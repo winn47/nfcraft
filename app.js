@@ -837,6 +837,25 @@ function _otpUnlockEmail() {
 }
 
 function otpEnableEmailEdit() {
+  // Agar account allaqachon yaratilgan bo'lsa (register orqali kelgan)
+  // email o'zgartirilsa — eski email bilan account qoladi
+  // Shuning uchun qaytadan ro'yxatdan o'tishni taklif qilamiz
+  if (currentUser && currentUser.token) {
+    const confirmed = confirm(
+      'Emailni o\'zgartirish uchun qaytadan ro\'yxatdan o\'tishingiz kerak.\n\n' +
+      'Hozirgi ma\'lumotlar o\'chib ketadi. Davom etasizmi?'
+    );
+    if (!confirmed) return;
+    // Avval yaratilgan accountni tozalaymiz
+    currentUser = null;
+    isAdmin = false;
+    isSuperAdmin = false;
+    localStorage.removeItem('currentUser');
+    // OTP ni yopamiz, register formani ochamiz
+    closeOverlay('otpOverlay');
+    setTimeout(() => openAuth('register'), 200);
+    return;
+  }
   _otpUnlockEmail();
   _otpHideMsg(1);
 }
