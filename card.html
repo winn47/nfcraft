@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NFCraft Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" href="./555ppp.jpg" type="image/jpeg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #e8ff47;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-bottom: 2.5rem;
+    opacity: 0.6;
+  }
+  .brand span { color: var(--accent); }
+
+  .card-wrap {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .profile-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    display: none;
+  }
+  .profile-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+
+  .card-owner {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .fields-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .field-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .field-item:hover { border-color: rgba(232,255,71,0.3); background: #1a1a1a; }
+
+  .field-icon {
+    font-size: 1.3rem;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .field-text { flex: 1; min-width: 0; }
+
+  .field-type {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+
+  .field-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .field-arrow {
+    color: var(--muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--muted);
+    padding: 3rem 0;
+    font-size: 0.9rem;
+  }
+
+  .error-msg {
+    text-align: center;
+    color: #ff6b6b;
+    padding: 3rem 0;
+    font-size: 0.9rem;
+  }
+
+  .footer-note {
+    margin-top: 2.5rem;
+    text-align: center;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.05em;
+  }
+  .footer-note span { color: var(--accent); opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="brand">NF<span>Craft</span></div>
+
+<div class="card-wrap">
+  <div class="profile-header">
+    <div class="profile-avatar" id="profileAvatar"><img id="profileAvatarImg" src="" alt=""></div>
+    <div class="card-owner" id="ownerName">Yuklanmoqda…</div>
+  </div>
+
+  <div class="fields-list" id="fieldsList">
+    <div class="loading">Ma'lumotlar yuklanmoqda…</div>
+  </div>
+</div>
+
+<div class="footer-note">Powered by NF<span>Craft</span></div>
+
+<script>
+const ICON_MAP = {
+  'Telegram': '✈️', 'Instagram': '📸', 'WhatsApp': '💬',
+  'Telefon': '📱', 'Email': '📧', 'Website': '🌐',
+  'LinkedIn': '💼', 'TikTok': '🎵', 'YouTube': '▶️',
+  'Facebook': '👥', 'Twitter/X': '𝕏', 'Manzil': '📍', 'Boshqa': '📋'
+};
+
+const LINK_MAP = {
+  'Telegram':   v => v.startsWith('http') ? v : `https://t.me/${v.replace('@','')}`,
+  'Instagram':  v => v.startsWith('http') ? v : `https://instagram.com/${v.replace('@','')}`,
+  'WhatsApp':   v => `https://wa.me/${v.replace(/\D/g,'')}`,
+  'Telefon':    v => `tel:${v}`,
+  'Email':      v => `mailto:${v}`,
+  'Website':    v => v.startsWith('http') ? v : `https://${v}`,
+  'LinkedIn':   v => v.startsWith('http') ? v : `https://${v}`,
+  'TikTok':     v => v.startsWith('http') ? v : `https://tiktok.com/@${v.replace('@','')}`,
+  'YouTube':    v => v.startsWith('http') ? v : `https://youtube.com/${v}`,
+  'Facebook':   v => v.startsWith('http') ? v : `https://facebook.com/${v}`,
+  'Twitter/X':  v => v.startsWith('http') ? v : `https://x.com/${v.replace('@','')}`,
+};
+
+async function loadCard() {
+  const params = new URLSearchParams(window.location.search);
+  const uuid = params.get('uuid');
+  if (!uuid) {
+    document.getElementById('fieldsList').innerHTML = '<div class="error-msg">UUID topilmadi.</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/card-info/${uuid}`);
+    if (!res.ok) throw new Error('Karta topilmadi');
+    const data = await res.json();
+
+    document.title = (data.ownerName || 'NFCraft') + ' — NFCraft Card';
+    document.getElementById('ownerName').textContent = data.ownerName || '–';
+
+    if (data.photo) {
+      const avatarEl = document.getElementById('profileAvatar');
+      const avatarImg = document.getElementById('profileAvatarImg');
+      avatarImg.src = data.photo;
+      avatarEl.style.display = 'block';
+    }
+
+    const list = document.getElementById('fieldsList');
+    if (!data.fields || !data.fields.length) {
+      list.innerHTML = '<div class="loading">Ma\'lumotlar yo\'q.</div>';
+      return;
+    }
+
+    list.innerHTML = data.fields.map(f => {
+      const icon = ICON_MAP[f.type] || '📋';
+      const linkFn = LINK_MAP[f.type];
+      const href = linkFn ? linkFn(f.value) : null;
+      const tag = href ? 'a' : 'div';
+      const extra = href ? `href="${href}" target="_blank" rel="noopener"` : '';
+      return `
+        <${tag} class="field-item" ${extra}>
+          <div class="field-icon">${icon}</div>
+          <div class="field-text">
+            <div class="field-type">${f.type}</div>
+            <div class="field-value">${f.value}</div>
+          </div>
+          ${href ? '<div class="field-arrow">›</div>' : ''}
+        </${tag}>`;
+    }).join('');
+  } catch (err) {
+    document.getElementById('fieldsList').innerHTML = `<div class="error-msg">${err.message}</div>`;
+    document.getElementById('ownerName').textContent = 'Xato';
+  }
+}
+
+loadCard();
+</script>
+</body>
+</html>

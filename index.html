@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NFCraft – Modern NFC Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="icon" href="./555ppp.jpg" type="image/jpeg">
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<div id="adminDashboard" style="display:none; min-height:100vh; background:var(--bg); padding:2rem 3vw;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem;">
+    <div style="font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:700;">NF<span style="color:var(--accent)">Craft</span> <span style="font-size:0.9rem; color:var(--muted); font-weight:400;">Admin</span></div>
+    <button onclick="logout()" style="padding:0.5rem 1.2rem; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:'DM Sans',sans-serif; cursor:pointer;">Chiqish</button>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.4rem;">
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.5rem;">Foydalanuvchilar</div>
+      <div id="statUsers" style="font-size:2.4rem; font-weight:700; font-family:'Syne',sans-serif;">—</div>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.4rem;">
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.5rem;">Buyurtmalar</div>
+      <div id="statOrders" style="font-size:2.4rem; font-weight:700; font-family:'Syne',sans-serif;">—</div>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.4rem;">
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.5rem;">Daromad</div>
+      <div id="statRevenue" style="font-size:2.4rem; font-weight:700; font-family:'Syne',sans-serif;">—</div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.2rem; margin-bottom:1.5rem;">
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:1rem;">Planlarga ko'ra buyurtmalar</div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.8rem;">
+      <div style="text-align:center; padding:1rem; background:var(--bg); border-radius:10px;">
+        <div style="font-size:0.72rem; color:var(--muted);">Starter</div>
+        <div id="planStarter" style="font-size:1.8rem; font-weight:700; font-family:'Syne',sans-serif;">0</div>
+      </div>
+      <div style="text-align:center; padding:1rem; background:var(--bg); border-radius:10px;">
+        <div style="font-size:0.72rem; color:var(--muted);">Pro</div>
+        <div id="planPro" style="font-size:1.8rem; font-weight:700; font-family:'Syne',sans-serif;">0</div>
+      </div>
+      <div style="text-align:center; padding:1rem; background:var(--bg); border-radius:10px;">
+        <div style="font-size:0.72rem; color:var(--muted);">Premium</div>
+        <div id="planPremium" style="font-size:1.8rem; font-weight:700; font-family:'Syne',sans-serif;">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.2rem; margin-bottom:1.5rem;">
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:1rem;">Barcha buyurtmalar</div>
+    <div class="admin-scroll-wrap">
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead class="admin-sticky-head">
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">#</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">User ID</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Plan</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Soni</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Summa</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="adminOrdersBody">
+          <tr><td colspan="6" style="padding:1rem; text-align:center; color:var(--muted2)">Yuklanmoqda...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.2rem;">
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:1rem;">Foydalanuvchilar</div>
+    <div class="admin-scroll-wrap admin-scroll-users">
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead class="admin-sticky-head">
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">#</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Ism Familiya</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Email</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Yosh</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Jins</th>
+            <th style="padding:0.6rem 0.8rem; text-align:left; color:var(--muted); font-weight:500;">Amal</th>
+          </tr>
+        </thead>
+        <tbody id="adminUsersBody">
+          <tr><td colspan="6" style="padding:1rem; text-align:center; color:var(--muted2)">Yuklanmoqda...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="overlay" id="userEditOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">Foydalanuvchini tahrirlash</div>
+      <button class="modal-close" onclick="closeOverlay('userEditOverlay')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+      <input type="hidden" id="editId">
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.4rem;">Ism</div>
+        <input id="editFirstName" class="input-field" type="text" style="width:100%;">
+      </div>
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.4rem;">Familiya</div>
+        <input id="editLastName" class="input-field" type="text" style="width:100%;">
+      </div>
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.4rem;">Email</div>
+        <input id="editEmail" class="input-field" type="email" style="width:100%;">
+      </div>
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.4rem;">Yosh</div>
+        <input id="editAge" class="input-field" type="number" style="width:100%;">
+      </div>
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.4rem;">Jins</div>
+        <select id="editGender" class="input-field" style="width:100%;">
+          <option value="male">Erkak</option>
+          <option value="female">Ayol</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:0.8rem; margin-top:0.5rem;">
+        <button onclick="saveUserEdit()" style="flex:1; padding:0.8rem; background:var(--accent); color:#000; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer;">Saqlash</button>
+        <button onclick="closeOverlay('userEditOverlay')" style="padding:0.8rem 1.2rem; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; cursor:pointer;">Bekor</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav id="siteNav">
+  <a class="logo" href="#">NF<span>Craft</span></a>
+  <ul>
+    <li><a href="#why"      data-i18n="navWhy">Why NFC</a></li>
+    <li><a href="#pricing"  data-i18n="navPricing">Pricing</a></li>
+    <li><a href="#owners"   data-i18n="navTeam">Team</a></li>
+    <li><a href="#location" data-i18n="navLocation">Location</a></li>
+    <li id="navUsersLink" style="display:none"><a href="#userManagement" data-i18n="navUsers">Users</a></li>
+  </ul>
+  <div class="nav-auth">
+    <button id="loginBtn"    class="nav-link" onclick="openAuth('login')"    data-i18n="login">Login</button>
+    <button id="registerBtn" class="nav-link" onclick="openAuth('register')" data-i18n="register">Register</button>
+    <button id="profileBtn"  class="nav-link" onclick="openProfile()" style="display:none;">Profile</button>
+    <button id="logoutBtn"   class="nav-link" onclick="logout()"              data-i18n="logout">Logout</button>
+  </div>
+  <div class="nav-language">
+    <div class="lang-picker" id="langPicker">
+      <button class="lang-current" id="langBtn" onclick="toggleLangDropdown(event)">
+        <span id="langCode">EN</span>
+        <svg class="lang-chevron" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="lang-dropdown" id="langDropdown">
+        <button onclick="setLanguage('en')" data-lang="en">EN</button>
+        <button onclick="setLanguage('uz')" data-lang="uz">UZ</button>
+        <button onclick="setLanguage('ru')" data-lang="ru">RU</button>
+      </div>
+    </div>
+  </div>
+  <button class="nav-cta" onclick="openOrder()" data-i18n="getStarted">Get Started</button>
+
+  <div class="mobile-menu-wrap">
+    <button class="three-dots-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="mobile-dropdown" id="mobileDropdown">
+      <a href="#why"      onclick="closeMobileMenu()" data-i18n="navWhy">Why NFC</a>
+      <a href="#pricing"  onclick="closeMobileMenu()" data-i18n="navPricing">Pricing</a>
+      <a href="#owners"   onclick="closeMobileMenu()" data-i18n="navTeam">Team</a>
+      <a href="#location" onclick="closeMobileMenu()" data-i18n="navLocation">Location</a>
+      <div class="mobile-divider"></div>
+      <button id="mLoginBtn"    onclick="closeMobileMenu(); openAuth('login')"    data-i18n="login">Login</button>
+      <button id="mRegisterBtn" onclick="closeMobileMenu(); openAuth('register')" data-i18n="register">Register</button>
+      <button id="mProfileBtn"  onclick="closeMobileMenu(); openProfile()" style="display:none;">Profile</button>
+      <button id="mLogoutBtn"   onclick="closeMobileMenu(); logout()"              data-i18n="logout">Logout</button>
+      <div class="mobile-divider"></div>
+      <div class="mobile-lang-row">
+        <button onclick="closeMobileMenu(); setLanguage('en')" data-mlang="en" class="mlang-btn active">EN</button>
+        <button onclick="closeMobileMenu(); setLanguage('uz')" data-mlang="uz" class="mlang-btn">UZ</button>
+        <button onclick="closeMobileMenu(); setLanguage('ru')" data-mlang="ru" class="mlang-btn">RU</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-badge" style="position:relative;z-index:1"><span class="dot"></span> NFC Technology, Reimagined</div>
+  <h1>Modern<br/><em>NFC Cards</em></h1>
+  <p class="hero-sub" data-i18n="heroSub">Share your contact, portfolio, or links with a single tap. No app required. Just your card — and the future in your pocket.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="openOrder()" data-i18n="orderNow">⚡ Order Now</button>
+    <a class="btn-secondary" href="#pricing" data-i18n="exploreCards">Explore Plans</a>
+  </div>
+  <div class="hero-visual">
+    <div class="nfc-card" id="heroCard">
+      <div class="nfc-chip"></div>
+      <div class="nfc-logo">NF<span>Craft</span></div>
+      <div class="nfc-waves"><div></div><div></div><div></div></div>
+      <div class="nfc-name">Smart NFC Card</div>
+    </div>
+    <div class="hero-color-selectors" id="heroColorSelectors">
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="reveal">
+    <div class="section-label" data-i18n="howLabel">How It Works</div>
+    <h2 class="section-title" data-i18n="howTitle">One tap. Everything shared.</h2>
+    <p class="section-sub" data-i18n="howSub">Hold your card near any smartphone — your full profile opens instantly. No app, no QR scan, no typing.</p>
+  </div>
+
+  <div class="how-inner">
+    <div class="how-steps reveal">
+      <div class="how-step">
+        <div class="how-step-left">
+          <div class="how-step-dot"><span>01</span></div>
+          <div class="how-step-line"></div>
+        </div>
+        <div class="how-step-content">
+          <div class="how-step-title" data-i18n="howStep1Title">Order your card</div>
+          <p class="how-step-desc" data-i18n="howStep1Desc">Pick a plan and color. Your card arrives pre-programmed and ready to use — no setup needed.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-left">
+          <div class="how-step-dot"><span>02</span></div>
+          <div class="how-step-line"></div>
+        </div>
+        <div class="how-step-content">
+          <div class="how-step-title" data-i18n="howStep2Title">Add your info</div>
+          <p class="how-step-desc" data-i18n="howStep2Desc">Add your phone, socials, website — anything you want to share. Edit anytime from any browser.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-left">
+          <div class="how-step-dot accent"><span>03</span></div>
+        </div>
+        <div class="how-step-content">
+          <div class="how-step-title" data-i18n="howStep3Title">Tap & connect</div>
+          <p class="how-step-desc" data-i18n="howStep3Desc">Hold the card near any phone. Your profile appears in under a second — they save your contact instantly.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-visual reveal">
+      <div class="demo-phone-wrap">
+        <div class="demo-phone">
+          <div class="demo-island"></div>
+          <div class="demo-screen">
+            <div class="demo-screen-brand">NF<span>Craft</span></div>
+            <div class="demo-screen-avatar"><div class="demo-screen-initials">AK</div></div>
+            <div class="demo-screen-name">Alex Kim</div>
+            <div class="demo-screen-links">
+              <div class="demo-screen-link">
+                <span class="dsl-icon">📱</span>
+                <div class="dsl-text"><div class="dsl-type">Phone</div><div class="dsl-val">+998 90 123 45 67</div></div>
+                <span class="dsl-arr">›</span>
+              </div>
+              <div class="demo-screen-link">
+                <span class="dsl-icon">📸</span>
+                <div class="dsl-text"><div class="dsl-type">Instagram</div><div class="dsl-val">@alexkim</div></div>
+                <span class="dsl-arr">›</span>
+              </div>
+              <div class="demo-screen-link">
+                <span class="dsl-icon">💼</span>
+                <div class="dsl-text"><div class="dsl-type">LinkedIn</div><div class="dsl-val">linkedin.com/in/alex</div></div>
+                <span class="dsl-arr">›</span>
+              </div>
+              <div class="demo-screen-link">
+                <span class="dsl-icon">🌐</span>
+                <div class="dsl-text"><div class="dsl-type">Website</div><div class="dsl-val">alexkim.com</div></div>
+                <span class="dsl-arr">›</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-nfc-card">
+          <div class="demo-card-chip"></div>
+          <div class="demo-card-logo">NF<span>Craft</span></div>
+          <div class="demo-card-owner">ALEX KIM</div>
+          <div class="demo-card-waves"><div></div><div></div><div></div></div>
+          <div class="demo-pulse-ring"></div>
+          <div class="demo-pulse-ring delay"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="reveal">
+    <div class="section-label" data-i18n="benefits">Benefits</div>
+    <h2 class="section-title" data-i18n="whyNfc">Why NFC Cards?</h2>
+    <p class="section-sub" data-i18n="whyNfcSub">A smarter way to share. Tap your card to any smartphone and instantly share anything — no downloads, no friction.</p>
+  </div>
+  <div class="benefits-grid reveal">
+    <div class="benefit-card">
+      <span class="benefit-icon">⚡</span>
+      <div class="benefit-title" data-i18n="instantSharing">Instant Sharing</div>
+      <p class="benefit-desc" data-i18n="instantDesc">One tap and your profile, links, or contact details are instantly on their phone. Zero friction, maximum impression.</p>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">📱</span>
+      <div class="benefit-title" data-i18n="noApps">No Apps Needed</div>
+      <p class="benefit-desc" data-i18n="noAppsDesc">NFC is built into every modern smartphone. No app downloads, no setup — it just works out of the box.</p>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">🌐</span>
+      <div class="benefit-title" data-i18n="worksEverywhere">Works Everywhere</div>
+      <p class="benefit-desc" data-i18n="worksDesc">Compatible with all modern Android and iOS devices. From budget phones to flagship models — universal support.</p>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">♻️</span>
+      <div class="benefit-title" data-i18n="ecoFriendly">Eco-Friendly</div>
+      <p class="benefit-desc" data-i18n="ecoDesc">Reusable and reprogrammable. Update what your card shares anytime, without printing new ones. Better for the planet.</p>
+    </div>
+  </div>
+</section>
+
+<section id="card-colors">
+  <div class="reveal">
+    <div class="section-label" data-i18n="colorsLabel">Colors</div>
+    <h2 class="section-title" data-i18n="colorsTitle">Pick Your Style</h2>
+    <p class="section-sub" data-i18n="colorsSub">Every card ships in your chosen color. Same smart NFC chip — different personality.</p>
+  </div>
+  <div class="card-showcase reveal">
+    <div class="showcase-stage">
+      <div class="showcase-card" id="showcaseCard">
+        <div class="sc-chip"></div>
+        <div class="sc-logo">NF<span>Craft</span></div>
+        <div class="sc-label">Smart NFC Card</div>
+        <div class="sc-waves"><div></div><div></div><div></div></div>
+      </div>
+    </div>
+    <div class="showcase-colors">
+      <button class="sc-dot selected" data-bg="#0e0e0e" data-light="false" style="background:#0e0e0e;" aria-label="Black"></button>
+      <button class="sc-dot" data-bg="#f0f0ed" data-light="true"  style="background:#f0f0ed;" aria-label="White"></button>
+      <button class="sc-dot" data-bg="#0d213f" data-light="false" style="background:#0d213f;" aria-label="Navy"></button>
+      <button class="sc-dot" data-bg="linear-gradient(135deg,#8a7240,#c9a84e)" data-light="false" style="background:linear-gradient(135deg,#8a7240,#c9a84e);" aria-label="Gold"></button>
+      <button class="sc-dot" data-bg="linear-gradient(135deg,#3d0015,#720028)" data-light="false" style="background:linear-gradient(135deg,#3d0015,#720028);" aria-label="Wine"></button>
+      <button class="sc-dot" data-bg="linear-gradient(135deg,#1a3a00,#2d6200)" data-light="false" style="background:linear-gradient(135deg,#1a3a00,#2d6200);" aria-label="Neon"></button>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="reveal">
+    <div class="section-label" data-i18n="pricing">Pricing</div>
+    <h2 class="section-title" data-i18n="simplePricing">Simple Pricing</h2>
+    <p class="section-sub" data-i18n="pickPlan">Pick a plan that fits your needs. Every card ships ready to use.</p>
+  </div>
+  <div class="pricing-grid reveal">
+    <div class="pricing-card" onclick="openOrder('starter')" style="cursor:pointer;">
+      <div class="pricing-name" data-i18n="starter">Starter</div>
+      <p class="pricing-desc" data-i18n="starterDesc">Perfect for personal use or trying NFC for the first time.</p>
+      <div class="pricing-price"><sup>$</sup>2.5 <span>/ card</span></div>
+      <ul class="pricing-features">
+        <li data-i18n="feat1Card">1 NFC card</li>
+        <li data-i18n="feat3Fields">Up to 3 fields</li>
+        <li data-i18n="featBasicColor">Basic black or white</li>
+        <li data-i18n="featReprogrammable">Reprogrammable</li>
+        <li data-i18n="featStdShipping">Standard shipping</li>
+      </ul>
+      <button class="pricing-btn pricing-btn-outline" data-i18n="orderStarter">Order Starter</button>
+    </div>
+    <div class="pricing-card" onclick="openOrder('pro')" style="cursor:pointer;">
+      <div class="pricing-name" data-i18n="pro">Pro</div>
+      <p class="pricing-desc" data-i18n="proDesc">Great for professionals who want a polished branded card.</p>
+      <div class="pricing-price"><sup>$</sup>5 <span>/ card</span></div>
+      <ul class="pricing-features">
+        <li data-i18n="feat1Card">1 NFC card</li>
+        <li data-i18n="feat7Fields">Up to 7 fields</li>
+        <li data-i18n="featAllColors">All colors available</li>
+        <li data-i18n="featReprogrammable">Reprogrammable</li>
+        <li data-i18n="featLogoPrint">Logo printing</li>
+        <li data-i18n="featPriorityShip">Priority shipping</li>
+      </ul>
+      <button class="pricing-btn pricing-btn-outline" data-i18n="orderPro">Order Pro</button>
+    </div>
+    <div class="pricing-card featured" onclick="openOrder('premium')" style="cursor:pointer;">
+      <div class="pricing-badge" data-i18n="bestChoice">Best Choice</div>
+      <div class="pricing-name" data-i18n="premiumTitle">Premium</div>
+      <p class="pricing-desc" data-i18n="premiumDesc">For businesses that want the best.</p>
+      <div class="pricing-price"><sup>$</sup>10 <span>/ card</span></div>
+      <ul class="pricing-features">
+        <li data-i18n="feat1Card">1 NFC card</li>
+        <li data-i18n="feat15Fields">Up to 15 fields</li>
+        <li data-i18n="featCustomDesign">Custom design</li>
+        <li data-i18n="featReprogrammable">Reprogrammable</li>
+        <li data-i18n="featLogoPrint">Logo printing</li>
+        <li data-i18n="featExpressShip">Express shipping</li>
+        <li data-i18n="featDedicatedSupport">Dedicated support</li>
+      </ul>
+      <button class="pricing-btn pricing-btn-solid" data-i18n="orderPremium">Order Premium</button>
+    </div>
+  </div>
+</section>
+
+<section id="owners">
+  <div class="reveal" style="text-align:center">
+    <div class="section-label" style="justify-content:center;display:flex" data-i18n="team">Our Team</div>
+    <h2 class="section-title" data-i18n="foundersTitle">The Founders</h2>
+    <p class="section-sub" style="margin:0 auto" data-i18n="foundersSub">The people behind NFCraft, dedicated to reimagining how professionals connect.</p>
+  </div>
+  <div class="owners-grid reveal">
+     <div class="owner-card">
+       <div class="owner-avatar" id="ownerAvatar1" data-initials="AK" data-bg="linear-gradient(135deg,#1a1a2e,#2a2a4e)"></div>
+       <div class="owner-name">Alex Kim</div>
+       <div class="owner-divider"></div>
+       <div class="owner-role" data-i18n="role1">Co-Founder & CEO</div>
+     </div>
+     <div class="owner-card">
+       <div class="owner-avatar" id="ownerAvatar2" data-initials="JP" data-bg="linear-gradient(135deg,#1a2e1a,#2a4e2a)"></div>
+       <div class="owner-name">Jordan Park</div>
+       <div class="owner-divider"></div>
+       <div class="owner-role" data-i18n="role2">Co-Founder & Design Lead</div>
+     </div>
+  </div>
+</section>
+
+<section id="location">
+  <div class="location-inner">
+    <div class="location-info reveal">
+      <div class="section-label" data-i18n="location">Find Us</div>
+      <h2 class="section-title" data-i18n="ourLocation">Our Location</h2>
+      <p class="section-sub" data-i18n="locationSub">Come visit our studio and experience NFCraft cards in person. We're open weekdays 10am–6pm.</p>
+      <div class="location-address">
+        <div class="loc-item">
+          <div class="loc-icon">📍</div>
+          <div>
+            <div class="loc-label" data-i18n="locAddressLabel">Address</div>
+            <div class="loc-value">Mashina bazar ko'chasi, PDP School,<br/>Yangi Hayat, Sergeli, Toshkent</div>
+          </div>
+        </div>
+        <div class="loc-item">
+          <div class="loc-icon">📞</div>
+          <div>
+            <div class="loc-label" data-i18n="locPhoneLabel">Phone</div>
+            <div class="loc-value">+998 70 020 95 55<br/>+998 88 097 79 90</div>
+          </div>
+        </div>
+        <div class="loc-item">
+          <div class="loc-icon">✉️</div>
+          <div>
+            <div class="loc-label" data-i18n="locEmailLabel">Email</div>
+            <div class="loc-value">nfcraftuz@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="map-container reveal" id="mapContainer">
+      <div class="map-placeholder" id="mapPlaceholder">
+        <div class="map-placeholder-icon">🗺️</div>
+        <div class="map-placeholder-text">Interactive map loading…</div>
+      </div>
+      <div id="ymap"></div>
+    </div>
+  </div>
+</section>
+
+<section id="profile" class="hidden">
+  <div class="reveal" style="text-align:center">
+    <div class="section-label" style="justify-content:center;display:flex" data-i18n="account">Account</div>
+    <h2 class="section-title" data-i18n="yourProfile">Your Profile</h2>
+    <p class="section-sub" style="margin:0 auto" data-i18n="profileSub">Manage your account and view your orders.</p>
+  </div>
+  <div class="profile-grid reveal">
+    <div class="profile-card">
+      <div class="profile-avatar">
+        <div class="profile-avatar-placeholder" id="profileAvatar">👤</div>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name" id="profileName">User Name</div>
+        <div class="profile-email" id="profileEmail">user@example.com</div>
+      </div>
+    </div>
+     <div class="profile-orders">
+       <h3 data-i18n="yourOrders">Your Orders</h3>
+       <div id="ordersList">
+         <p style="color:var(--muted2)" data-i18n="noOrders">No orders yet.</p>
+       </div>
+     </div>
+     <div class="profile-card-orders">
+       <h3 data-i18n="cardOrders">Card Orders</h3>
+       <div id="cardOrdersList">
+         <p style="color:var(--muted2)" data-i18n="noCardOrders">No card orders yet.</p>
+       </div>
+     </div>
+  </div>
+</section>
+
+<section id="userManagement" style="padding: 120px 6vw; background: var(--bg2); display:none;">
+  <div class="reveal">
+    <div class="section-label">User Management</div>
+    <h2 class="section-title">Foydalanuvchilarni Boshqarish</h2>
+    <p class="section-sub">Foydalanuvchilarni qo'shish, tahrirlash va o'chirish</p>
+  </div>
+
+  <div class="user-management-container" style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; margin-top: 3rem;">
+    <div class="user-form-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem;">
+      <h3 id="userFormTitle" style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Foydalanuvchi Qo'shish / Tahrirlash</h3>
+      <form id="userForm" onsubmit="submitUserForm(event)">
+        <input type="hidden" id="editUserId" value="">
+
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="firstName" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Ism</label>
+          <input type="text" id="firstName" name="firstName" class="input-field" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="lastName" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Familiya</label>
+          <input type="text" id="lastName" name="lastName" class="input-field" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="userEmail" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Email</label>
+          <input type="email" id="userEmail" name="email" class="input-field" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1rem;" id="passwordGroup">
+          <label for="userPassword" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Parol</label>
+          <input type="password" id="userPassword" name="password" class="input-field" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="age" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Yosh</label>
+          <input type="number" id="age" name="age" class="input-field" required min="1" max="120" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="phoneNumber" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Telefon</label>
+          <input type="tel" id="phoneNumber" name="phonenumber" class="input-field" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+        </div>
+        <div class="input-group" style="margin-bottom: 1.5rem;">
+          <label for="gender" style="display: block; margin-bottom: 0.5rem; color: var(--text);">Jins</label>
+          <select id="gender" name="gender" class="input-field" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);">
+            <option value="">Tanlang</option>
+            <option value="male">Erkak</option>
+            <option value="female">Ayol</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:0.75rem;">
+          <button type="submit" id="userFormSubmitBtn" style="flex:1; padding: 0.85rem; background: var(--accent); color: #000; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer;">Qo'shish</button>
+          <button type="button" id="userFormCancelBtn" onclick="cancelEditUser()" style="display:none; padding: 0.85rem 1.2rem; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer;">Bekor</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="users-table-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem;">
+      <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Foydalanuvchilar Ro'yxati</h2>
+      <div style="overflow-x: auto;">
+        <table id="usersTable" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">ID</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Ism Familiya</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Email</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Telefon</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Yosh</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Jins</th>
+              <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.8rem;">Amallar</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="7" style="padding:1.5rem; text-align:center; color:var(--muted2);">Yuklanmoqda...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="overlay" id="orderOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="orderModal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle" data-i18n="modalTitle">Place Your Order</div>
+      <button class="modal-close" onclick="closeOverlay('orderOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="steps-bar">
+        <div class="step-dot active" id="sdot1"><div class="step-circle">1</div><div class="step-label" data-i18n="stepPlan">Plan</div></div>
+        <div class="step-connector"></div>
+        <div class="step-dot" id="sdot2"><div class="step-circle">2</div><div class="step-label" data-i18n="stepQty">Quantity</div></div>
+        <div class="step-connector"></div>
+        <div class="step-dot" id="sdot3"><div class="step-circle">3</div><div class="step-label" data-i18n="stepColor">Color</div></div>
+        <div class="step-connector"></div>
+        <div class="step-dot" id="sdot4"><div class="step-circle">4</div><div class="step-label" data-i18n="stepOptions">Options</div></div>
+      </div>
+
+      <div class="order-step active" id="ostep1">
+        <div class="step-section-title" data-i18n="choosePlan">Choose Your Plan</div>
+        <div class="plan-options">
+          <div class="plan-option" id="plan-starter" onclick="selectPlan('starter')">
+            <div class="plan-option-left"><div class="plan-radio"></div><div><div class="plan-name" data-i18n="starter">Starter</div><div class="plan-detail" data-i18n="planDetailStarter">Basic NFC card, black or white</div></div></div>
+            <div class="plan-price">$2.50</div>
+          </div>
+          <div class="plan-option" id="plan-pro" onclick="selectPlan('pro')">
+            <div class="plan-option-left"><div class="plan-radio"></div><div><div class="plan-name" data-i18n="pro">Pro</div><div class="plan-detail" data-i18n="planDetailPro">All colors + logo printing + priority</div></div></div>
+            <div class="plan-price">$5.00</div>
+          </div>
+          <div class="plan-option" id="plan-premium" onclick="selectPlan('premium')">
+            <div class="plan-option-left"><div class="plan-radio"></div><div><div class="plan-name" data-i18n="premiumTitle">Premium</div><div class="plan-detail" data-i18n="planDetailPremium">Custom design + express + support</div></div></div>
+            <div class="plan-price">$10.00</div>
+          </div>
+        </div>
+        <div class="step-nav"><button class="btn-next" onclick="nextStep(1)">Continue →</button></div>
+      </div>
+
+      <div class="order-step" id="ostep2">
+        <div class="step-section-title" data-i18n="howMany">How many cards?</div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-num" id="qtyDisplay">1</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+        <div class="live-total" id="totalStep2">
+          <div class="total-row"><span data-i18n="labelPlanPrice">Plan price</span><span id="ts2plan">–</span></div>
+          <div class="total-row"><span data-i18n="stepQty">Quantity</span><span id="ts2qty">–</span></div>
+          <div class="total-row main"><span data-i18n="labelSubtotal">Subtotal</span><span id="ts2total">–</span></div>
+        </div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep(2)">←</button><button class="btn-next" onclick="nextStep(2)">Continue →</button></div>
+      </div>
+
+      <div class="order-step" id="ostep3">
+        <div class="step-section-title" data-i18n="chooseColor">Choose Card Color</div>
+        <div class="color-options">
+          <div class="color-option selected" id="col-black" onclick="selectColor('black','#0e0e0e','Black')"><div class="color-swatch" style="background:#0e0e0e;border-color:rgba(255,255,255,0.15);"></div><div class="color-label" data-i18n="colorBlack">Black</div></div>
+          <div class="color-option" id="col-white" onclick="selectColor('white','#f0f0ed','White')"><div class="color-swatch light-swatch" style="background:#f0f0ed;"></div><div class="color-label" data-i18n="colorWhite">White</div></div>
+          <div class="color-option" id="col-navy" onclick="selectColor('navy','#0d213f','Navy')"><div class="color-swatch" style="background:#0d213f;"></div><div class="color-label" data-i18n="colorNavy">Navy</div></div>
+          <div class="color-option" id="col-gold" onclick="selectColor('gold','linear-gradient(135deg,#8a7240,#c9a84e)','Gold')"><div class="color-swatch" style="background:linear-gradient(135deg,#8a7240,#c9a84e);"></div><div class="color-label" data-i18n="colorGold">Gold</div></div>
+          <div class="color-option" id="col-green" onclick="selectColor('green','linear-gradient(135deg,#3d0015,#720028)','Wine')"><div class="color-swatch" style="background:linear-gradient(135deg,#3d0015,#720028);"></div><div class="color-label" data-i18n="colorForest">Wine</div></div>
+          <div class="color-option" id="col-custom" onclick="selectColor('custom','linear-gradient(135deg,#1a3a00,#2d6200)','Neon')"><div class="color-swatch" style="background:linear-gradient(135deg,#1a3a00,#2d6200);"></div><div class="color-label" data-i18n="colorNeon">Neon</div></div>
+        </div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep(3)">←</button><button class="btn-next" onclick="nextStep(3)">Continue →</button></div>
+      </div>
+
+      <div class="order-step" id="ostep4">
+        <div class="step-section-title" data-i18n="addonsOpts">Add-ons & Options</div>
+        <div class="addon-options">
+          <div class="addon-option" id="addon-logo" onclick="toggleAddon('logo')">
+            <div class="addon-left"><div class="addon-checkbox"></div><div><div class="addon-name" data-i18n="addonLogoName">Add Logo</div><div class="addon-desc" data-i18n="addonLogoDesc">Print your logo on the card</div></div></div>
+            <div class="addon-price-tag">+$0.50</div>
+          </div>
+          <div class="addon-option" id="addon-design" onclick="toggleAddon('design')">
+            <div class="addon-left"><div class="addon-checkbox"></div><div><div class="addon-name" data-i18n="addonDesignName">Custom Design</div><div class="addon-desc" data-i18n="addonDesignDesc">Full custom artwork & layout</div></div></div>
+            <div class="addon-price-tag">+$2.00</div>
+          </div>
+        </div>
+        <div class="live-total">
+          <div class="total-row"><span data-i18n="stepPlan">Plan</span><span id="fin-plan">–</span></div>
+          <div class="total-row"><span data-i18n="labelQtyPrice">Qty × price</span><span id="fin-qty">–</span></div>
+          <div class="total-row" id="fin-logo-row" style="display:none"><span data-i18n="addonLogoName">Logo</span><span id="fin-logo">–</span></div>
+          <div class="total-row" id="fin-design-row" style="display:none"><span data-i18n="addonDesignName">Custom design</span><span id="fin-design">–</span></div>
+          <div class="total-row main"><span data-i18n="labelTotal">Total</span><span id="fin-total">–</span></div>
+        </div>
+        <div style="margin-top:1rem;margin-bottom:0.8rem;">
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;">📱 <span data-i18n="phoneLabel">Phone number</span> <span style="color:#ff6b6b">*</span></div>
+          <input
+            id="orderPhone"
+            type="tel"
+            placeholder="+998 90 123 45 67"
+            style="width:100%;box-sizing:border-box;padding:0.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;outline:none;display:block;"
+          />
+          <div style="font-size:0.72rem;color:var(--muted2);margin-top:0.3rem;" data-i18n="phoneRequired">Required for delivery</div>
+        </div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep(4)">←</button><button class="btn-next" onclick="placeOrder()" data-i18n="placeOrderBtn">Place Order →</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="authOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="authModal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="authTitle">Please Register to Order</div>
+      <button class="modal-close" onclick="closeOverlay('authOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p data-i18n="authSub" style="color:var(--muted2);font-size:0.88rem;margin-bottom:1.5rem;line-height:1.6;">Create a free account or sign in to complete your NFCraft order.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('register')" data-i18n="register">Register</button>
+        <button class="auth-tab" onclick="switchAuthTab('login')" data-i18n="signIn">Sign In</button>
+      </div>
+        <form class="auth-form" id="form-register" onsubmit="handleRegister(event)">
+          <div class="input-group"><div class="input-label" data-i18n="firstName">First Name</div><input class="input-field" id="regFirstName" type="text" data-i18n-ph="enterFirstName" placeholder="Enter first name" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="lastName">Last Name</div><input class="input-field" id="regLastName" type="text" data-i18n-ph="enterLastName" placeholder="Enter last name" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="age">Age</div><input class="input-field" id="regAge" type="number" data-i18n-ph="enterAge" placeholder="Enter age" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="address">Address</div><input class="input-field" id="regAddress" type="text" data-i18n-ph="enterAddress" placeholder="Enter address" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="gender">Gender</div><select class="input-field" id="regGender" required><option value="" data-i18n="select">Select</option><option value="male" data-i18n="male">Male</option><option value="female" data-i18n="female">Female</option></select></div>
+          <div class="input-group"><div class="input-label" data-i18n="emailLabel">Email</div><input class="input-field" id="regEmail" type="email" data-i18n-ph="enterEmail" placeholder="Enter email" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="passwordLabel">Password</div><input class="input-field" id="regPassword" type="password" data-i18n-ph="enterPassword" placeholder="Enter password" required /></div>
+          <button class="auth-submit" type="submit" data-i18n="createAccount">Create Account & Order</button>
+        </form>
+
+        <form class="auth-form hidden" id="form-login" onsubmit="handleLogin(event)">
+          <div class="input-group"><div class="input-label" data-i18n="emailLabel">Email</div><input class="input-field" id="loginEmail" type="email" data-i18n-ph="enterEmail" placeholder="Enter email" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="passwordLabel">Password</div><input class="input-field" id="loginPassword" type="password" data-i18n-ph="enterPassword" placeholder="Enter password" required /></div>
+          <button class="auth-submit" type="submit" data-i18n="signInBtn">Sign In & Continue</button>
+        </form>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="otpOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Email Verification</div>
+      <button class="modal-close" onclick="closeOverlay('otpOverlay')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:2rem 2rem 1.5rem;">
+
+      <div id="otpStep1">
+        <div class="otp-step-icon">✉️</div>
+        <p id="otpStep1Desc" style="color:var(--muted2);font-size:0.88rem;margin-bottom:1.5rem;line-height:1.6;text-align:center;">
+          Registration successful! Verify your email to activate your account.
+        </p>
+        <div class="input-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+            <div class="input-label" style="margin-bottom:0;">Email Address</div>
+            <button id="otpEditEmailBtn" onclick="otpEnableEmailEdit()" style="display:none;background:none;border:none;color:var(--accent);font-size:0.78rem;cursor:pointer;font-family:inherit;padding:0;display:flex;align-items:center;gap:0.25rem;">
+              ✏️ Edit
+            </button>
+          </div>
+          <input class="input-field" id="otpEmail" type="email" placeholder="Enter your email" autocomplete="email" />
+        </div>
+        <div id="otpMsg1" class="otp-msg" style="display:none;"></div>
+        <button class="auth-submit" id="sendCodeBtn" onclick="handleSendCode()">Send Verification Code</button>
+      </div>
+
+      <div id="otpStep2" style="display:none;">
+        <div class="otp-step-icon">🔐</div>
+        <p style="color:var(--muted2);font-size:0.85rem;margin-bottom:0.4rem;text-align:center;">Code sent to</p>
+        <p id="otpEmailDisplay" style="color:var(--accent);font-weight:600;font-size:0.92rem;margin-bottom:1.8rem;text-align:center;word-break:break-all;"></p>
+
+        <div class="otp-boxes" id="otpBoxes">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" />
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+        </div>
+
+        <div id="otpMsg2" class="otp-msg" style="display:none;"></div>
+        <button class="auth-submit" id="verifyCodeBtn" onclick="handleVerifyCode()">Verify Code</button>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <span style="color:var(--muted2);font-size:0.82rem;">Didn't receive it? </span>
+          <button onclick="otpBackToEmail()" style="background:none;border:none;color:var(--accent);font-size:0.82rem;cursor:pointer;font-family:inherit;padding:0;">Resend code</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="successOverlay">
+  <div class="modal" id="successModal" style="max-width:420px;">
+    <div class="modal-body" style="padding:2.5rem 2rem;">
+      <div class="success-screen">
+        <div class="success-icon">🎉</div>
+        <div class="success-title" data-i18n="orderPlaced">Order Placed!</div>
+        <p class="success-sub" data-i18n="orderSuccess">Your NFCraft card is being crafted and will be ready soon.</p>
+        <button class="btn-primary" style="margin-top:2rem;width:100%;justify-content:center;" onclick="closeOverlay('successOverlay')" data-i18n="done">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cardInfoOverlay">
+  <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-title">Karta ma'lumotlari</div>
+      <button class="modal-close" onclick="closeOverlay('cardInfoOverlay')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1.5rem;">
+      <p id="ciPlanNote" style="font-size:0.8rem;color:var(--muted2);margin-bottom:1.2rem;"></p>
+
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);">
+        <label for="ciPhotoInput" id="ciPhotoLabel" style="width:64px;height:64px;border-radius:50%;border:1.5px dashed var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;transition:border-color 0.2s;">
+          <span id="ciPhotoPlus" style="font-size:1.6rem;color:var(--muted);line-height:1;">+</span>
+          <img id="ciPhotoImg" style="display:none;width:100%;height:100%;object-fit:cover;" alt="">
+        </label>
+        <input type="file" id="ciPhotoInput" accept="image/*" style="display:none" onchange="previewCiPhoto(this)">
+        <div>
+          <div style="font-size:0.88rem;font-weight:500;margin-bottom:0.2rem;">Profil rasmi</div>
+          <div style="font-size:0.75rem;color:var(--muted2);">Ixtiyoriy — yuklamasangiz ham bo'ladi</div>
+        </div>
+      </div>
+
+      <div id="ciFieldsList"></div>
+      <button id="ciAddBtn" onclick="addCardField()" style="width:100%;margin-top:0.8rem;padding:0.65rem;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">+ Ma'lumot qo'shish</button>
+      <div id="ciCount" style="text-align:center;font-size:0.75rem;color:var(--muted2);margin-top:0.5rem;"></div>
+      <button onclick="submitCardInfo()" style="width:100%;margin-top:1.2rem;padding:0.9rem;background:var(--accent);color:#000;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;">Saqlash va yuborish →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cardLinkOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-body" style="padding:2.5rem 2rem;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:1rem;">✅</div>
+      <div style="font-size:1.3rem;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:0.8rem;">Tayyor!</div>
+      <p style="color:var(--muted2);font-size:0.85rem;margin-bottom:1.5rem;">Karta ma'lumotlaringiz saqlandi. Admin sizning kartangizni tayyorlaydi.</p>
+      <button onclick="closeOverlay('cardLinkOverlay')" style="width:100%;padding:0.75rem;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;">Tayyor</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="userPanelOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:900px; max-height:80vh; overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-title">My Account</div>
+      <button class="modal-close" onclick="closeUserPanel()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:2rem;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Your Profile</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <div style="color: var(--muted); font-size: 0.85rem;">Full Name</div>
+            <div id="userPanelName" style="font-size: 1.1rem; font-weight: 500;">–</div>
+          </div>
+          <div>
+            <div style="color: var(--muted); font-size: 0.85rem;">Email</div>
+            <div id="userPanelEmail" style="font-size: 1.1rem; font-weight: 500;">–</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+        <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Your Orders</h3>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Plan</th>
+                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Qty</th>
+                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Total</th>
+                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="userOrdersBody">
+              <tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">No orders yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<footer id="siteFooter">
+  <div class="footer-brand">NF<span>Craft</span></div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 NFCraft. All rights reserved.</div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Card Component</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    /* Barcha CSS stillari faqat shu style tegi ichida bo'ladi */
+    .product-card-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: var(--bg, #f4f4f4);
+      padding: 2rem;
+    }
+
+    .product-card {
+      background: var(--surface, #ffffff);
+      border: 1px solid var(--border, #ddd);
+      border-radius: 20px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 320px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-image {
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      background: var(--surface2, #eee);
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+
+    .product-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text, #333);
+    }
+
+    .product-price {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent, #2ecc71);
+      margin-bottom: 1rem;
+    }
+
+    /* Agar so'mda yozsangiz, bu ::before shart emas, lekin o'chirmadim */
+    .product-price::before {
+      content: '$';
+      font-size: 1rem;
+      vertical-align: super;
+    }
+
+    .add-to-cart-btn {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent, #3498db);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .add-to-cart-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(52, 152, 219, 0.35);
+    }
+
+    @media (max-width: 480px) {
+      .product-card {
+        max-width: 280px;
+        padding: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="product-card-container">
+    <div class="product-card" id="productCard">
+      <div class="product-image">
+        <img src="https://placehold.co/400x400/1a1a1a/e8ff47?text=Product" alt="Product Image">
+      </div>
+      <h3 class="product-title">Premium Wireless Headphones</h3>
+      <div class="product-price">99.99</div>
+      <button class="add-to-cart-btn" onclick="addToCart()">Savatga qo'shish</button>
+    </div>
+  </div>
+
+  <script>
+    function addToCart() {
+      alert('Mahsulot savatga qo\'shildi!');
+    }
+  </script>
+  
+</body>
+</html>
