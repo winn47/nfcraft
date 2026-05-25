@@ -783,8 +783,8 @@ function applyTranslations() {
   if (heroTitle) heroTitle.innerHTML = t.heroTitle;
 }
 
-const API_BASE    = 'http://localhost:8080/api';
-const API_BASE_V1 = 'http://localhost:8080/api/v1';
+const API_BASE    = 'https://nfcraftbackend1-production.up.railway.app/api';
+const API_BASE_V1 = 'https://nfcraftbackend1-production.up.railway.app/api/v1';
 
 let _otpEmail = '';
 
