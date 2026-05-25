@@ -1,5 +1,6 @@
 let currentUser = null;
 let isAdmin = false;
+let isSuperAdmin = false;
 
 function initAuth() {
   const saved = localStorage.getItem('currentUser');
@@ -7,6 +8,7 @@ function initAuth() {
     try {
       currentUser = JSON.parse(saved);
       isAdmin = currentUser.isAdmin === true || currentUser.isAdmin === 1 || currentUser.isAdmin === 'true';
+      isSuperAdmin = currentUser.isSuperAdmin === true || currentUser.isSuperAdmin === 1 || currentUser.isSuperAdmin === 'true';
     } catch (e) {
       console.error('Error loading user:', e);
       localStorage.removeItem('currentUser');
@@ -71,7 +73,7 @@ function updateAuthUI() {
     if (mRegisterBtn) mRegisterBtn.style.display  = 'block';
     if (mProfileBtn)  mProfileBtn.style.display   = 'none';
     if (mLogoutBtn)   mLogoutBtn.style.display     = 'none';
-    orderButtons.forEach(btn => btn.style.display = 'none');
+    orderButtons.forEach(btn => btn.style.display = '');
   }
 }
 
@@ -123,7 +125,7 @@ const translations = {
     featCustomDesign: 'Custom design', featExpressShip: 'Express shipping',
     featDedicatedSupport: 'Dedicated support', bestChoice: 'Best Choice',
     foundersTitle: 'The Founders', foundersSub: 'The people behind NFCraft, dedicated to reimagining how professionals connect.',
-    role1: 'Co-Founder & CEO', role2: 'Co-Founder & Design Lead',
+    role1: 'CEO & Front End Developer', role2: 'Co-Founder & Backend Developer',
     ourLocation: 'Our Location', locationSub: 'Come visit our studio and experience NFCraft cards in person. We\'re open weekdays 10am–6pm.',
     locAddressLabel: 'Address', locPhoneLabel: 'Phone', locEmailLabel: 'Email',
     modalTitle: 'Place Your Order', choosePlan: 'Choose Your Plan',
@@ -191,7 +193,7 @@ const translations = {
     featCustomDesign: 'Maxsus dizayn', featExpressShip: 'Express yetkazish',
     featDedicatedSupport: 'Maxsus yordam', bestChoice: 'Eng Yaxshi Tanlov',
     foundersTitle: 'Asoschiler', foundersSub: 'NFCraft ortidagi odamlar — mutaxassislar aloqa o\'rnatish usulini qayta tasavvur qilishga bag\'ishlangan.',
-    role1: 'Asoschi & Bosh Direktor', role2: 'Asoschi & Dizayn Rahbari',
+    role1: 'Bosh Direktor & Front End Dasturchi', role2: 'Hammuassis & Backend Dasturchi',
     ourLocation: 'Bizning Manzil', locationSub: 'Studiyamizga tashrif buyuring va NFCraft kartalarini jonli ko\'ring. Ish kunlari 10:00–18:00.',
     locAddressLabel: 'Manzil', locPhoneLabel: 'Telefon', locEmailLabel: 'Email',
     modalTitle: 'Buyurtma Bering', choosePlan: 'Rejangizni Tanlang',
@@ -259,7 +261,7 @@ const translations = {
     featCustomDesign: 'Индивидуальный дизайн', featExpressShip: 'Экспресс-доставка',
     featDedicatedSupport: 'Персональная поддержка', bestChoice: 'Лучший Выбор',
     foundersTitle: 'Основатели', foundersSub: 'Люди за NFCraft, посвятившие себя переосмыслению того, как профессионалы устанавливают связи.',
-    role1: 'Сооснователь & CEO', role2: 'Сооснователь & Руководитель дизайна',
+    role1: 'CEO & Front End Разработчик', role2: 'Сооснователь & Backend Разработчик',
     ourLocation: 'Наш Адрес', locationSub: 'Посетите нашу студию и познакомьтесь с картами NFCraft лично. Открыты в будни 10:00–18:00.',
     locAddressLabel: 'Адрес', locPhoneLabel: 'Телефон', locEmailLabel: 'Email',
     modalTitle: 'Оформить заказ', choosePlan: 'Выберите план',
@@ -729,9 +731,11 @@ async function handleLogin(e) {
       firstName: data.firstName || 'Foydalanuvchi',
       lastName: data.lastName || '',
       isAdmin: data.isAdmin === true || data.isAdmin === 1 || data.isAdmin === 'true' || data.is_admin === true || data.is_admin === 1,
+      isSuperAdmin: data.isSuperAdmin === true || data.isSuperAdmin === 1 || data.isSuperAdmin === 'true',
       token: data.token
     };
     isAdmin = currentUser.isAdmin;
+    isSuperAdmin = currentUser.isSuperAdmin;
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     updateAuthUI();
     closeOverlay('authOverlay');
@@ -1142,7 +1146,12 @@ function cancelEditUser() {
 }
 
 async function loadAdminDashboard() {
+  const superAdminSection = document.getElementById('adminManagementSection');
+  if (superAdminSection) superAdminSection.style.display = isSuperAdmin ? 'block' : 'none';
+  const roleLabel = document.getElementById('adminRoleLabel');
+  if (roleLabel) roleLabel.textContent = isSuperAdmin ? 'Super Admin' : 'Admin';
   await Promise.all([loadAdminStats(), loadAllOrders(), loadAdminUsers()]);
+  if (isSuperAdmin) loadAdminManagement();
 }
 
 async function loadAdminStats() {
@@ -1173,21 +1182,30 @@ async function loadAdminUsers() {
       tbody.innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--muted2)">Foydalanuvchi yo\'q</td></tr>';
       return;
     }
-    tbody.innerHTML = users.map(u => `
+    tbody.innerHTML = users.map(u => {
+      const isUserAdmin = u.isAdmin === true || u.isAdmin === 1;
+      const isSuperAdminUser = currentUser && u.email === (currentUser.email === currentUser.email ? 'whatififlydidy@gmail.com' : '');
+      const adminBadge = isUserAdmin
+        ? `<span style="padding:0.15rem 0.5rem;border-radius:20px;font-size:0.65rem;background:rgba(232,255,71,0.12);color:var(--accent);margin-left:0.4rem;">Admin</span>` : '';
+      const toggleBtn = isSuperAdmin && u.email !== 'whatififlydidy@gmail.com'
+        ? `<button onclick="toggleUserAdmin(${u.id},${isUserAdmin},'${(u.firstName||'')+ ' '+(u.lastName||'')}')"
+            style="padding:0.25rem 0.7rem;background:${isUserAdmin?'rgba(255,80,80,0.1)':'rgba(232,255,71,0.1)'};border:1px solid ${isUserAdmin?'rgba(255,80,80,0.3)':'rgba(232,255,71,0.3)'};color:${isUserAdmin?'#ff6b6b':'var(--accent)'};border-radius:6px;font-size:0.75rem;cursor:pointer">${isUserAdmin?'Admin olish':'Admin qilish'}</button>` : '';
+      return `
       <tr style="border-bottom:1px solid var(--border)">
         <td style="padding:0.6rem 0.8rem;font-weight:700;color:var(--accent);font-size:0.85rem">#${u.id}</td>
-        <td style="padding:0.6rem 0.8rem">${u.firstName || u.firstname || ''} ${u.lastName || u.lastname || ''}</td>
+        <td style="padding:0.6rem 0.8rem">${u.firstName || u.firstname || ''} ${u.lastName || u.lastname || ''}${adminBadge}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.email}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.age || '—'}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.gender === 'male' ? 'Erkak' : u.gender === 'female' ? 'Ayol' : '—'}</td>
-        <td style="padding:0.6rem 0.8rem;display:flex;gap:0.5rem;">
+        <td style="padding:0.6rem 0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
           <button onclick="openUserEdit(${u.id},'${u.firstName || u.firstname || ''}','${u.lastName || u.lastname || ''}','${u.email}',${u.age || 0},'${u.gender || ''}')"
             style="padding:0.25rem 0.7rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.75rem;cursor:pointer">Tahrirlash</button>
           <button onclick="adminDeleteUser(${u.id})"
             style="padding:0.25rem 0.7rem;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:6px;font-size:0.75rem;cursor:pointer">O'chirish</button>
+          ${toggleBtn}
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   } catch {
     tbody.innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
   }
@@ -1245,6 +1263,54 @@ async function adminDeleteUser(id) {
     loadAdminStats();
   } catch {
     alert('Xato yuz berdi');
+  }
+}
+
+async function loadAdminManagement() {
+  const adminsBody = document.getElementById('adminAdminsBody');
+  if (!adminsBody) return;
+  try {
+    const res = await fetch(`${API_BASE}/users/admins`, {
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    });
+    if (!res.ok) throw new Error();
+    const admins = await res.json();
+    if (!Array.isArray(admins) || admins.length === 0) {
+      adminsBody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--muted2)">Admin yo\'q</td></tr>';
+      return;
+    }
+    adminsBody.innerHTML = admins.map(u => {
+      const isSelf = u.email === 'whatififlydidy@gmail.com';
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:0.6rem 0.8rem">
+          ${u.firstName || ''} ${u.lastName || ''}
+          ${isSelf ? '<span style="padding:0.15rem 0.5rem;border-radius:20px;font-size:0.62rem;background:rgba(232,255,71,0.15);color:var(--accent);margin-left:0.4rem;">Super Admin</span>' : ''}
+        </td>
+        <td style="padding:0.6rem 0.8rem;color:var(--muted2);font-size:0.83rem">${u.email}</td>
+        <td style="padding:0.6rem 0.8rem">
+          ${!isSelf ? `<button onclick="toggleUserAdmin(${u.id},true,'${(u.firstName||'')+' '+(u.lastName||'')}')"
+            style="padding:0.25rem 0.7rem;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:6px;font-size:0.75rem;cursor:pointer">Admin olish</button>` : '<span style="color:var(--muted);font-size:0.75rem">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch {
+    adminsBody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
+  }
+}
+
+async function toggleUserAdmin(userId, currentAdminStatus, name) {
+  const action = currentAdminStatus ? 'admin huquqini olib tashlash' : 'admin qilish';
+  if (!confirm(`"${name.trim()}" foydalanuvchisini ${action}ni tasdiqlaysizmi?`)) return;
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/toggle-admin`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Xato');
+    await Promise.all([loadAdminUsers(), loadAdminManagement()]);
+  } catch (e) {
+    alert('Xato: ' + (e.message || 'Noma\'lum xato'));
   }
 }
 

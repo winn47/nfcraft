@@ -18,8 +18,33 @@
 <div id="adminDashboard" style="display:none; min-height:100vh; background:var(--bg); padding:2rem 3vw;">
 
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem;">
-    <div style="font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:700;">NF<span style="color:var(--accent)">Craft</span> <span style="font-size:0.9rem; color:var(--muted); font-weight:400;">Admin</span></div>
+    <div style="font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:700;">
+      NF<span style="color:var(--accent)">Craft</span>
+      <span style="font-size:0.9rem; color:var(--muted); font-weight:400;" id="adminRoleLabel">Admin</span>
+    </div>
     <button onclick="logout()" style="padding:0.5rem 1.2rem; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:'DM Sans',sans-serif; cursor:pointer;">Chiqish</button>
+  </div>
+
+  <!-- Super Admin: Admin Management -->
+  <div id="adminManagementSection" style="display:none; background:var(--surface); border:1px solid rgba(232,255,71,0.15); border-radius:14px; padding:1.2rem; margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
+      <span style="font-size:0.78rem;color:var(--accent);font-weight:600;letter-spacing:0.04em;">⚡ SUPER ADMIN</span>
+      <span style="font-size:0.72rem;color:var(--muted);">— Admin huquqlari boshqaruvi</span>
+    </div>
+    <div class="admin-scroll-wrap">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead class="admin-sticky-head">
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Ism Familiya</th>
+            <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Email</th>
+            <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Amal</th>
+          </tr>
+        </thead>
+        <tbody id="adminAdminsBody">
+          <tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--muted2)">Yuklanmoqda...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">
@@ -417,16 +442,20 @@
   </div>
   <div class="owners-grid reveal">
      <div class="owner-card">
-       <div class="owner-avatar" id="ownerAvatar1" data-initials="AK" data-bg="linear-gradient(135deg,#1a1a2e,#2a2a4e)"></div>
-       <div class="owner-name">Alex Kim</div>
+       <div class="owner-avatar" id="ownerAvatar1">
+         <img src="./amin.jpg" alt="Kahhorov Amin" />
+       </div>
+       <div class="owner-name">Kahhorov Amin</div>
        <div class="owner-divider"></div>
-       <div class="owner-role" data-i18n="role1">Co-Founder & CEO</div>
+       <div class="owner-role" data-i18n="role1">CEO & Front End Developer</div>
      </div>
      <div class="owner-card">
-       <div class="owner-avatar" id="ownerAvatar2" data-initials="JP" data-bg="linear-gradient(135deg,#1a2e1a,#2a4e2a)"></div>
-       <div class="owner-name">Jordan Park</div>
+       <div class="owner-avatar" id="ownerAvatar2">
+         <img src="./iskandar.png" alt="Iskandar Xudoyberdiyev" />
+       </div>
+       <div class="owner-name">Iskandar Xudoyberdiyev</div>
        <div class="owner-divider"></div>
-       <div class="owner-role" data-i18n="role2">Co-Founder & Design Lead</div>
+       <div class="owner-role" data-i18n="role2">Co-Founder & Backend Developer</div>
      </div>
   </div>
 </section>

@@ -13,13 +13,34 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+
+/* ── GLOBAL SCROLLBAR HIDDEN ── */
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+html::-webkit-scrollbar { display: none; }
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  min-width: 0;
+}
+*::-webkit-scrollbar { display: none; }
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
   font-weight: 300;
   overflow-x: hidden;
+  overflow-y: scroll;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
 }
 
 .hidden { display: none; }
@@ -43,6 +64,9 @@ nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 6vw;
   height: 72px;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(20px);
   background: rgba(8,8,8,0.7);
@@ -133,6 +157,8 @@ nav ul a:hover { color: var(--text); }
   align-items: center; justify-content: center;
   text-align: center; padding: 120px 6vw 80px;
   position: relative; overflow: hidden;
+  max-width: 100%;
+  width: 100%;
 }
 .hero-bg {
   position: absolute; inset: 0; z-index: 0;
@@ -281,7 +307,7 @@ h1 em {
 }
 .hero-color-dot:hover { transform: scale(1.15); }
 
-section { padding: 120px 6vw; }
+section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
 .section-label {
   font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
   color: var(--accent); margin-bottom: 1rem; font-weight: 500;
@@ -753,9 +779,12 @@ section { padding: 120px 6vw; }
   background: var(--bg2); border-radius: 28px 28px 0 0;
   width: 100%; max-width: 480px;
   max-height: 92vh; overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   transform: translateY(40px);
   transition: transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
 }
+.modal::-webkit-scrollbar { display: none; }
 @media (min-width: 600px) {
   .modal { border-radius: 28px; }
 }
@@ -1023,6 +1052,9 @@ footer {
   border-top: 1px solid var(--border); padding: 3rem 6vw;
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 1rem;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
 }
 .footer-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; }
 .footer-brand span { color: var(--accent); }
@@ -1041,7 +1073,7 @@ footer {
 .mobile-menu-wrap {
   display: none;
   position: relative;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 .three-dots-btn {
   display: flex;
@@ -1353,71 +1385,309 @@ footer {
   100% { opacity: 0; transform: scale(1.35); }
 }
 
-@media (max-width: 1024px) {
-  nav { padding: 0 4vw; }
-  section { padding-left: 4vw !important; padding-right: 4vw !important; }
-  .pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-  .benefits-grid { grid-template-columns: repeat(2, 1fr); }
-  .user-management-container { grid-template-columns: 1fr; }
-  .how-inner { gap: 2.5rem; }
+/* ══════════════════════════════════════════
+   BREAKPOINT 1 — 1440px  (large desktop)
+══════════════════════════════════════════ */
+@media (max-width: 1440px) {
+  nav { padding: 0 5vw; }
+  section { padding-left: 5vw; padding-right: 5vw; }
+  #hero { padding: 130px 5vw 90px; }
 }
 
-@media (max-width: 768px) {
-  .showcase-card { width: 290px; height: 183px; transform: none; }
+/* ══════════════════════════════════════════
+   BREAKPOINT 2 — 1280px  (desktop)
+══════════════════════════════════════════ */
+@media (max-width: 1280px) {
+  h1 { font-size: clamp(2.8rem, 7vw, 6rem); }
+  .how-inner { gap: 3rem; }
+  .pricing-grid { gap: 1.2rem; }
+}
 
-  nav { padding: 0 5vw; height: 60px; }
+/* ══════════════════════════════════════════
+   BREAKPOINT 3 — 1024px  (small desktop / large tablet)
+══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  nav { padding: 0 4vw; }
+  section { padding: 90px 4vw !important; }
+  #hero { padding: 110px 4vw 70px; }
+
+  .how-inner { gap: 2.5rem; }
+  .pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .benefits-grid { grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .location-inner { gap: 2.5rem; }
+  .user-management-container { grid-template-columns: 1fr !important; }
+  .profile-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ══════════════════════════════════════════
+   BREAKPOINT 4 — 900px  (tablet landscape)
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
   nav ul { display: none; }
-  .nav-auth { display: none; }
   .nav-language { display: none; }
   .nav-cta { display: none !important; }
   .mobile-menu-wrap { display: block; }
+  .nav-auth { display: none; }
 
-  #hero { padding: 100px 5vw 60px; text-align: center; }
-  #hero h1 { font-size: clamp(2.2rem, 10vw, 3.5rem); }
-  .hero-sub { font-size: 0.95rem; }
-  .hero-btns { flex-direction: column; align-items: center; gap: 0.8rem; }
-  .hero-btns .btn-primary,
-  .hero-btns .btn-secondary { width: 100%; max-width: 280px; justify-content: center; }
-  .hero-visual { margin-top: 2.5rem; }
-  .nfc-card { width: 260px; height: 154px; }
-
-  .section-title { font-size: clamp(1.8rem, 7vw, 2.5rem); }
   .how-inner { grid-template-columns: 1fr; gap: 2rem; }
-  .how-visual { order: -1; padding-bottom: 70px; }
-  .benefits-grid { grid-template-columns: 1fr; gap: 1rem; }
-  .pricing-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+  .how-visual { order: -1; padding-bottom: 80px; }
+
+  .location-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .map-container { height: 300px; }
+
+  .owners-grid { gap: 2.5rem; }
+  .showcase-card { width: 300px; height: 190px; }
+}
+
+/* ══════════════════════════════════════════
+   BREAKPOINT 5 — 768px  (tablet portrait)
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* NAV */
+  nav { height: 60px; padding: 0 4vw; }
+  .mobile-menu-wrap { display: block; }
+  .nav-auth { display: none !important; }
+
+  /* HERO */
+  #hero { padding: 95px 5vw 60px; text-align: center; }
+  h1 { font-size: clamp(2rem, 9vw, 3.5rem); }
+  .hero-sub { font-size: 0.95rem; max-width: 100%; }
+  .hero-btns { flex-direction: column; align-items: center; gap: 0.75rem; }
+  .hero-btns .btn-primary,
+  .hero-btns .btn-secondary { width: 100%; max-width: 300px; justify-content: center; }
+  .hero-visual { margin-top: 3rem; }
+  .nfc-card { width: 260px; height: 155px; }
+
+  /* SECTIONS */
+  section { padding: 70px 5vw !important; }
+  .section-title { font-size: clamp(1.7rem, 6vw, 2.5rem); }
+  .section-sub { font-size: 0.95rem; }
+
+  /* HOW */
+  .how-visual { padding-bottom: 75px; }
+  .demo-phone { width: 200px; height: 380px; }
+  .demo-nfc-card { width: 175px; height: 104px; bottom: -56px; }
+
+  /* BENEFITS */
+  .benefits-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* PRICING */
+  .pricing-grid { grid-template-columns: 1fr; gap: 1rem; }
   .pricing-card.featured { transform: none; }
-  .owners-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-  .location-inner { grid-template-columns: 1fr; }
+  .pricing-card { padding: 2rem 1.5rem; }
 
-  #adminDashboard { padding: 1.2rem 4vw; }
-  #adminDashboard [style*="grid-template-columns:repeat(3"] {
-    grid-template-columns: 1fr !important;
-  }
+  /* OWNERS */
+  .owners-grid { gap: 2rem; }
+  .owner-avatar { width: 120px; height: 120px; }
 
-  .modal { width: 95vw !important; max-width: 95vw !important; margin: 0 auto; }
+  /* SHOWCASE */
+  .showcase-card { width: 280px; height: 177px; transform: rotateY(-4deg) rotateX(2deg); }
+
+  /* MODAL */
+  .modal { width: 100% !important; max-width: 100% !important; border-radius: 24px 24px 0 0; }
+  .overlay { align-items: flex-end !important; }
   .modal-body { padding: 1.2rem !important; }
+  .modal-header { padding: 1.2rem 1.2rem 0.8rem; }
 
+  /* FOOTER */
   footer { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 2rem 5vw; }
 
+  /* ORDER */
   .step-nav { flex-direction: column; gap: 0.5rem; }
-  .order-step { padding: 1rem; }
+  .color-options { justify-content: center; }
+
+  /* ADMIN */
+  #adminDashboard { padding: 1rem 4vw; }
+  #adminDashboard > div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+
+  /* OTP */
+  .otp-box { width: 42px; height: 50px; font-size: 1.3rem; }
 }
 
+/* ══════════════════════════════════════════
+   BREAKPOINT 6 — 640px  (large phone)
+══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  #hero { padding: 88px 4vw 55px; }
+  h1 { font-size: clamp(1.9rem, 8vw, 3rem); letter-spacing: -0.03em; }
+  .hero-sub { font-size: 0.92rem; }
+  .nfc-card { width: 240px; height: 142px; }
+
+  .benefits-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+  .benefit-card { padding: 1.5rem; }
+
+  .owners-grid { flex-direction: column; align-items: center; gap: 2rem; }
+  .owner-avatar { width: 130px; height: 130px; }
+
+  .showcase-card { width: 260px; height: 164px; }
+  .sc-dot { width: 30px; height: 30px; }
+
+  .pricing-card { padding: 1.8rem 1.3rem; }
+  .pricing-price { font-size: 2.5rem; }
+
+  .how-visual { padding-bottom: 85px; }
+
+  .live-total { padding: 1rem; }
+  .total-row.main { font-size: 1rem; }
+
+  .otp-box { width: 38px; height: 46px; font-size: 1.2rem; }
+  .otp-boxes { gap: 0.4rem; }
+
+  footer { padding: 1.8rem 4vw; }
+  .footer-links { flex-wrap: wrap; gap: 1rem; }
+}
+
+/* ══════════════════════════════════════════
+   BREAKPOINT 7 — 480px  (standard phone)
+══════════════════════════════════════════ */
 @media (max-width: 480px) {
-  #hero h1 { font-size: 2rem; }
+  nav { height: 56px; }
+  .logo { font-size: 1.2rem; }
+
+  #hero { padding: 80px 4vw 50px; }
+  h1 { font-size: clamp(1.7rem, 7.5vw, 2.5rem); }
+  .hero-badge { font-size: 0.72rem; padding: 0.3rem 0.8rem; }
   .hero-sub { font-size: 0.88rem; }
-  .nfc-card { width: 220px; height: 130px; }
-  .section-title { font-size: 1.6rem; }
-  .pricing-grid { grid-template-columns: 1fr; }
-  .owners-grid { grid-template-columns: 1fr; }
+  .btn-primary { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+  .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+  .nfc-card { width: 210px; height: 125px; }
 
-  #adminDashboard > div { gap: 0.8rem; }
+  section { padding: 55px 4vw !important; }
+  .section-title { font-size: clamp(1.5rem, 6vw, 2rem); }
+  .section-label { font-size: 0.7rem; }
 
-  .auth-form .input-group { margin-bottom: 0.8rem; }
-  .input-field { padding: 0.65rem 0.9rem; font-size: 0.9rem; }
+  .demo-phone { width: 180px; height: 340px; }
+  .demo-nfc-card { width: 158px; height: 94px; bottom: -50px; }
 
-    table { font-size: 0.75rem; }
+  .showcase-card { width: 240px; height: 152px; }
+  .showcase-colors { gap: 0.7rem; }
+  .sc-dot { width: 28px; height: 28px; }
+
+  .benefit-card { padding: 1.3rem; }
+  .benefit-title { font-size: 1rem; }
+
+  .pricing-card { padding: 1.5rem 1.2rem; border-radius: 18px; }
+  .pricing-name { font-size: 1.1rem; }
+  .pricing-price { font-size: 2.2rem; margin-bottom: 1.2rem; }
+  .pricing-features { gap: 0.5rem; margin-bottom: 1.5rem; }
+  .pricing-btn { padding: 0.8rem; font-size: 0.85rem; }
+
+  .owner-avatar { width: 110px; height: 110px; }
+  .owner-name { font-size: 1rem; }
+
+  .map-container { height: 250px; border-radius: 16px; }
+
+  .steps-bar { gap: 0.3rem; }
+  .step-circle { width: 24px; height: 24px; font-size: 0.7rem; }
+  .step-label { font-size: 0.58rem; }
+  .step-connector { max-width: 24px; }
+
+  .modal-header { padding: 1rem; }
+  .modal-title { font-size: 1rem; }
+
+  .input-field { padding: 0.65rem 0.9rem; font-size: 0.88rem; }
+  .auth-submit { padding: 0.8rem; font-size: 0.88rem; }
+
+  .how-step-dot { width: 40px; height: 40px; }
+  .how-step-title { font-size: 0.97rem; }
+  .how-step-desc { font-size: 0.84rem; }
+
+  table { font-size: 0.76rem; }
   td, th { padding: 0.4rem 0.5rem !important; }
+
+  #adminDashboard { padding: 0.8rem 3vw; }
+
+  footer { padding: 1.5rem 4vw; }
+  .footer-brand { font-size: 1rem; }
+  .footer-copy { font-size: 0.76rem; }
+  .footer-links a { font-size: 0.76rem; }
+
+  .otp-box { width: 36px; height: 44px; font-size: 1.1rem; border-radius: 8px; }
+  .otp-boxes { gap: 0.35rem; }
 }
- 
+
+/* ══════════════════════════════════════════
+   BREAKPOINT 8 — 375px  (small phone)
+══════════════════════════════════════════ */
+@media (max-width: 375px) {
+  nav { height: 52px; padding: 0 3.5vw; }
+  .logo { font-size: 1.1rem; }
+
+  #hero { padding: 72px 3.5vw 44px; }
+  h1 { font-size: 1.6rem; }
+  .hero-sub { font-size: 0.85rem; }
+  .nfc-card { width: 190px; height: 113px; }
+  .hero-btns .btn-primary,
+  .hero-btns .btn-secondary { max-width: 100%; }
+
+  section { padding: 48px 3.5vw !important; }
+  .section-title { font-size: 1.4rem; }
+
+  .showcase-card { width: 220px; height: 139px; }
+  .sc-dot { width: 26px; height: 26px; }
+
+  .demo-phone { width: 165px; height: 315px; }
+  .demo-nfc-card { width: 144px; height: 86px; bottom: -46px; }
+
+  .pricing-card { padding: 1.3rem 1rem; }
+  .pricing-price { font-size: 2rem; }
+
+  .owner-avatar { width: 100px; height: 100px; }
+
+  .steps-bar { gap: 0.2rem; }
+  .step-connector { max-width: 18px; }
+  .step-circle { width: 22px; height: 22px; font-size: 0.65rem; }
+
+  .otp-box { width: 32px; height: 40px; font-size: 1rem; }
+  .otp-boxes { gap: 0.28rem; }
+
+  .map-container { height: 220px; }
+
+  .benefit-card { padding: 1.1rem; }
+}
+
+/* ══════════════════════════════════════════
+   BREAKPOINT 9 — 320px  (very small phone)
+══════════════════════════════════════════ */
+@media (max-width: 320px) {
+  nav { height: 50px; padding: 0 3vw; }
+  .logo { font-size: 1rem; }
+
+  #hero { padding: 65px 3vw 40px; }
+  h1 { font-size: 1.45rem; letter-spacing: -0.02em; }
+  .hero-sub { font-size: 0.8rem; }
+  .nfc-card { width: 170px; height: 101px; }
+  .hero-badge { font-size: 0.65rem; padding: 0.25rem 0.6rem; }
+
+  section { padding: 40px 3vw !important; }
+  .section-title { font-size: 1.25rem; }
+  .section-sub { font-size: 0.82rem; }
+
+  .showcase-card { width: 200px; height: 126px; }
+  .sc-dot { width: 24px; height: 24px; }
+  .showcase-colors { gap: 0.5rem; }
+
+  .pricing-card { padding: 1.1rem 0.9rem; border-radius: 14px; }
+  .pricing-price { font-size: 1.8rem; }
+  .pricing-btn { padding: 0.7rem; font-size: 0.82rem; }
+
+  .benefit-card { padding: 1rem; border-radius: 14px; }
+  .benefit-icon { font-size: 1.4rem; }
+  .benefit-title { font-size: 0.92rem; }
+  .benefit-desc { font-size: 0.8rem; }
+
+  .owner-avatar { width: 90px; height: 90px; }
+  .owner-name { font-size: 0.9rem; }
+
+  .demo-phone { width: 150px; height: 285px; }
+  .demo-nfc-card { width: 130px; height: 78px; bottom: -42px; }
+
+  .otp-box { width: 29px; height: 36px; font-size: 0.95rem; }
+  .otp-boxes { gap: 0.22rem; }
+
+  .modal-body { padding: 0.9rem !important; }
+
+  .map-container { height: 200px; }
+
+  footer { padding: 1.2rem 3vw; }
+}
