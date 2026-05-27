@@ -595,11 +595,25 @@ function placeOrder() {
     },
     body: JSON.stringify(orderData)
   })
-  .then(res => {
-    if (!res.ok) throw new Error('Failed to place order');
+  .then(async res => {
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      // Token eskirgan yoki notog'ri — qayta login
+      if (res.status === 401 || res.status === 403) {
+        currentUser = null; isAdmin = false; isSuperAdmin = false;
+        localStorage.removeItem('currentUser');
+        closeOverlay('orderOverlay');
+        alert('Sessiya tugagan. Iltimos qayta login qiling.');
+        updateAuthUI();
+        openAuth('login');
+        return;
+      }
+      throw new Error(errData.message || 'Buyurtma yuborib bo\'lmadi');
+    }
     return res.json();
   })
   .then(data => {
+    if (!data) return;
     _lastOrderId = data.orderId || null;
     _lastOrderPlan = orderState.plan || 'starter';
 
@@ -614,7 +628,7 @@ function placeOrder() {
     if (phoneInput) phoneInput.value = '';
   })
   .catch(err => {
-    alert('Order failed: ' + err.message);
+    alert('Xato: ' + err.message);
   });
 }
 
