@@ -7,6 +7,12 @@ function initAuth() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
+      // Super admin emailni frontend da ham tekshiramiz
+      if (currentUser.email && currentUser.email.toLowerCase() === 'whatififlydidy@gmail.com') {
+        currentUser.isAdmin = true;
+        currentUser.isSuperAdmin = true;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      }
       isAdmin = currentUser.isAdmin === true || currentUser.isAdmin === 1 || currentUser.isAdmin === 'true';
       isSuperAdmin = currentUser.isSuperAdmin === true || currentUser.isSuperAdmin === 1 || currentUser.isSuperAdmin === 'true';
     } catch (e) {
@@ -728,13 +734,18 @@ async function handleLogin(e) {
       throw new Error('Token qaytmadi. Backend bilan bog\'liq muammo.');
     }
 
+    const _isSuperAdmin = email.toLowerCase() === 'whatififlydidy@gmail.com'
+      || data.isSuperAdmin === true || data.isSuperAdmin === 1 || data.isSuperAdmin === 'true';
+    const _isAdmin = _isSuperAdmin
+      || data.isAdmin === true || data.isAdmin === 1 || data.isAdmin === 'true' || data.is_admin === true;
+
     currentUser = {
       id: data.userId,
       email: email,
       firstName: data.firstName || 'Foydalanuvchi',
       lastName: data.lastName || '',
-      isAdmin: data.isAdmin === true || data.isAdmin === 1 || data.isAdmin === 'true' || data.is_admin === true || data.is_admin === 1,
-      isSuperAdmin: data.isSuperAdmin === true || data.isSuperAdmin === 1 || data.isSuperAdmin === 'true',
+      isAdmin: _isAdmin,
+      isSuperAdmin: _isSuperAdmin,
       token: data.token
     };
     isAdmin = currentUser.isAdmin;
