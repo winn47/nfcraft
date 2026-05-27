@@ -672,16 +672,7 @@
 
       <div class="order-step" id="ostep4">
         <div class="step-section-title" data-i18n="addonsOpts">Add-ons & Options</div>
-        <div class="addon-options">
-          <div class="addon-option" id="addon-logo" onclick="toggleAddon('logo')">
-            <div class="addon-left"><div class="addon-checkbox"></div><div><div class="addon-name" data-i18n="addonLogoName">Add Logo</div><div class="addon-desc" data-i18n="addonLogoDesc">Print your logo on the card</div></div></div>
-            <div class="addon-price-tag">+$0.50</div>
-          </div>
-          <div class="addon-option" id="addon-design" onclick="toggleAddon('design')">
-            <div class="addon-left"><div class="addon-checkbox"></div><div><div class="addon-name" data-i18n="addonDesignName">Custom Design</div><div class="addon-desc" data-i18n="addonDesignDesc">Full custom artwork & layout</div></div></div>
-            <div class="addon-price-tag">+$2.00</div>
-          </div>
-        </div>
+        <div class="addon-options" style="display:none"></div>
         <div class="live-total">
           <div class="total-row"><span data-i18n="stepPlan">Plan</span><span id="fin-plan">–</span></div>
           <div class="total-row"><span data-i18n="labelQtyPrice">Qty × price</span><span id="fin-qty">–</span></div>
@@ -721,7 +712,7 @@
           <div class="input-group"><div class="input-label" data-i18n="firstName">First Name</div><input class="input-field" id="regFirstName" type="text" data-i18n-ph="enterFirstName" placeholder="Enter first name" required /></div>
           <div class="input-group"><div class="input-label" data-i18n="lastName">Last Name</div><input class="input-field" id="regLastName" type="text" data-i18n-ph="enterLastName" placeholder="Enter last name" required /></div>
           <div class="input-group"><div class="input-label" data-i18n="age">Age</div><input class="input-field" id="regAge" type="number" data-i18n-ph="enterAge" placeholder="Enter age" required /></div>
-          <div class="input-group"><div class="input-label" data-i18n="address">Address</div><input class="input-field" id="regAddress" type="text" data-i18n-ph="enterAddress" placeholder="Enter address" required /></div>
+          <div class="input-group"><div class="input-label" data-i18n="regionLabel">Region</div><select class="input-field" id="regAddress" required><option value="">— Viloyatni tanlang —</option><option>Toshkent shahri</option><option>Toshkent viloyati</option><option>Andijon viloyati</option><option>Farg'ona viloyati</option><option>Namangan viloyati</option><option>Samarqand viloyati</option><option>Buxoro viloyati</option><option>Navoiy viloyati</option><option>Qashqadaryo viloyati</option><option>Surxondaryo viloyati</option><option>Jizzax viloyati</option><option>Sirdaryo viloyati</option><option>Xorazm viloyati</option><option>Qoraqalpog'iston Respublikasi</option></select></div>
           <div class="input-group"><div class="input-label" data-i18n="gender">Gender</div><select class="input-field" id="regGender" required><option value="" data-i18n="select">Select</option><option value="male" data-i18n="male">Male</option><option value="female" data-i18n="female">Female</option></select></div>
           <div class="input-group"><div class="input-label" data-i18n="emailLabel">Email</div><input class="input-field" id="regEmail" type="email" data-i18n-ph="enterEmail" placeholder="Enter email" required /></div>
           <div class="input-group"><div class="input-label" data-i18n="passwordLabel">Password</div><input class="input-field" id="regPassword" type="password" data-i18n-ph="enterPassword" placeholder="Enter password" required /></div>

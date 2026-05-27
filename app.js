@@ -649,16 +649,19 @@ function switchAuthTab(tab) {
   if (form) form.classList.remove('hidden');
 }
 
+// Pending registration data (OTP dan oldin saqlanadi)
+let _pendingRegData = null;
+
 async function handleRegister(e) {
   e.preventDefault();
 
   const firstName = document.getElementById('regFirstName').value.trim();
-  const lastName = document.getElementById('regLastName').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const age = parseInt(document.getElementById('regAge').value);
-  const address = document.getElementById('regAddress').value.trim();
-  const gender = document.getElementById('regGender').value;
+  const lastName  = document.getElementById('regLastName').value.trim();
+  const email     = document.getElementById('regEmail').value.trim();
+  const password  = document.getElementById('regPassword').value;
+  const age       = parseInt(document.getElementById('regAge').value);
+  const address   = document.getElementById('regAddress').value;
+  const gender    = document.getElementById('regGender').value;
 
   if (!firstName || !lastName || !email || !password || !age || !address || !gender) {
     alert('Barcha maydonlarni to\'ldiring.');
@@ -669,9 +672,7 @@ async function handleRegister(e) {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email, password, firstName, lastName, age, address, gender
-      })
+      body: JSON.stringify({ email, password, firstName, lastName, age, address, gender })
     });
 
     if (res.status === 409) {
@@ -685,28 +686,9 @@ async function handleRegister(e) {
       throw new Error(err.message || 'Ro\'yxatdan o\'tib bo\'lmadi');
     }
 
-    const data = await res.json();
-
-    if (!data.token) {
-      throw new Error('Token qaytmadi. Backend bilan bog\'liq muammo.');
-    }
-
-    currentUser = {
-      id: data.userId,
-      email: email,
-      firstName: data.firstName || firstName,
-      lastName: data.lastName || lastName,
-      age: age,
-      address: address,
-      gender: gender,
-      isAdmin: data.isAdmin === true || data.isAdmin === 1,
-      isSuperAdmin: data.isSuperAdmin === true || data.isSuperAdmin === 1,
-      token: data.token
-    };
-    isAdmin = currentUser.isAdmin;
-    isSuperAdmin = currentUser.isSuperAdmin;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    updateAuthUI();
+    // Faqat OTP yuborildi — user hali DB da yo'q
+    // Pending ma'lumotni saqlaymiz
+    _pendingRegData = { email, firstName, lastName, age, address, gender };
     closeOverlay('authOverlay');
     openOtpVerify(email);
   } catch (err) {
@@ -823,18 +805,28 @@ let _otpEmail = '';
 function openOtpVerify(prefillEmail = '') {
   const overlay = document.getElementById('otpOverlay');
   if (!overlay) return;
-  _otpStep(1);
-  const emailInput  = document.getElementById('otpEmail');
-  const editBtn     = document.getElementById('otpEditEmailBtn');
+
   const filled = prefillEmail || (currentUser?.email || '');
+  const emailInput = document.getElementById('otpEmail');
   if (emailInput) {
     emailInput.value = filled;
+  }
+
+  // Registration flow: code already sent by /register, skip straight to digit entry
+  if (_pendingRegData && filled) {
+    _otpEmail = filled;
+    const displayEl = document.getElementById('otpEmailDisplay');
+    if (displayEl) displayEl.textContent = filled;
+    _otpStep(2);
+  } else {
+    _otpStep(1);
     if (filled) {
       _otpLockEmail();
     } else {
       _otpUnlockEmail();
     }
   }
+
   overlay.classList.add('active');
 }
 
@@ -927,7 +919,7 @@ function otpBackToEmail() {
 async function handleSendCode() {
   const email = document.getElementById('otpEmail').value.trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    _otpShowMsg(1, 'Please enter a valid email address.', true);
+    _otpShowMsg(1, 'Iltimos, to\'g\'ri email manzil kiriting.', true);
     return;
   }
 
@@ -976,6 +968,65 @@ async function handleVerifyCode() {
   btn.disabled = true;
   _otpHideMsg(2);
 
+  // Registration flow: complete-register (creates user in DB)
+  if (_pendingRegData) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/complete-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: _pendingRegData.email, code })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+
+      if (data.success === true) {
+        // Save user session
+        const _isSuperAdmin = data.isSuperAdmin === true
+          || (data.email && data.email.toLowerCase() === 'whatififlydidy@gmail.com');
+        const _isAdmin = _isSuperAdmin || data.isAdmin === true;
+
+        currentUser = {
+          id: data.userId,
+          token: data.token,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: _pendingRegData.email,
+          isAdmin: _isAdmin,
+          isSuperAdmin: _isSuperAdmin
+        };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        isSuperAdmin = _isSuperAdmin;
+        _pendingRegData = null;
+
+        _otpShowMsg(2, '✓ Ro\'yxatdan muvaffaqiyatli o\'tdingiz!', false);
+        btn.style.display = 'none';
+        setTimeout(() => {
+          closeOverlay('otpOverlay');
+          btn.style.display = '';
+          btn.textContent = 'Verify Code';
+          btn.disabled = false;
+          updateAuthUI();
+        }, 1800);
+      } else {
+        _otpShowMsg(2, data.message || 'Kod xato yoki muddati o\'tgan. Qayta urinib ko\'ring.', true);
+        _otpClearBoxes();
+        btn.textContent = 'Verify Code';
+        btn.disabled = false;
+        setTimeout(() => {
+          const first = document.querySelector('.otp-box');
+          if (first) first.focus();
+        }, 80);
+      }
+    } catch (_) {
+      _otpShowMsg(2, 'Network error. Check your connection and try again.', true);
+      btn.textContent = 'Verify Code';
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  // Email-verify-only flow (e.g. email change confirmation)
   try {
     const res = await fetch(`${API_BASE_V1}/auth/verify-code`, {
       method: 'POST',
