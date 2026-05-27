@@ -195,7 +195,7 @@ async function loadCard() {
   }
 
   try {
-    const res = await fetch(`http://localhost:8080/api/card-info/${uuid}`);
+    const res = await fetch(`https://nfcraftbackend1-production.up.railway.app/api/card-info/${uuid}`);
     if (!res.ok) throw new Error('Karta topilmadi');
     const data = await res.json();
 
