@@ -1459,9 +1459,9 @@ footer {
   .nfc-card { width: 260px; height: 155px; }
 
   /* SECTIONS */
-  section { padding: 70px 5vw !important; }
-  .section-title { font-size: clamp(1.7rem, 6vw, 2.5rem); }
-  .section-sub { font-size: 0.95rem; }
+  section { padding: 60px 5vw !important; }
+  .section-title { font-size: clamp(1.5rem, 5.5vw, 2.2rem); }
+  .section-sub { font-size: 0.92rem; max-width: 100%; }
 
   /* HOW */
   .how-visual { padding-bottom: 75px; }
@@ -1552,9 +1552,10 @@ footer {
   .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
   .nfc-card { width: 210px; height: 125px; }
 
-  section { padding: 55px 4vw !important; }
-  .section-title { font-size: clamp(1.5rem, 6vw, 2rem); }
-  .section-label { font-size: 0.7rem; }
+  section { padding: 48px 4vw !important; }
+  .section-title { font-size: clamp(1.25rem, 5.5vw, 1.65rem); }
+  .section-sub { font-size: 0.85rem; }
+  .section-label { font-size: 0.68rem; }
 
   .demo-phone { width: 180px; height: 340px; }
   .demo-nfc-card { width: 158px; height: 94px; bottom: -50px; }

@@ -125,7 +125,7 @@ const translations = {
     featCustomDesign: 'Custom design', featExpressShip: 'Express shipping',
     featDedicatedSupport: 'Dedicated support', bestChoice: 'Best Choice',
     foundersTitle: 'The Founders', foundersSub: 'The people behind NFCraft, dedicated to reimagining how professionals connect.',
-    role1: 'CEO & Front End Developer', role2: 'Co-Founder & Backend Developer',
+    role1: 'CEO & Front End Developer', role2: 'CEO & Backend Developer',
     ourLocation: 'Our Location', locationSub: 'Come visit our studio and experience NFCraft cards in person. We\'re open weekdays 10am–6pm.',
     locAddressLabel: 'Address', locPhoneLabel: 'Phone', locEmailLabel: 'Email',
     modalTitle: 'Place Your Order', choosePlan: 'Choose Your Plan',
@@ -193,7 +193,7 @@ const translations = {
     featCustomDesign: 'Maxsus dizayn', featExpressShip: 'Express yetkazish',
     featDedicatedSupport: 'Maxsus yordam', bestChoice: 'Eng Yaxshi Tanlov',
     foundersTitle: 'Asoschiler', foundersSub: 'NFCraft ortidagi odamlar — mutaxassislar aloqa o\'rnatish usulini qayta tasavvur qilishga bag\'ishlangan.',
-    role1: 'Bosh Direktor & Front End Dasturchi', role2: 'Hammuassis & Backend Dasturchi',
+    role1: 'Bosh Direktor & Front End Dasturchi', role2: 'Bosh Direktor & Backend Dasturchi',
     ourLocation: 'Bizning Manzil', locationSub: 'Studiyamizga tashrif buyuring va NFCraft kartalarini jonli ko\'ring. Ish kunlari 10:00–18:00.',
     locAddressLabel: 'Manzil', locPhoneLabel: 'Telefon', locEmailLabel: 'Email',
     modalTitle: 'Buyurtma Bering', choosePlan: 'Rejangizni Tanlang',
@@ -261,7 +261,7 @@ const translations = {
     featCustomDesign: 'Индивидуальный дизайн', featExpressShip: 'Экспресс-доставка',
     featDedicatedSupport: 'Персональная поддержка', bestChoice: 'Лучший Выбор',
     foundersTitle: 'Основатели', foundersSub: 'Люди за NFCraft, посвятившие себя переосмыслению того, как профессионалы устанавливают связи.',
-    role1: 'CEO & Front End Разработчик', role2: 'Сооснователь & Backend Разработчик',
+    role1: 'CEO & Front End Разработчик', role2: 'CEO & Backend Разработчик',
     ourLocation: 'Наш Адрес', locationSub: 'Посетите нашу студию и познакомьтесь с картами NFCraft лично. Открыты в будни 10:00–18:00.',
     locAddressLabel: 'Адрес', locPhoneLabel: 'Телефон', locEmailLabel: 'Email',
     modalTitle: 'Оформить заказ', choosePlan: 'Выберите план',
@@ -679,9 +679,12 @@ async function handleRegister(e) {
       age: age,
       address: address,
       gender: gender,
-      isAdmin: false,
+      isAdmin: data.isAdmin === true || data.isAdmin === 1,
+      isSuperAdmin: data.isSuperAdmin === true || data.isSuperAdmin === 1,
       token: data.token
     };
+    isAdmin = currentUser.isAdmin;
+    isSuperAdmin = currentUser.isSuperAdmin;
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     updateAuthUI();
     closeOverlay('authOverlay');
