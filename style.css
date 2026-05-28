@@ -259,8 +259,9 @@ h1 em {
   50% { transform: translateY(-16px) rotateX(5deg) rotateY(8deg); }
 }
 .nfc-chip {
-  position: absolute; top: 28px; left: 28px;
-  width: 44px; height: 34px;
+  position: absolute;
+  top: clamp(14px, 4.5%, 28px); left: clamp(14px, 4.5%, 28px);
+  width: clamp(26px, 7vw, 44px); height: clamp(20px, 5.3vw, 34px);
   background: linear-gradient(135deg, #c8a84b, #f0d080, #c8a84b);
   border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
@@ -270,8 +271,10 @@ h1 em {
   border: 1px solid rgba(0,0,0,0.2); border-radius: 3px;
 }
 .nfc-logo {
-  position: absolute; top: 28px; right: 28px;
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem;
+  position: absolute;
+  top: clamp(14px, 4.5%, 28px); right: clamp(14px, 4.5%, 28px);
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(0.52rem, 2.6vw, 0.9rem);
   color: rgba(255,255,255,0.9); letter-spacing: -0.02em;
 }
 .nfc-logo span { color: var(--accent); }
@@ -283,12 +286,13 @@ h1 em {
   height: 2px; border-radius: 1px;
   background: rgba(255,255,255,0.3);
 }
-.nfc-waves div:nth-child(1) { width: 12px; }
-.nfc-waves div:nth-child(2) { width: 20px; }
-.nfc-waves div:nth-child(3) { width: 28px; }
+.nfc-waves div:nth-child(1) { width: clamp(7px, 1.9vw, 12px); }
+.nfc-waves div:nth-child(2) { width: clamp(12px, 3.1vw, 20px); }
+.nfc-waves div:nth-child(3) { width: clamp(17px, 4.4vw, 28px); }
 .nfc-name {
-  position: absolute; bottom: 28px; left: 28px;
-  font-size: 0.8rem; color: rgba(255,255,255,0.5); letter-spacing: 0.08em;
+  position: absolute;
+  bottom: clamp(14px, 4.5%, 28px); left: clamp(14px, 4.5%, 28px);
+  font-size: clamp(0.48rem, 2.2vw, 0.8rem); color: rgba(255,255,255,0.5); letter-spacing: 0.08em;
 }
 
 .hero-color-selectors {
@@ -526,19 +530,23 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
   pointer-events: none;
 }
 .sc-chip {
-  width: 40px; height: 30px; border-radius: 7px;
+  width: clamp(24px, 6.5vw, 40px); height: clamp(18px, 4.9vw, 30px);
+  border-radius: 7px;
   background: linear-gradient(135deg,#c8a84b,#f0d080);
   opacity: 0.92;
 }
 .sc-logo {
   position: absolute; top: 1.4rem; right: 1.6rem;
-  font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(0.62rem, 3vw, 1.1rem);
+  font-weight: 800;
   color: #fff; transition: color 0.3s; letter-spacing: -0.01em;
 }
 .sc-logo span { color: var(--accent); }
 .sc-label {
   position: absolute; bottom: 1.5rem; left: 1.8rem;
-  font-size: 0.8rem; color: rgba(255,255,255,0.45);
+  font-size: clamp(0.44rem, 2vw, 0.8rem);
+  color: rgba(255,255,255,0.45);
   letter-spacing: 0.06em; transition: color 0.3s;
 }
 .sc-waves {
@@ -546,9 +554,9 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
   display: flex; align-items: flex-end; gap: 3px;
 }
 .sc-waves div { border: 1.5px solid rgba(255,255,255,0.3); border-radius: 50%; transition: border-color 0.3s; }
-.sc-waves div:nth-child(1) { width:11px; height:11px; }
-.sc-waves div:nth-child(2) { width:19px; height:19px; }
-.sc-waves div:nth-child(3) { width:27px; height:27px; }
+.sc-waves div:nth-child(1) { width:clamp(7px,1.7vw,11px); height:clamp(7px,1.7vw,11px); }
+.sc-waves div:nth-child(2) { width:clamp(12px,3vw,19px); height:clamp(12px,3vw,19px); }
+.sc-waves div:nth-child(3) { width:clamp(17px,4.2vw,27px); height:clamp(17px,4.2vw,27px); }
 
 .showcase-colors {
   display: flex; align-items: center; gap: 1rem;
@@ -1335,7 +1343,7 @@ footer {
   50%       { transform: translateX(-50%) translateY(-10px); }
 }
 .demo-card-chip {
-  width: 28px; height: 20px;
+  width: clamp(18px, 4.8vw, 28px); height: clamp(13px, 3.5vw, 20px);
   background: linear-gradient(135deg, #8a7240, #c9a84e);
   border-radius: 4px;
 }
@@ -1343,14 +1351,14 @@ footer {
   position: absolute;
   top: 13px; right: 14px;
   font-family: 'Syne', sans-serif;
-  font-size: 0.62rem;
+  font-size: clamp(0.38rem, 1.6vw, 0.62rem);
   font-weight: 700;
   color: rgba(255,255,255,0.35);
 }
 .demo-card-logo span { color: var(--accent); }
 .demo-card-owner {
   font-family: 'Syne', sans-serif;
-  font-size: 0.58rem;
+  font-size: clamp(0.35rem, 1.5vw, 0.58rem);
   font-weight: 600;
   color: rgba(255,255,255,0.45);
   letter-spacing: 0.12em;
