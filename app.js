@@ -1851,3 +1851,71 @@ window.openAuth = function(tab) {
   if (_origOpenAuth) _origOpenAuth(tab);
   setTimeout(renderGoogleBtn, 100);
 };
+
+// ─────────────────────────────────────────────────────────────
+//  TELEGRAM LOGIN
+// ─────────────────────────────────────────────────────────────
+const TELEGRAM_BOT_ID = '8390043232';
+
+function triggerTelegramLogin() {
+  const origin = encodeURIComponent(window.location.origin);
+  const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_BOT_ID}&origin=${origin}&embed=1&request_access=write`;
+
+  const popup = window.open(
+    url,
+    'TelegramLogin',
+    'width=550,height=470,scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no'
+  );
+
+  if (!popup) {
+    alert("Popup bloklandi. Brauzerdagi popup ruxsatini yoqing.");
+    return;
+  }
+
+  const onMessage = function(event) {
+    if (event.origin !== 'https://oauth.telegram.org') return;
+    const msg = event.data;
+    if (msg && msg.event === 'auth_result') {
+      window.removeEventListener('message', onMessage);
+      if (popup && !popup.closed) popup.close();
+      if (msg.result) {
+        handleTelegramAuth(msg.result);
+      }
+    }
+  };
+  window.addEventListener('message', onMessage);
+}
+
+async function handleTelegramAuth(tgUser) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/telegram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tgUser)
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Telegram login xatosi');
+
+    const _isSuperAdmin = data.isSuperAdmin === true
+      || (data.email && data.email.toLowerCase() === 'whatififlydidy@gmail.com');
+    const _isAdmin = _isSuperAdmin || data.isAdmin === true;
+
+    currentUser = {
+      id:           data.userId,
+      token:        data.token,
+      firstName:    data.firstName,
+      lastName:     data.lastName,
+      email:        data.email || '',
+      isAdmin:      _isAdmin,
+      isSuperAdmin: _isSuperAdmin
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    isSuperAdmin = _isSuperAdmin;
+
+    closeOverlay('authOverlay');
+    updateAuthUI();
+  } catch (err) {
+    alert('Telegram orqali kirish amalga oshmadi: ' + err.message);
+  }
+}
