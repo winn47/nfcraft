@@ -1766,3 +1766,77 @@ window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
   revealElements.forEach(el => el.classList.add('visible'));
 });
+
+/* ══════════════════════════════════════════
+   GOOGLE SIGN-IN
+══════════════════════════════════════════ */
+const GOOGLE_CLIENT_ID = '196351661484-ava56hi7hm2sh2t5lecbic76aud3h0sr.apps.googleusercontent.com';
+
+function initGoogleSignIn() {
+  if (typeof google === 'undefined') return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+  renderGoogleBtn();
+}
+
+function renderGoogleBtn() {
+  const container = document.getElementById('googleSignInBtn');
+  if (!container || typeof google === 'undefined') return;
+  container.innerHTML = '';
+  google.accounts.id.renderButton(container, {
+    theme: 'filled_black',
+    size: 'large',
+    width: 340,
+    text: 'continue_with',
+    shape: 'rectangular',
+    logo_alignment: 'left'
+  });
+}
+
+async function handleGoogleCredential(response) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Google login xatosi');
+
+    const _isSuperAdmin = data.isSuperAdmin === true
+      || (data.email && data.email.toLowerCase() === 'whatififlydidy@gmail.com');
+    const _isAdmin = _isSuperAdmin || data.isAdmin === true;
+
+    currentUser = {
+      id:          data.userId,
+      token:       data.token,
+      firstName:   data.firstName,
+      lastName:    data.lastName,
+      email:       data.email,
+      isAdmin:     _isAdmin,
+      isSuperAdmin: _isSuperAdmin
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    isSuperAdmin = _isSuperAdmin;
+
+    closeOverlay('authOverlay');
+    updateAuthUI();
+  } catch (err) {
+    alert('Google orqali kirish amalga oshmadi: ' + err.message);
+  }
+}
+
+// Google GSI skript yuklanganda chaqiriladi
+window.onGoogleLibraryLoad = initGoogleSignIn;
+
+// Auth overlay ochilganda tugmani qayta render qilish
+const _origOpenAuth = window.openAuth;
+window.openAuth = function(tab) {
+  if (_origOpenAuth) _origOpenAuth(tab);
+  setTimeout(renderGoogleBtn, 100);
+};

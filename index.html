@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="./style.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="icon" href="./555ppp.jpg" type="image/jpeg">
 </head>
@@ -724,6 +725,11 @@
           <div class="input-group"><div class="input-label" data-i18n="passwordLabel">Password</div><input class="input-field" id="loginPassword" type="password" data-i18n-ph="enterPassword" placeholder="Enter password" required /></div>
           <button class="auth-submit" type="submit" data-i18n="signInBtn">Sign In & Continue</button>
         </form>
+
+      <!-- Google Sign-In -->
+      <div class="auth-divider"><span>yoki</span></div>
+      <div id="googleSignInBtn" style="display:flex;justify-content:center;"></div>
+
     </div>
   </div>
 </div>

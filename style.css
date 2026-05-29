@@ -972,6 +972,17 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
 }
 .auth-submit:hover { box-shadow: 0 4px 20px rgba(232,255,71,0.3); }
 
+.auth-divider {
+  display: flex; align-items: center; gap: 0.8rem;
+  margin: 1.2rem 0 1rem;
+  color: var(--muted); font-size: 0.8rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: ''; flex: 1;
+  height: 1px; background: var(--border);
+}
+
 .otp-step-icon {
   font-size: 2.4rem;
   text-align: center;
