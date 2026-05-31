@@ -159,6 +159,10 @@ const translations = {
     orderPlaced: 'Order Placed!',
     orderSuccess: 'Your NFCraft card is being crafted and will be delivered soon.',
     done: 'Done',
+    dividerOr: 'or',
+    googleSignIn: 'Sign in with Google',
+    telegramSignIn: 'Sign in with Telegram',
+    createAccount: 'Create Account',
   },
   uz: {
     navWhy: 'Nima uchun NFC', navPricing: 'Narxlar', navTeam: 'Jamoa', navLocation: 'Manzil', navUsers: 'Foydalanuvchilar',
@@ -227,6 +231,10 @@ const translations = {
     orderPlaced: 'Buyurtma Qabul Qilindi!',
     orderSuccess: 'NFCraft kartangiz tayyorlanmoqda va tez orada yetkazib beriladi.',
     done: 'Tayyor',
+    dividerOr: 'yoki',
+    googleSignIn: 'Google orqali kirish',
+    telegramSignIn: 'Telegram orqali kirish',
+    createAccount: 'Hisob Yaratish',
   },
   ru: {
     navWhy: 'Почему NFC', navPricing: 'Цены', navTeam: 'Команда', navLocation: 'Адрес', navUsers: 'Пользователи',
@@ -295,6 +303,10 @@ const translations = {
     orderPlaced: 'Заказ принят!',
     orderSuccess: 'Ваша карта NFCraft изготавливается и будет доставлена в ближайшее время.',
     done: 'Готово',
+    dividerOr: 'или',
+    googleSignIn: 'Войти через Google',
+    telegramSignIn: 'Войти через Telegram',
+    createAccount: 'Создать аккаунт',
   },
 };
 
@@ -356,8 +368,12 @@ const orderState = {
 const planPrices = { starter: 2.5, pro: 5, premium: 10 };
 const addonPrices = { logo: 0.5, design: 2 };
 
+// Saves the plan user wanted before they were asked to log in
+let _pendingPlan = null;
+
 function openOrder(plan) {
   if (!currentUser) {
+    _pendingPlan = plan || null;
     openAuth('register');
     return;
   }
@@ -365,11 +381,32 @@ function openOrder(plan) {
   if (overlay) {
     overlay.classList.add('active');
     goToStep(1);
-    orderState.plan = null;
+    // Full reset every time order is opened
+    orderState.plan      = null;
+    orderState.qty       = 1;
+    orderState.color     = 'black';
+    orderState.colorHex  = '#111';
+    orderState.colorName = 'Black';
+    orderState.addons    = { logo: false, design: false };
+    orderState.phone     = '';
+    const qtyEl = document.getElementById('qtyDisplay');
+    if (qtyEl) qtyEl.textContent = '1';
+    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.addon-item').forEach(el => el.classList.remove('selected'));
     document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
-    if (plan) {
-      selectPlan(plan);
-    }
+    const phoneInput = document.getElementById('orderPhone');
+    if (phoneInput) phoneInput.value = '';
+    if (plan) selectPlan(plan);
+  }
+}
+
+// Called after any successful auth — resumes pending order if any
+function _afterAuth() {
+  updateAuthUI();
+  if (_pendingPlan) {
+    const plan = _pendingPlan;
+    _pendingPlan = null;
+    setTimeout(() => openOrder(plan), 350);
   }
 }
 
@@ -620,12 +657,20 @@ function placeOrder() {
     closeOverlay('orderOverlay');
     openCardInfoForm();
 
-    orderState.plan = null;
-    orderState.qty = 1;
-    orderState.color = 'black';
-    orderState.addons = { logo: false, design: false };
-    orderState.phone = '';
+    // Full state + UI reset after order placed
+    orderState.plan      = null;
+    orderState.qty       = 1;
+    orderState.color     = 'black';
+    orderState.colorHex  = '#111';
+    orderState.colorName = 'Black';
+    orderState.addons    = { logo: false, design: false };
+    orderState.phone     = '';
     if (phoneInput) phoneInput.value = '';
+    const qtyEl = document.getElementById('qtyDisplay');
+    if (qtyEl) qtyEl.textContent = '1';
+    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.addon-item').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
   })
   .catch(err => {
     alert('Xato: ' + err.message);
@@ -747,9 +792,8 @@ async function handleLogin(e) {
     isAdmin = currentUser.isAdmin;
     isSuperAdmin = currentUser.isSuperAdmin;
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    updateAuthUI();
     closeOverlay('authOverlay');
-    alert('Kirish muvaffaqiyatli!');
+    _afterAuth();
   } catch (err) {
     alert('Kirish xatosi: ' + err.message);
   }
@@ -1006,7 +1050,7 @@ async function handleVerifyCode() {
           btn.style.display = '';
           btn.textContent = 'Verify Code';
           btn.disabled = false;
-          updateAuthUI();
+          _afterAuth();
         }, 1800);
       } else {
         _otpShowMsg(2, data.message || 'Kod xato yoki muddati o\'tgan. Qayta urinib ko\'ring.', true);
@@ -1788,6 +1832,7 @@ function renderGoogleBtn() {
   if (!container) return;
   if (container.dataset.ready === '1') return;
   container.dataset.ready = '1';
+  const t = translations[currentLang] || translations['uz'];
   container.innerHTML = `
     <button class="google-btn" onclick="triggerGoogleSignIn()">
       <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -1796,7 +1841,7 @@ function renderGoogleBtn() {
         <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
         <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
       </svg>
-      Google orqali kirish
+      ${t.googleSignIn || 'Google orqali kirish'}
     </button>`;
 }
 
@@ -1836,7 +1881,7 @@ async function handleGoogleCredential(response) {
     isSuperAdmin = _isSuperAdmin;
 
     closeOverlay('authOverlay');
-    updateAuthUI();
+    _afterAuth();
   } catch (err) {
     alert('Google orqali kirish amalga oshmadi: ' + err.message);
   }
@@ -1845,11 +1890,14 @@ async function handleGoogleCredential(response) {
 // Google GSI skript yuklanganda chaqiriladi
 window.onGoogleLibraryLoad = initGoogleSignIn;
 
-// Auth overlay ochilganda tugmani qayta render qilish
+// Auth overlay ochilganda Google tugmani render qilish (til o'zgarsa ham yangilanadi)
 const _origOpenAuth = window.openAuth;
 window.openAuth = function(tab) {
   if (_origOpenAuth) _origOpenAuth(tab);
-  setTimeout(renderGoogleBtn, 100);
+  // Force re-render so translated text is correct for current language
+  const gBtn = document.getElementById('googleSignInBtn');
+  if (gBtn) { gBtn.dataset.ready = ''; gBtn.innerHTML = ''; }
+  setTimeout(renderGoogleBtn, 80);
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1858,8 +1906,11 @@ window.openAuth = function(tab) {
 const TELEGRAM_BOT_ID = '8390043232';
 
 function triggerTelegramLogin() {
+  // NOTE: NO embed=1 — with embed=1 the page sends postMessage to window.parent
+  //       (the popup itself), not to window.opener (our page). Without it,
+  //       the popup sends the result directly to window.opener = our page.
   const origin = encodeURIComponent(window.location.origin);
-  const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_BOT_ID}&origin=${origin}&embed=1&request_access=write`;
+  const url = `https://oauth.telegram.org/auth?bot_id=${TELEGRAM_BOT_ID}&origin=${origin}&request_access=write`;
 
   const popup = window.open(
     url,
@@ -1874,12 +1925,20 @@ function triggerTelegramLogin() {
 
   const onMessage = function(event) {
     if (event.origin !== 'https://oauth.telegram.org') return;
-    const msg = event.data;
+
+    // Telegram sends event.data as a JSON STRING, not an object — parse it
+    let msg = event.data;
+    if (typeof msg === 'string') {
+      try { msg = JSON.parse(msg); } catch (e) { return; }
+    }
+
     if (msg && msg.event === 'auth_result') {
       window.removeEventListener('message', onMessage);
       if (popup && !popup.closed) popup.close();
-      if (msg.result) {
-        handleTelegramAuth(msg.result);
+      // result can be inside msg.result or be msg itself
+      const userData = msg.result || msg;
+      if (userData && userData.id) {
+        handleTelegramAuth(userData);
       }
     }
   };
@@ -1914,7 +1973,7 @@ async function handleTelegramAuth(tgUser) {
     isSuperAdmin = _isSuperAdmin;
 
     closeOverlay('authOverlay');
-    updateAuthUI();
+    _afterAuth();
   } catch (err) {
     alert('Telegram orqali kirish amalga oshmadi: ' + err.message);
   }
