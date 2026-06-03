@@ -7,7 +7,6 @@ function initAuth() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // Super admin emailni frontend da ham tekshiramiz
       if (currentUser.email && currentUser.email.toLowerCase() === 'whatififlydidy@gmail.com') {
         currentUser.isAdmin = true;
         currentUser.isSuperAdmin = true;
@@ -21,23 +20,51 @@ function initAuth() {
     }
   }
   updateAuthUI();
+  // Sync isAdmin from DB — fixes "admin assigned but sees user page" bug
+  if (currentUser && currentUser.token) _syncUserStatus();
+}
+
+// Fetches fresh isAdmin/isSuperAdmin from DB on every page load.
+// If superadmin assigned admin role while user was logged in,
+// the old JWT token has isAdmin=false. This call fixes that without re-login.
+async function _syncUserStatus() {
+  const API = 'https://nfcraftbackend1-production.up.railway.app/api';
+  try {
+    const res = await fetch(`${API}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success) return;
+    const adminChanged = currentUser.isAdmin !== data.isAdmin
+                      || currentUser.isSuperAdmin !== data.isSuperAdmin;
+    currentUser.isAdmin      = data.isAdmin;
+    currentUser.isSuperAdmin = data.isSuperAdmin;
+    currentUser.firstName    = data.firstName || currentUser.firstName;
+    currentUser.lastName     = data.lastName  || currentUser.lastName;
+    isAdmin      = data.isAdmin;
+    isSuperAdmin = data.isSuperAdmin;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    if (adminChanged) updateAuthUI();
+  } catch (_) {
+    // silently ignore network errors
+  }
 }
 
 function updateAuthUI() {
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
-  const profileBtn  = document.getElementById('profileBtn');
-  const logoutBtn   = document.getElementById('logoutBtn');
-  const mLoginBtn    = document.getElementById('mLoginBtn');
-  const mRegisterBtn = document.getElementById('mRegisterBtn');
-  const mProfileBtn  = document.getElementById('mProfileBtn');
-  const mLogoutBtn   = document.getElementById('mLogoutBtn');
+  const mLoginBtn   = document.getElementById('mLoginBtn');
+  const mRegisterBtn= document.getElementById('mRegisterBtn');
+
+  // New profile picker elements
+  const profilePicker = document.getElementById('profilePicker');
+  const profileName   = document.getElementById('profileName');
+  const mProfileMenu  = document.getElementById('mProfileMenu');
+  const mProfileName  = document.getElementById('mProfileName');
 
   const orderButtons = document.querySelectorAll('.nav-cta, .btn-primary, .pricing-btn');
-
   const userManagementSection = document.getElementById('userManagement');
-  const navUsersLink = document.getElementById('navUsersLink');
-
   const siteNav    = document.getElementById('siteNav');
   const siteFooter = document.getElementById('siteFooter');
   const adminDash  = document.getElementById('adminDashboard');
@@ -54,16 +81,20 @@ function updateAuthUI() {
     if (adminDash)  adminDash.style.display  = 'none';
     document.querySelectorAll('section').forEach(s => s.style.display = '');
     if (userManagementSection) userManagementSection.style.display = 'none';
+
+    // Desktop: hide login/register, show profile picker
     if (loginBtn)     loginBtn.style.display     = 'none';
     if (registerBtn)  registerBtn.style.display  = 'none';
-    if (profileBtn)   profileBtn.style.display   = 'inline-block';
-    if (logoutBtn)    logoutBtn.style.display     = 'inline-block';
-    if (profileBtn)   profileBtn.textContent      = currentUser.firstName || 'Profile';
-    if (mLoginBtn)    mLoginBtn.style.display     = 'none';
-    if (mRegisterBtn) mRegisterBtn.style.display  = 'none';
-    if (mProfileBtn)  mProfileBtn.style.display   = 'block';
-    if (mLogoutBtn)   mLogoutBtn.style.display     = 'block';
-    if (mProfileBtn)  mProfileBtn.textContent      = currentUser.firstName || 'Profile';
+    if (profilePicker) profilePicker.style.display = '';
+    if (profileName)   profileName.textContent     = currentUser.firstName || 'Profil';
+
+    // Mobile: hide login/register, show profile menu
+    if (mLoginBtn)    mLoginBtn.style.display    = 'none';
+    if (mRegisterBtn) mRegisterBtn.style.display = 'none';
+    if (mProfileMenu) {
+      mProfileMenu.style.display = 'block';
+      if (mProfileName) mProfileName.textContent = currentUser.firstName + ' ' + (currentUser.lastName || '');
+    }
     orderButtons.forEach(btn => btn.style.display = '');
   } else {
     if (siteNav)    siteNav.style.display    = '';
@@ -71,17 +102,28 @@ function updateAuthUI() {
     if (adminDash)  adminDash.style.display  = 'none';
     document.querySelectorAll('section').forEach(s => s.style.display = '');
     if (userManagementSection) userManagementSection.style.display = 'none';
+
     if (loginBtn)     loginBtn.style.display     = 'inline-block';
     if (registerBtn)  registerBtn.style.display  = 'inline-block';
-    if (profileBtn)   profileBtn.style.display   = 'none';
-    if (logoutBtn)    logoutBtn.style.display     = 'none';
-    if (mLoginBtn)    mLoginBtn.style.display     = 'block';
-    if (mRegisterBtn) mRegisterBtn.style.display  = 'block';
-    if (mProfileBtn)  mProfileBtn.style.display   = 'none';
-    if (mLogoutBtn)   mLogoutBtn.style.display     = 'none';
+    if (profilePicker) profilePicker.style.display = 'none';
+    if (mLoginBtn)    mLoginBtn.style.display    = 'block';
+    if (mRegisterBtn) mRegisterBtn.style.display = 'block';
+    if (mProfileMenu) mProfileMenu.style.display = 'none';
     orderButtons.forEach(btn => btn.style.display = '');
   }
 }
+
+// ── Profile dropdown helpers ──
+function toggleProfileDropdown(e) {
+  e.stopPropagation();
+  const d = document.getElementById('profileDropdown');
+  if (d) d.classList.toggle('open');
+}
+function closeProfileDropdown() {
+  const d = document.getElementById('profileDropdown');
+  if (d) d.classList.remove('open');
+}
+document.addEventListener('click', () => closeProfileDropdown());
 
 let currentLang = 'en';
 
@@ -163,6 +205,7 @@ const translations = {
     googleSignIn: 'Sign in with Google',
     telegramSignIn: 'Sign in with Telegram',
     createAccount: 'Create Account',
+    navProfile: '👤 Profile', navOrders: '📦 My Orders', navSettings: '⚙️ Settings',
   },
   uz: {
     navWhy: 'Nima uchun NFC', navPricing: 'Narxlar', navTeam: 'Jamoa', navLocation: 'Manzil', navUsers: 'Foydalanuvchilar',
@@ -235,6 +278,7 @@ const translations = {
     googleSignIn: 'Google orqali kirish',
     telegramSignIn: 'Telegram orqali kirish',
     createAccount: 'Hisob Yaratish',
+    navProfile: '👤 Profil', navOrders: '📦 Buyurtmalar', navSettings: '⚙️ Sozlamalar',
   },
   ru: {
     navWhy: 'Почему NFC', navPricing: 'Цены', navTeam: 'Команда', navLocation: 'Адрес', navUsers: 'Пользователи',
@@ -307,6 +351,7 @@ const translations = {
     googleSignIn: 'Войти через Google',
     telegramSignIn: 'Войти через Telegram',
     createAccount: 'Создать аккаунт',
+    navProfile: '👤 Профиль', navOrders: '📦 Заказы', navSettings: '⚙️ Настройки',
   },
 };
 
@@ -655,7 +700,7 @@ function placeOrder() {
     _lastOrderPlan = orderState.plan || 'starter';
 
     closeOverlay('orderOverlay');
-    openCardInfoForm();
+    showPaymentModal(data);
 
     // Full state + UI reset after order placed
     orderState.plan      = null;
@@ -800,13 +845,8 @@ async function handleLogin(e) {
 }
 
 function openProfile() {
-  if (!currentUser) {
-    openAuth('login');
-    return;
-  }
-  if (!isAdmin) {
-    openUserPanel();
-  }
+  if (!currentUser) { openAuth('login'); return; }
+  if (!isAdmin) openUserPanel('profile');
 }
 
 function logout() {
@@ -814,6 +854,88 @@ function logout() {
   isAdmin = false;
   localStorage.removeItem('currentUser');
   location.reload();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  STIKER ORDER
+// ─────────────────────────────────────────────────────────────
+
+function openStickerOrder() {
+  closeOverlay('orderOverlay');
+  const overlay = document.getElementById('stickerOverlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+function _stickerPrice(qty) {
+  if (qty <= 50)  return 0.50;
+  if (qty <= 200) return 0.40;
+  return 0.35;
+}
+
+// Live price hint update
+document.addEventListener('DOMContentLoaded', () => {
+  const qtyInput = document.getElementById('stQty');
+  if (qtyInput) {
+    qtyInput.addEventListener('input', () => {
+      const q = parseInt(qtyInput.value) || 0;
+      const u = _stickerPrice(q);
+      const hint = document.getElementById('stPriceHint');
+      if (hint) hint.textContent = `${q} dona × $${u.toFixed(2)} = $${(q * u).toFixed(2)}`;
+    });
+  }
+});
+
+async function placeStickerOrder() {
+  const bizName     = (document.getElementById('stBizName')?.value || '').trim();
+  const category    = document.getElementById('stCategory')?.value || '';
+  const address     = (document.getElementById('stAddress')?.value || '').trim();
+  const phone       = (document.getElementById('stPhone')?.value || '').trim();
+  const hours       = (document.getElementById('stHours')?.value || '').trim();
+  const desc        = (document.getElementById('stDesc')?.value || '').trim();
+  const qty         = parseInt(document.getElementById('stQty')?.value) || 50;
+  const contactPhone= (document.getElementById('stContact')?.value || phone).trim();
+
+  if (!bizName || !address || !phone) {
+    alert("Biznes nomi, manzil va telefon kiritilishi shart.");
+    return;
+  }
+
+  const btn = document.querySelector('#stickerOverlay .auth-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Yuborilmoqda...'; }
+
+  try {
+    const res = await fetch(`${API_BASE}/sticker/order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
+      },
+      body: JSON.stringify({ businessName: bizName, category, address, phone,
+                             contactPhone, description: desc, workingHours: hours, quantity: qty })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Xato');
+
+    closeOverlay('stickerOverlay');
+    alert(`✅ Stiker buyurtmangiz qabul qilindi!\n\nBuyurtma ID: ${data.orderId}\nJami: $${data.total?.toFixed(2)}\nSoni: ${data.quantity} dona\n\nTez orada siz bilan bog'lanamiz.`);
+
+    // Reset form
+    ['stBizName','stAddress','stPhone','stHours','stDesc','stContact'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const qtyEl = document.getElementById('stQty');
+    if (qtyEl) qtyEl.value = '50';
+    const catEl = document.getElementById('stCategory');
+    if (catEl) catEl.value = '';
+    const hint = document.getElementById('stPriceHint');
+    if (hint) hint.textContent = '50 dona × $0.40 = $20.00';
+
+  } catch (err) {
+    alert('Xato: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📦 Buyurtma berish'; }
+  }
 }
 
 function filterCards(category, btn) {
@@ -1440,6 +1562,26 @@ async function loadAdminManagement() {
   }
 }
 
+async function updateOrderStatus(orderId, newStatus, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentUser.token}`
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Xato');
+    await loadAllOrders();
+  } catch (e) {
+    alert('Xato: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '?'; }
+  }
+}
+
 async function toggleUserAdmin(userId, currentAdminStatus, name) {
   const action = currentAdminStatus ? 'admin huquqini olib tashlash' : 'admin qilish';
   if (!confirm(`"${name.trim()}" foydalanuvchisini ${action}ni tasdiqlaysizmi?`)) return;
@@ -1480,8 +1622,25 @@ async function loadAllOrders() {
       return;
     }
     tbody.innerHTML = orders.map(o => {
-      const sc = o.status === 'completed' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : '#facc15';
+      const s   = o.status || 'pending';
+      const sc  = s === 'delivered' ? '#4ade80' : s === 'cancelled' ? '#ff6b6b' : s === 'paid' ? '#34d399' : s === 'shipped' ? '#60a5fa' : '#facc15';
       const oid = o.orderId || o.id || '—';
+
+      // Next status button
+      const nextMap = {
+        'pending':         { label: '✅ To\'landi',      next: 'paid' },
+        'pending_payment': { label: '✅ To\'landi',      next: 'paid' },
+        'paid':            { label: '🔧 Tayyorlanmoqda', next: 'processing' },
+        'processing':      { label: '📦 Jo\'natildi',    next: 'shipped' },
+        'shipped':         { label: '✓ Yetkazildi',      next: 'delivered' },
+      };
+      const nextBtn = nextMap[s]
+        ? `<button onclick="updateOrderStatus(${o.orderId || o.id},'${nextMap[s].next}',this)"
+             style="padding:0.25rem 0.6rem;border-radius:8px;border:1px solid rgba(232,255,71,0.3);background:rgba(232,255,71,0.07);color:var(--accent);font-size:0.72rem;cursor:pointer;white-space:nowrap;">
+             ${nextMap[s].label}
+           </button>`
+        : '';
+
       return `<tr style="border-bottom:1px solid var(--border)">
         <td style="padding:0.5rem 0.7rem;font-weight:700;color:var(--accent);font-size:0.85rem">#${oid}</td>
         <td style="padding:0.5rem 0.7rem;color:var(--muted2);font-size:0.82rem">User #${o.userId}</td>
@@ -1489,8 +1648,9 @@ async function loadAllOrders() {
         <td style="padding:0.5rem 0.7rem">${o.quantity || 1}</td>
         <td style="padding:0.5rem 0.7rem">$${parseFloat(o.total || 0).toFixed(2)}</td>
         <td style="padding:0.5rem 0.7rem">
-          <span style="padding:0.2rem 0.6rem;border-radius:20px;font-size:0.72rem;background:${sc}22;color:${sc}">${o.status || 'pending'}</span>
+          <span style="padding:0.2rem 0.6rem;border-radius:20px;font-size:0.72rem;background:${sc}22;color:${sc}">${s}</span>
         </td>
+        <td style="padding:0.5rem 0.7rem">${nextBtn}</td>
       </tr>`;
     }).join('');
   } catch {
@@ -1498,12 +1658,22 @@ async function loadAllOrders() {
   }
 }
 
-function openUserPanel() {
+function openUserPanel(tab) {
   const overlay = document.getElementById('userPanelOverlay');
   if (overlay) {
     overlay.classList.add('active');
+    switchUserTab(tab || 'profile');
     loadUserDashboard();
   }
+}
+
+function switchUserTab(tab) {
+  ['profile', 'orders', 'settings'].forEach(t => {
+    const sec = document.getElementById('usection-' + t);
+    const btn = document.getElementById('utab-' + t);
+    if (sec) sec.style.display = t === tab ? '' : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
 }
 
 function closeUserPanel() {
@@ -1519,11 +1689,24 @@ function loadUserDashboard() {
 }
 
 async function loadUserProfile() {
-  const profileName = document.getElementById('userPanelName');
-  const profileEmail = document.getElementById('userPanelEmail');
+  const nameEl  = document.getElementById('userPanelName');
+  const emailEl = document.getElementById('userPanelEmail');
+  const gridEl  = document.getElementById('userProfileGrid');
 
-  if (profileName) profileName.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-  if (profileEmail) profileEmail.textContent = currentUser.email;
+  if (nameEl)  nameEl.textContent  = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
+  if (emailEl) emailEl.textContent = currentUser.email || '—';
+
+  if (gridEl) {
+    const fields = [
+      { label: 'ID',       val: currentUser.id || '—' },
+      { label: 'Status',   val: currentUser.isAdmin ? '🛡 Admin' : '👤 Foydalanuvchi' },
+    ];
+    gridEl.innerHTML = fields.map(f => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;">
+        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.2rem;">${f.label}</div>
+        <div style="font-size:0.9rem;font-weight:500;">${f.val}</div>
+      </div>`).join('');
+  }
 }
 
 async function loadUserOrders() {
@@ -1610,6 +1793,79 @@ function previewCiPhoto(input) {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function showPaymentModal(orderData) {
+  const cardNum  = orderData.cardNumber || '—';
+  const holder   = orderData.cardHolder || '—';
+  const bank     = orderData.cardBank   || '';
+  const total    = parseFloat(orderData.total || 0).toFixed(2);
+  const orderId  = orderData.orderId || '—';
+
+  // Format card number with spaces: 1234 5678 9012 3456
+  const fmt = cardNum.replace(/\s/g,'').replace(/(.{4})/g,'$1 ').trim();
+
+  const html = `
+    <div style="text-align:center;padding:0.5rem 0 1.2rem;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">💳</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:0.3rem;">
+        To'lovni amalga oshiring
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted2);">Buyurtma #${orderId} tasdiqlangach tayyorlanadi</div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid rgba(232,255,71,0.2);border-radius:14px;padding:1.4rem;margin-bottom:1rem;">
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.4rem;letter-spacing:0.05em;">KARTA RAQAMI</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.1em;margin-bottom:0.2rem;" id="pmCardNum">${fmt}</div>
+      <div style="font-size:0.8rem;color:var(--muted2);">${holder} · ${bank}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:1.2rem;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.3rem;">TO'LOV MIQDORI</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;color:var(--accent);">$${total}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.3rem;">IZOH (COMMENT)</div>
+        <div style="font-size:0.85rem;font-weight:600;">NFCraft #${orderId}</div>
+      </div>
+    </div>
+
+    <button onclick="
+      navigator.clipboard.writeText('${cardNum.replace(/\s/g,'')}');
+      this.textContent='✓ Nusxalandi!';
+      setTimeout(()=>this.textContent='📋 Karta raqamini nusxalash',2000)
+    " style="width:100%;padding:0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;margin-bottom:0.7rem;">
+      📋 Karta raqamini nusxalash
+    </button>
+
+    <div style="font-size:0.78rem;color:var(--muted2);text-align:center;line-height:1.6;background:rgba(255,255,255,0.03);border-radius:10px;padding:0.8rem;">
+      ⚠️ To'lov o'tkazilgandan so'ng <b>1-2 soat ichida</b> admin tasdiqlaydi.<br>
+      Karta ma'lumotlari to'ldirishga o'tasiz.
+    </div>
+
+    <button onclick="closePaymentModal()" style="width:100%;margin-top:0.9rem;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;">
+      ✅ To'ladim — Davom etish
+    </button>`;
+
+  let modal = document.getElementById('paymentModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'paymentModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1.6rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;">
+      ${html}
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+function closePaymentModal() {
+  const modal = document.getElementById('paymentModal');
+  if (modal) modal.style.display = 'none';
+  openCardInfoForm();
 }
 
 function openCardInfoForm() {

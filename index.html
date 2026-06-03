@@ -176,8 +176,22 @@
   <div class="nav-auth">
     <button id="loginBtn"    class="nav-link" onclick="openAuth('login')"    data-i18n="login">Login</button>
     <button id="registerBtn" class="nav-link" onclick="openAuth('register')" data-i18n="register">Register</button>
-    <button id="profileBtn"  class="nav-link" onclick="openProfile()" style="display:none;">Profile</button>
-    <button id="logoutBtn"   class="nav-link" onclick="logout()"              data-i18n="logout">Logout</button>
+
+    <!-- Profile dropdown (logged-in state) -->
+    <div class="profile-picker" id="profilePicker" style="display:none;">
+      <button class="lang-current profile-current" onclick="toggleProfileDropdown(event)">
+        <span class="profile-avatar-dot">●</span>
+        <span id="profileName">—</span>
+        <svg class="lang-chevron" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="lang-dropdown profile-dropdown" id="profileDropdown">
+        <button onclick="closeProfileDropdown(); openUserPanel('profile')" data-i18n="navProfile">👤 Profil</button>
+        <button onclick="closeProfileDropdown(); openUserPanel('orders')"  data-i18n="navOrders">📦 Buyurtmalar</button>
+        <button onclick="closeProfileDropdown(); openUserPanel('settings')" data-i18n="navSettings">⚙️ Sozlamalar</button>
+        <div class="profile-drop-divider"></div>
+        <button onclick="closeProfileDropdown(); logout()" class="profile-logout-btn" data-i18n="logout">↪ Chiqish</button>
+      </div>
+    </div>
   </div>
   <div class="nav-language">
     <div class="lang-picker" id="langPicker">
@@ -206,8 +220,14 @@
       <div class="mobile-divider"></div>
       <button id="mLoginBtn"    onclick="closeMobileMenu(); openAuth('login')"    data-i18n="login">Login</button>
       <button id="mRegisterBtn" onclick="closeMobileMenu(); openAuth('register')" data-i18n="register">Register</button>
-      <button id="mProfileBtn"  onclick="closeMobileMenu(); openProfile()" style="display:none;">Profile</button>
-      <button id="mLogoutBtn"   onclick="closeMobileMenu(); logout()"              data-i18n="logout">Logout</button>
+      <!-- Mobile profile menu (shown when logged in) -->
+      <div id="mProfileMenu" style="display:none;">
+        <div class="mobile-profile-name" id="mProfileName">—</div>
+        <button onclick="closeMobileMenu(); openUserPanel('profile')"  data-i18n="navProfile">👤 Profil</button>
+        <button onclick="closeMobileMenu(); openUserPanel('orders')"   data-i18n="navOrders">📦 Buyurtmalar</button>
+        <button onclick="closeMobileMenu(); openUserPanel('settings')" data-i18n="navSettings">⚙️ Sozlamalar</button>
+        <button onclick="closeMobileMenu(); logout()" style="color:#ff8888;" data-i18n="logout">↪ Chiqish</button>
+      </div>
       <div class="mobile-divider"></div>
       <div class="mobile-lang-row">
         <button onclick="closeMobileMenu(); setLanguage('en')" data-mlang="en" class="mlang-btn active">EN</button>
@@ -397,8 +417,6 @@
         <li data-i18n="feat1Card">1 NFC card</li>
         <li data-i18n="feat3Fields">Up to 3 fields</li>
         <li data-i18n="featBasicColor">Basic black or white</li>
-        <li data-i18n="featReprogrammable">Reprogrammable</li>
-        <li data-i18n="featStdShipping">Standard shipping</li>
       </ul>
       <button class="pricing-btn pricing-btn-outline" data-i18n="orderStarter">Order Starter</button>
     </div>
@@ -410,9 +428,6 @@
         <li data-i18n="feat1Card">1 NFC card</li>
         <li data-i18n="feat7Fields">Up to 7 fields</li>
         <li data-i18n="featAllColors">All colors available</li>
-        <li data-i18n="featReprogrammable">Reprogrammable</li>
-        <li data-i18n="featLogoPrint">Logo printing</li>
-        <li data-i18n="featPriorityShip">Priority shipping</li>
       </ul>
       <button class="pricing-btn pricing-btn-outline" data-i18n="orderPro">Order Pro</button>
     </div>
@@ -424,16 +439,147 @@
       <ul class="pricing-features">
         <li data-i18n="feat1Card">1 NFC card</li>
         <li data-i18n="feat15Fields">Up to 15 fields</li>
-        <li data-i18n="featCustomDesign">Custom design</li>
-        <li data-i18n="featReprogrammable">Reprogrammable</li>
-        <li data-i18n="featLogoPrint">Logo printing</li>
-        <li data-i18n="featExpressShip">Express shipping</li>
-        <li data-i18n="featDedicatedSupport">Dedicated support</li>
+        <li data-i18n="featAllColors">All colors available</li>
       </ul>
       <button class="pricing-btn pricing-btn-solid" data-i18n="orderPremium">Order Premium</button>
     </div>
   </div>
 </section>
+
+<!-- ═══════════════════════ NFC STIKER SECTION ═══════════════════════ -->
+<section id="sticker-section" style="padding:5rem 0 4rem;">
+  <div class="reveal" style="text-align:center;max-width:700px;margin:0 auto 3rem;padding:0 1.5rem;">
+    <div class="section-label">Biznes uchun</div>
+    <h2 class="section-title" style="font-size:clamp(1.8rem,4vw,2.6rem);">NFC Stikerlar 🏷</h2>
+    <p class="section-sub">Mahsulotingizga yopishtiring — mijoz muammo bo'lsa bir teginishda sizning manzil va telefon raqamingizga kiradi.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;max-width:1000px;margin:0 auto 3rem;padding:0 1.5rem;">
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;">
+      <div style="font-size:1.8rem;margin-bottom:0.8rem;">🛒</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:600;margin-bottom:0.4rem;">Supermarketlar</div>
+      <div style="color:var(--muted2);font-size:0.85rem;line-height:1.6;">Har bir mahsulotga stiker. Mijoz muammo bo'lsa siz bilan tez bog'lanadi.</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;">
+      <div style="font-size:1.8rem;margin-bottom:0.8rem;">📱</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:600;margin-bottom:0.4rem;">Elektronika do'konlari</div>
+      <div style="color:var(--muted2);font-size:0.85rem;line-height:1.6;">Mahsulot qutisiga yopishtirib bering — kafolat va servis ma'lumotlari.</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;">
+      <div style="font-size:1.8rem;margin-bottom:0.8rem;">💊</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:600;margin-bottom:0.4rem;">Dorixonalar</div>
+      <div style="color:var(--muted2);font-size:0.85rem;line-height:1.6;">Dori qutisiga yopishtirib, do'xtur maslahat linkini ulashish imkoniyati.</div>
+    </div>
+
+  </div>
+
+  <!-- How it works -->
+  <div style="max-width:700px;margin:0 auto 3rem;padding:0 1.5rem;">
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div style="display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,255,71,0.1);border:1px solid rgba(232,255,71,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);flex-shrink:0;">1</div>
+        <div style="font-size:0.9rem;color:var(--muted2);">Biznesingiz nomini, manzilini va telefon raqamingizni kiriting</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,255,71,0.1);border:1px solid rgba(232,255,71,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);flex-shrink:0;">2</div>
+        <div style="font-size:0.9rem;color:var(--muted2);">Kerakli miqdorda stiker buyurtma bering — yetkazib beramiz</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,255,71,0.1);border:1px solid rgba(232,255,71,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);flex-shrink:0;">3</div>
+        <div style="font-size:0.9rem;color:var(--muted2);">Mahsulotlarga yopishtirasiz — mijoz teginsa manzilga yo'naltiriladi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div style="max-width:700px;margin:0 auto 2.5rem;padding:0 1.5rem;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.6rem;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:0.3rem;">Narxlar (1 dona)</div>
+        <div style="color:var(--muted2);font-size:0.82rem;line-height:1.7;">
+          1–50 dona: <b style="color:var(--text);">$0.50</b><br>
+          51–200 dona: <b style="color:var(--text);">$0.40</b><br>
+          201+ dona: <b style="color:var(--text);">$0.35</b>
+        </div>
+      </div>
+      <button onclick="openStickerOrder()" class="btn-primary" style="min-width:160px;">
+        📦 Stiker Buyurtma
+      </button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ STIKER ORDER MODAL ══ -->
+<div class="overlay" id="stickerOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">🏷 Stiker Buyurtma</div>
+      <button class="modal-close" onclick="closeOverlay('stickerOverlay')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1.6rem;display:flex;flex-direction:column;gap:1rem;">
+
+      <div class="input-group">
+        <div class="input-label">Biznes / Do'kon nomi <span style="color:#ff6b6b">*</span></div>
+        <input class="input-field" id="stBizName" type="text" placeholder="Masalan: Anora Supermarket" required/>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Kategoriya</div>
+        <select class="input-field" id="stCategory">
+          <option value="">— Tanlang —</option>
+          <option value="Supermarket">🛒 Supermarket</option>
+          <option value="Dorixona">💊 Dorixona</option>
+          <option value="Elektronika">📱 Elektronika</option>
+          <option value="Kiyim">👕 Kiyim do'koni</option>
+          <option value="Oziq-ovqat">🥦 Oziq-ovqat</option>
+          <option value="Restoran">🍽 Restoran / Cafe</option>
+          <option value="Salon">✂️ Go'zallik saloni</option>
+          <option value="Boshqa">📦 Boshqa</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Manzil <span style="color:#ff6b6b">*</span></div>
+        <input class="input-field" id="stAddress" type="text" placeholder="Masalan: Toshkent, Yunusobod, Navruz ko'chasi 12" required/>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Telefon <span style="color:#ff6b6b">*</span></div>
+        <input class="input-field" id="stPhone" type="tel" placeholder="+998 90 123 45 67" required/>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Ish vaqti (ixtiyoriy)</div>
+        <input class="input-field" id="stHours" type="text" placeholder="Dush–Shan: 09:00–21:00"/>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Qo'shimcha ma'lumot (ixtiyoriy)</div>
+        <textarea class="input-field" id="stDesc" rows="2" placeholder="Do'kon haqida qisqacha..." style="resize:vertical;"></textarea>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Stiker soni <span style="color:#ff6b6b">*</span></div>
+        <input class="input-field" id="stQty" type="number" min="1" max="10000" value="50"/>
+        <div style="font-size:0.74rem;color:var(--muted2);margin-top:0.35rem;" id="stPriceHint">50 dona × $0.40 = $20.00</div>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Yetkazish telefoni</div>
+        <input class="input-field" id="stContact" type="tel" placeholder="+998 90 123 45 67"/>
+      </div>
+
+      <button class="auth-submit" onclick="placeStickerOrder()" style="margin-top:0.4rem;">
+        📦 Buyurtma berish
+      </button>
+
+    </div>
+  </div>
+</div>
 
 <section id="owners">
   <div class="reveal" style="text-align:center">
@@ -855,44 +1001,72 @@
 
 
 <div class="overlay" id="userPanelOverlay" onclick="handleOverlayClick(event)">
-  <div class="modal" style="max-width:900px; max-height:80vh; overflow-y:auto;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <div class="modal-title">My Account</div>
+      <div class="modal-title" id="userPanelTitle">Mening hisobim</div>
       <button class="modal-close" onclick="closeUserPanel()">✕</button>
     </div>
-    <div class="modal-body" style="padding:2rem;">
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
-        <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Your Profile</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+
+    <!-- Tab bar -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 1.5rem;">
+      <button class="upanel-tab active" id="utab-profile"  onclick="switchUserTab('profile')">👤 Profil</button>
+      <button class="upanel-tab"        id="utab-orders"   onclick="switchUserTab('orders')">📦 Buyurtmalar</button>
+      <button class="upanel-tab"        id="utab-settings" onclick="switchUserTab('settings')">⚙️ Sozlamalar</button>
+    </div>
+
+    <div class="modal-body" style="padding:1.6rem;">
+
+      <!-- PROFILE TAB -->
+      <div id="usection-profile">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(232,255,71,0.1);border:1px solid rgba(232,255,71,0.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">👤</div>
           <div>
-            <div style="color: var(--muted); font-size: 0.85rem;">Full Name</div>
-            <div id="userPanelName" style="font-size: 1.1rem; font-weight: 500;">–</div>
-          </div>
-          <div>
-            <div style="color: var(--muted); font-size: 0.85rem;">Email</div>
-            <div id="userPanelEmail" style="font-size: 1.1rem; font-weight: 500;">–</div>
+            <div id="userPanelName" style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:600;">–</div>
+            <div id="userPanelEmail" style="font-size:0.82rem;color:var(--muted2);margin-top:0.2rem;">–</div>
           </div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;" id="userProfileGrid">
+          <!-- filled by JS -->
+        </div>
       </div>
-      
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
-        <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Your Orders</h3>
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse;">
+
+      <!-- ORDERS TAB -->
+      <div id="usection-orders" style="display:none;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
             <thead>
-              <tr style="border-bottom: 1px solid var(--border);">
-                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Plan</th>
-                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Qty</th>
-                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Total</th>
-                <th style="padding: 0.75rem 1rem; text-align: left; color: var(--muted); font-size:0.85rem;">Status</th>
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Plan</th>
+                <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Soni</th>
+                <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Jami</th>
+                <th style="padding:0.6rem 0.8rem;text-align:left;color:var(--muted);font-weight:500;">Holat</th>
               </tr>
             </thead>
             <tbody id="userOrdersBody">
-              <tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">No orders yet</td></tr>
+              <tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">Buyurtmalar yo'q</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="usection-settings" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:0.8rem;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;">
+            <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.25rem;">Til / Language</div>
+            <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+              <button onclick="setLanguage('uz')" style="flex:1;padding:0.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;" id="settLangUz">🇺🇿 UZ</button>
+              <button onclick="setLanguage('ru')" style="flex:1;padding:0.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;" id="settLangRu">🇷🇺 RU</button>
+              <button onclick="setLanguage('en')" style="flex:1;padding:0.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;" id="settLangEn">🇬🇧 EN</button>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;">
+            <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.5rem;">Hisob</div>
+            <button onclick="closeUserPanel(); logout()" style="width:100%;padding:0.7rem;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);border-radius:8px;color:#ff8888;font-family:'DM Sans',sans-serif;font-size:0.88rem;cursor:pointer;">↪ Hisobdan chiqish</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

@@ -138,6 +138,31 @@ nav ul a:hover { color: var(--text); }
 .lang-dropdown button:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 .lang-dropdown button.active { color: var(--accent); background: rgba(232,255,71,0.06); }
 
+/* ── Profile picker ── */
+.profile-picker { position: relative; }
+.profile-current { gap: 0.45rem !important; min-width: 0; }
+.profile-avatar-dot { color: var(--accent); font-size: 0.5rem; flex-shrink: 0; }
+.profile-dropdown { min-width: 190px; text-align: left !important; }
+.profile-dropdown button { text-align: left !important; font-size: 0.84rem !important; }
+.profile-drop-divider {
+  height: 1px; background: var(--border); margin: 0.3rem 0.6rem;
+}
+.profile-logout-btn { color: #ff8888 !important; }
+.profile-logout-btn:hover { background: rgba(255,107,107,0.06) !important; color: #ff9999 !important; }
+
+/* Mobile profile section */
+.mobile-profile-name {
+  font-size: 0.78rem; color: var(--muted); font-weight: 500;
+  padding: 0.4rem 0 0.2rem; letter-spacing: 0.03em;
+}
+#mProfileMenu button {
+  width: 100%; text-align: left; background: none; border: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem; padding: 0.65rem 0; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+#mProfileMenu button:last-child { border-bottom: none; }
+
 .mobile-lang-row {
   display: flex; gap: 0.5rem; padding: 0.3rem 0;
 }
@@ -945,7 +970,7 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
 }
 .btn-next:hover { box-shadow: 0 4px 20px rgba(232,255,71,0.35); transform: translateY(-1px); }
 
-.auth-tabs { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.auth-tabs { display: flex; gap: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
 .auth-tab {
   flex: 1; padding: 0.8rem; text-align: center; font-size: 0.88rem;
   border: none; background: none; color: var(--muted);
@@ -953,6 +978,17 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
   font-family: 'DM Sans', sans-serif; margin-bottom: -1px;
 }
 .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* User panel tabs */
+.upanel-tab {
+  padding: 0.75rem 1.1rem; font-size: 0.83rem;
+  border: none; background: none; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap;
+  transition: color 0.18s, border-color 0.18s;
+}
+.upanel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.upanel-tab:hover:not(.active) { color: var(--text); }
 .auth-form { display: flex; flex-direction: column; gap: 1rem; }
 .auth-form.hidden { display: none; }
 .input-group { display: flex; flex-direction: column; gap: 0.4rem; }

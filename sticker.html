@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NFCraft Stiker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" href="./555ppp.jpg" type="image/jpeg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #0a0a0a;
+    --surface: #141414;
+    --surface2:#1a1a1a;
+    --border:  rgba(255,255,255,0.08);
+    --text:    #f0f0f0;
+    --muted:   #666;
+    --muted2:  #888;
+    --accent:  #e8ff47;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 4rem;
+  }
+
+  /* ── Top bar ── */
+  .top-bar {
+    width: 100%; max-width: 480px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.4rem 0;
+  }
+  .brand { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+  .brand span { color: var(--accent); }
+  .sticker-badge {
+    background: rgba(232,255,71,0.1);
+    border: 1px solid rgba(232,255,71,0.25);
+    color: var(--accent);
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em;
+    padding: 0.25rem 0.7rem; border-radius: 20px;
+  }
+
+  /* ── Card ── */
+  .card {
+    width: 100%; max-width: 480px;
+    margin: 1.6rem 1rem 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  /* Category color strip */
+  .card-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, #e8ff47, #a8e63d);
+  }
+
+  .card-body { padding: 1.8rem 1.6rem 1.4rem; }
+
+  /* Logo */
+  .biz-logo {
+    width: 64px; height: 64px; border-radius: 14px;
+    object-fit: cover;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+  }
+  .biz-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+  .category-pill {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    font-size: 0.72rem; font-weight: 500; letter-spacing: 0.03em;
+    padding: 0.2rem 0.7rem; border-radius: 20px;
+    margin-bottom: 0.7rem;
+  }
+
+  .biz-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem; font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .biz-desc {
+    color: var(--muted2); font-size: 0.88rem; line-height: 1.6;
+    margin-bottom: 1.4rem;
+  }
+
+  /* Info rows */
+  .info-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .info-row {
+    display: flex; align-items: flex-start; gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none; color: inherit;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .info-row:hover { border-color: rgba(255,255,255,0.18); background: #1f1f1f; }
+
+  .info-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(232,255,71,0.08);
+    border: 1px solid rgba(232,255,71,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem;
+  }
+  .info-text-wrap { display: flex; flex-direction: column; gap: 0.15rem; }
+  .info-label { font-size: 0.7rem; color: var(--muted); font-weight: 500; letter-spacing: 0.03em; }
+  .info-value { font-size: 0.92rem; color: var(--text); line-height: 1.4; }
+
+  /* CTA buttons */
+  .cta-group {
+    display: flex; flex-direction: column; gap: 0.75rem;
+    margin-top: 1.4rem;
+  }
+
+  .btn-call {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    padding: 0.9rem 1.4rem;
+    background: var(--accent); color: #0a0a0a;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+    border: none; border-radius: 12px;
+    text-decoration: none; cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn-call:hover { transform: translateY(-1px); opacity: 0.92; }
+
+  .btn-map {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    padding: 0.85rem 1.4rem;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.14);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 500;
+    border-radius: 12px;
+    text-decoration: none; cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .btn-map:hover { background: var(--surface2); border-color: rgba(255,255,255,0.25); }
+
+  /* Complaint section */
+  .complaint-box {
+    width: 100%; max-width: 480px;
+    margin: 1rem 1rem 0;
+    background: rgba(255,107,107,0.05);
+    border: 1px solid rgba(255,107,107,0.15);
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+  }
+  .complaint-title {
+    font-size: 0.8rem; font-weight: 600; color: #ff8888;
+    margin-bottom: 0.5rem; letter-spacing: 0.03em;
+  }
+  .complaint-text {
+    font-size: 0.82rem; color: var(--muted2); line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer-note {
+    margin-top: 2.2rem;
+    font-size: 0.72rem; color: var(--muted);
+    text-decoration: none;
+    display: block; text-align: center;
+  }
+  .footer-note:hover { color: var(--accent); }
+
+  /* Loading / error */
+  .state-msg {
+    margin-top: 4rem; text-align: center; color: var(--muted2);
+    font-size: 0.95rem; padding: 0 2rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">NF<span>Craft</span></div>
+  <div class="sticker-badge">NFC STIKER</div>
+</div>
+
+<div id="mainContent" style="width:100%;max-width:480px;display:none;">
+
+  <div class="card">
+    <div class="card-stripe"></div>
+    <div class="card-body">
+
+      <div class="biz-logo" id="bizLogo">🏪</div>
+
+      <div class="category-pill" id="categoryPill" style="display:none;"></div>
+      <div class="biz-name" id="bizName">—</div>
+      <div class="biz-desc" id="bizDesc" style="display:none;"></div>
+
+      <div class="info-list">
+
+        <a class="info-row" id="phoneRow" href="#">
+          <div class="info-icon">📞</div>
+          <div class="info-text-wrap">
+            <span class="info-label">Telefon</span>
+            <span class="info-value" id="bizPhone">—</span>
+          </div>
+        </a>
+
+        <div class="info-row">
+          <div class="info-icon">📍</div>
+          <div class="info-text-wrap">
+            <span class="info-label">Manzil</span>
+            <span class="info-value" id="bizAddress">—</span>
+          </div>
+        </div>
+
+        <div class="info-row" id="hoursRow" style="display:none;">
+          <div class="info-icon">🕐</div>
+          <div class="info-text-wrap">
+            <span class="info-label">Ish vaqti</span>
+            <span class="info-value" id="bizHours">—</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="cta-group">
+        <a class="btn-call" id="callBtn" href="#">
+          📞 Qo'ng'iroq qilish
+        </a>
+        <a class="btn-map" id="mapBtn"
+           href="#" target="_blank" rel="noopener">
+          🗺 Xaritada ko'rish
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="complaint-box">
+    <div class="complaint-title">⚠️ Muammo yoki shikoyat bormi?</div>
+    <div class="complaint-text" id="complaintText">
+      Ushbu mahsulotni sotib olgan market bilan bog'laning.<br>
+      Yuqoridagi telefon raqamini bosib aloqa qiling.
+    </div>
+  </div>
+
+</div>
+
+<div class="state-msg" id="loadingMsg">Yuklanmoqda...</div>
+<div class="state-msg" id="errorMsg" style="display:none;">
+  Stiker ma'lumotlari topilmadi.<br>
+  <span style="font-size:0.8rem;color:var(--muted);">Iltimos, to'g'ri QR/NFC stikerdan foydalaning.</span>
+</div>
+
+<a class="footer-note" href="https://nfcraft.uz" target="_blank" rel="noopener">
+  Powered by NFCraft · nfcraft.uz
+</a>
+
+<script>
+const API = 'https://nfcraftbackend1-production.up.railway.app/api';
+
+function getUUID() {
+  const p = new URLSearchParams(location.search);
+  return p.get('uuid') || p.get('id') || '';
+}
+
+function show(id)  { const el = document.getElementById(id); if (el) el.style.display = ''; }
+function hide(id)  { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function text(id, val) { const el = document.getElementById(id); if (el) el.textContent = val || '—'; }
+
+async function loadSticker() {
+  const uuid = getUUID();
+  if (!uuid) { hide('loadingMsg'); show('errorMsg'); return; }
+
+  try {
+    const res  = await fetch(`${API}/sticker/info/${uuid}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.businessName) { hide('loadingMsg'); show('errorMsg'); return; }
+
+    // Business name
+    text('bizName', data.businessName);
+    document.title = data.businessName + ' — NFCraft';
+
+    // Logo
+    const logoEl = document.getElementById('bizLogo');
+    if (data.logo && data.logo.startsWith('data:')) {
+      logoEl.innerHTML = `<img src="${data.logo}" alt="logo"/>`;
+    } else {
+      const icons = { supermarket:'🛒', dorixona:'💊', elektronika:'📱', oziq:'🥦', kiyim:'👕', restaurant:'🍽', cafe:'☕', salon:'✂️' };
+      const cat = (data.category || '').toLowerCase();
+      logoEl.textContent = icons[cat] || '🏪';
+    }
+
+    // Category
+    if (data.category) {
+      const pill = document.getElementById('categoryPill');
+      pill.textContent = data.category;
+      show('categoryPill');
+    }
+
+    // Description
+    if (data.description) {
+      text('bizDesc', data.description);
+      show('bizDesc');
+    }
+
+    // Phone
+    const phone = data.phone || '';
+    text('bizPhone', phone);
+    document.getElementById('phoneRow').href = 'tel:' + phone.replace(/\s/g,'');
+    document.getElementById('callBtn').href  = 'tel:' + phone.replace(/\s/g,'');
+
+    // Address
+    text('bizAddress', data.address);
+    const mapUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(data.address);
+    document.getElementById('mapBtn').href = mapUrl;
+
+    // Working hours
+    if (data.workingHours) {
+      text('bizHours', data.workingHours);
+      show('hoursRow');
+    }
+
+    // Complaint text
+    text('complaintText',
+      `"${data.businessName}" do'konida mahsulotingiz bilan muammo yuzaga kelsa, yuqoridagi telefonga qo'ng'iroq qiling.\nManzil: ${data.address}`
+    );
+
+    hide('loadingMsg');
+    show('mainContent');
+  } catch (err) {
+    hide('loadingMsg');
+    show('errorMsg');
+  }
+}
+
+loadSticker();
+</script>
+
+</body>
+</html>
