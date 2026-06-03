@@ -771,6 +771,59 @@
 
 </section>
 
+<!-- ══ STIKER DESIGNER MODAL ══ -->
+<div class="overlay" id="stickerDesignerOverlay">
+  <div class="modal" style="max-width:860px;max-height:96vh;overflow-y:auto;margin:1rem;">
+    <div class="modal-header">
+      <div class="modal-title">🎨 Stiker Dizaynlash</div>
+      <button class="modal-close" onclick="closeOverlay('stickerDesignerOverlay')">✕</button>
+    </div>
+    <!-- Toolbar -->
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.8rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface2);">
+      <label class="ds-tool-btn" title="Logo yuklash">
+        📸 Logo
+        <input type="file" accept="image/*" onchange="dsLoadLogo(this)" style="display:none;"/>
+      </label>
+      <button class="ds-tool-btn" onclick="dsAddText()" title="Matn qo'shish">✏️ Matn</button>
+      <button class="ds-tool-btn" onclick="dsUndo()" title="Orqaga">↩ Undo</button>
+      <button class="ds-tool-btn" onclick="dsDeleteSelected()" title="O'chirish" id="dsBtnDelete" style="display:none;color:#ff8888;">🗑 O'chir</button>
+      <div style="display:flex;align-items:center;gap:0.4rem;margin-left:0.3rem;">
+        <span style="font-size:0.72rem;color:var(--muted);">Fon:</span>
+        <input type="color" id="dsBgColorPicker" value="#ffffff" oninput="dsBgColor(this.value)" style="width:30px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:1px;background:var(--surface);"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;" id="dsTextControls" style="display:none;">
+        <span style="font-size:0.72rem;color:var(--muted);">Rang:</span>
+        <input type="color" id="dsTextColorPicker" value="#111111" oninput="dsSetTextColor(this.value)" style="width:30px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:1px;background:var(--surface);"/>
+        <select id="dsFontPicker" onchange="dsSetFont(this.value)" style="padding:0.3rem 0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;cursor:pointer;">
+          <option value="bold 700 Syne,sans-serif">Syne Bold</option>
+          <option value="500 DM Sans,sans-serif">DM Sans</option>
+          <option value="bold Georgia,serif">Serif</option>
+          <option value="bold monospace">Mono</option>
+        </select>
+        <input type="range" id="dsFontSize" min="12" max="80" value="36" oninput="dsSetFontSize(+this.value)" style="width:70px;accent-color:var(--accent);" title="Hajm"/>
+      </div>
+    </div>
+
+    <!-- Canvas area -->
+    <div style="padding:1.2rem;background:#111;display:flex;justify-content:center;">
+      <div style="position:relative;display:inline-block;">
+        <canvas id="dsCanvas" style="border-radius:16px;display:block;touch-action:none;box-shadow:0 8px 40px rgba(0,0,0,0.6);cursor:crosshair;max-width:100%;"></canvas>
+        <div style="position:absolute;bottom:0.5rem;right:0.8rem;font-size:0.6rem;color:rgba(255,255,255,0.3);font-family:'Syne',sans-serif;pointer-events:none;">Elementni sudrab joylashtiring</div>
+      </div>
+    </div>
+
+    <!-- Bottom actions -->
+    <div style="display:flex;gap:0.7rem;padding:1rem 1.4rem;border-top:1px solid var(--border);">
+      <button onclick="dsSaveAndOrder()" style="flex:1;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;">
+        Buyurtma Berish →
+      </button>
+      <button onclick="skipDesignAndOrder()" style="padding:0.85rem 1.2rem;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;">
+        Dizaynsiz
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ STIKER ORDER MODAL ══ -->
 <div class="overlay" id="stickerOverlay" onclick="handleOverlayClick(event)">
   <div class="modal" style="max-width:480px;">

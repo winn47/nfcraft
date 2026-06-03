@@ -870,11 +870,338 @@ function logout() {
 // ─────────────────────────────────────────────────────────────
 
 function openStickerOrder() {
-  if (!currentUser) {
-    openAuth('register');
-    return;
-  }
+  if (!currentUser) { openAuth('register'); return; }
   closeOverlay('orderOverlay');
+  openStickerDesigner();
+}
+
+function skipDesignAndOrder() {
+  closeOverlay('stickerDesignerOverlay');
+  _dsDesignData = null;
+  const overlay = document.getElementById('stickerOverlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CANVAS STIKER DIZAYNER
+// ─────────────────────────────────────────────────────────────
+
+let _dsCanvas, _dsCtx;
+let _dsElements = [];   // [{id,type,x,y,w,h,text,font,color,img,imgSrc}]
+let _dsSelected = null; // selected element id
+let _dsDragging = false;
+let _dsDragOff  = {x:0, y:0};
+let _dsHistory  = [];
+let _dsDesignData = null;
+let _dsBg = '#ffffff';
+const DS_W = 560, DS_H = 315; // 16:9 canvas size
+
+function openStickerDesigner() {
+  const overlay = document.getElementById('stickerDesignerOverlay');
+  if (overlay) overlay.classList.add('active');
+  requestAnimationFrame(() => initDesignerCanvas());
+}
+
+function initDesignerCanvas() {
+  _dsCanvas = document.getElementById('dsCanvas');
+  if (!_dsCanvas) return;
+
+  // Responsive scaling
+  const maxW = Math.min(window.innerWidth - 48, 760);
+  const scale = Math.min(1, maxW / DS_W);
+  _dsCanvas.width  = DS_W;
+  _dsCanvas.height = DS_H;
+  _dsCanvas.style.width  = Math.round(DS_W * scale) + 'px';
+  _dsCanvas.style.height = Math.round(DS_H * scale) + 'px';
+
+  _dsCtx = _dsCanvas.getContext('2d');
+  _dsBg = '#ffffff';
+  document.getElementById('dsBgColorPicker').value = '#ffffff';
+  _dsHistory = [];
+  _dsSelected = null;
+
+  // Default elements
+  _dsElements = [
+    { id:'nfclogo', type:'text', x:18, y:22, text:'NFCraft', font:'bold 11px Syne,sans-serif', color:'rgba(0,0,0,0.35)', locked:true },
+    { id:'footer',  type:'text', x:18, y:DS_H-12, text:'nfcraft.uz · NFC Stiker biznesingiz uchun', font:'10px DM Sans,sans-serif', color:'rgba(0,0,0,0.45)', locked:true },
+    { id:'brand',   type:'text', x:DS_W/2, y:DS_H/2+12, text:'BIZNESINGIZ', font:'bold 36px Syne,sans-serif', color:'#111111', align:'center' },
+    { id:'nfcring', type:'nfc',  x:DS_W/2, y:DS_H/2-28, r:34 },
+  ];
+
+  dsBindEvents();
+  dsDraw();
+}
+
+function dsDraw() {
+  if (!_dsCtx) return;
+  const ctx = _dsCtx;
+  ctx.clearRect(0, 0, DS_W, DS_H);
+
+  // Background with rounded corners
+  ctx.save();
+  dsRoundRect(ctx, 0, 0, DS_W, DS_H, 0);
+  ctx.fillStyle = _dsBg;
+  ctx.fill();
+  ctx.restore();
+
+  // Draw elements back-to-front
+  for (const el of _dsElements) {
+    ctx.save();
+    if (el.type === 'text') {
+      ctx.font  = el.font || 'bold 36px Syne,sans-serif';
+      ctx.fillStyle = el.color || '#111';
+      ctx.textAlign = el.align || 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(el.text, el.x, el.y);
+    } else if (el.type === 'image' && el.img) {
+      ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
+    } else if (el.type === 'nfc') {
+      dsDrawNfc(ctx, el.x, el.y, el.r, _dsTextColor());
+    }
+    // Selection handles
+    if (_dsSelected === el.id && !el.locked) {
+      const bb = dsGetBBox(el);
+      ctx.strokeStyle = '#e8ff47';
+      ctx.lineWidth   = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(bb.x - 6, bb.y - 6, bb.w + 12, bb.h + 12);
+      ctx.setLineDash([]);
+      // Corner handles
+      [[bb.x-6,bb.y-6],[bb.x+bb.w+6,bb.y-6],[bb.x-6,bb.y+bb.h+6],[bb.x+bb.w+6,bb.y+bb.h+6]].forEach(([hx,hy]) => {
+        ctx.fillStyle = '#e8ff47';
+        ctx.fillRect(hx-4, hy-4, 8, 8);
+      });
+    }
+    ctx.restore();
+  }
+}
+
+function dsDrawNfc(ctx, cx, cy, r, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  // Outer circle
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+  // Mid arc
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.6, Math.PI*0.3, Math.PI*1.7); ctx.stroke();
+  // Inner dot
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2); ctx.stroke();
+}
+
+function dsRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function _dsTextColor() {
+  // Auto-contrast based on background
+  const hex = _dsBg.replace('#','');
+  if (hex.length < 6) return '#111';
+  const r = parseInt(hex.slice(0,2),16);
+  const g = parseInt(hex.slice(2,4),16);
+  const b = parseInt(hex.slice(4,6),16);
+  return (r*0.299+g*0.587+b*0.114) > 140 ? '#111111' : '#ffffff';
+}
+
+function dsGetBBox(el) {
+  if (!_dsCtx) return {x:el.x,y:el.y,w:60,h:20};
+  if (el.type === 'text') {
+    _dsCtx.font = el.font || 'bold 36px Syne,sans-serif';
+    _dsCtx.textAlign = el.align || 'left';
+    const m = _dsCtx.measureText(el.text);
+    const w = m.width;
+    const h = parseInt(el.font) || 20;
+    const ax = el.align === 'center' ? el.x - w/2 : el.x;
+    return { x:ax, y:el.y-h/2, w, h };
+  }
+  if (el.type === 'nfc')   return { x:el.x-el.r, y:el.y-el.r, w:el.r*2, h:el.r*2 };
+  if (el.type === 'image') return { x:el.x, y:el.y, w:el.w, h:el.h };
+  return { x:el.x, y:el.y, w:60, h:20 };
+}
+
+function dsHitTest(mx, my) {
+  for (let i = _dsElements.length-1; i >= 0; i--) {
+    const el = _dsElements[i];
+    if (el.locked) continue;
+    const bb = dsGetBBox(el);
+    if (mx >= bb.x-8 && mx <= bb.x+bb.w+8 && my >= bb.y-8 && my <= bb.y+bb.h+8) return el;
+  }
+  return null;
+}
+
+function dsCanvasXY(e) {
+  const rect = _dsCanvas.getBoundingClientRect();
+  const scaleX = DS_W / rect.width;
+  const scaleY = DS_H / rect.height;
+  const src = e.touches ? e.touches[0] : e;
+  return { x:(src.clientX - rect.left)*scaleX, y:(src.clientY - rect.top)*scaleY };
+}
+
+function dsBindEvents() {
+  const c = _dsCanvas;
+  const down = (e) => {
+    e.preventDefault();
+    const {x,y} = dsCanvasXY(e);
+    const hit = dsHitTest(x, y);
+    _dsDragging = !!hit;
+    _dsSelected = hit ? hit.id : null;
+    if (hit) { _dsDragOff = {x: x - hit.x, y: y - hit.y}; }
+    _dsShowTextControls(hit && hit.type === 'text' && !hit.locked ? hit : null);
+    document.getElementById('dsBtnDelete').style.display = (_dsSelected && !_dsElements.find(e=>e.id===_dsSelected)?.locked) ? '' : 'none';
+    dsDraw();
+  };
+  const move = (e) => {
+    e.preventDefault();
+    if (!_dsDragging || !_dsSelected) return;
+    const {x,y} = dsCanvasXY(e);
+    const el = _dsElements.find(e=>e.id===_dsSelected);
+    if (!el || el.locked) return;
+    el.x = Math.max(0, Math.min(DS_W, x - _dsDragOff.x));
+    el.y = Math.max(0, Math.min(DS_H, y - _dsDragOff.y));
+    dsDraw();
+  };
+  const up = () => { _dsDragging = false; dsSnapshot(); };
+
+  c.addEventListener('mousedown', down);
+  c.addEventListener('mousemove', move);
+  c.addEventListener('mouseup',   up);
+  c.addEventListener('touchstart', down, {passive:false});
+  c.addEventListener('touchmove',  move, {passive:false});
+  c.addEventListener('touchend',   up);
+}
+
+function _dsShowTextControls(el) {
+  const tc = document.getElementById('dsTextControls');
+  if (!tc) return;
+  if (el) {
+    tc.style.display = 'flex';
+    document.getElementById('dsTextColorPicker').value = el.color || '#111111';
+    const size = parseInt(el.font) || 36;
+    document.getElementById('dsFontSize').value = size;
+  } else {
+    tc.style.display = 'none';
+  }
+}
+
+// ── Canvas actions ──
+function dsAddText() {
+  dsSnapshot();
+  const id = 'txt_' + Date.now();
+  _dsElements.push({ id, type:'text', x:DS_W/2, y:DS_H/2, text:'MATN', font:'bold 32px Syne,sans-serif', color:_dsTextColor(), align:'center' });
+  _dsSelected = id;
+  _dsShowTextControls(_dsElements.at(-1));
+  document.getElementById('dsBtnDelete').style.display = '';
+  dsDraw();
+  // Prompt for text
+  const val = prompt('Matnni kiriting:', 'MATN');
+  if (val !== null) {
+    _dsElements.at(-1).text = val || 'MATN';
+    dsDraw();
+  }
+}
+
+function dsLoadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  dsSnapshot();
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxS = 80;
+      const ratio = Math.min(maxS/img.width, maxS/img.height);
+      const w = Math.round(img.width * ratio);
+      const h = Math.round(img.height * ratio);
+      // Remove old logo if any
+      _dsElements = _dsElements.filter(el => el.id !== 'logo');
+      _dsElements.push({ id:'logo', type:'image', x:30, y:DS_H/2 - h/2, w, h, img, imgSrc:e.target.result });
+      dsDraw();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function dsBgColor(color) {
+  dsSnapshot();
+  _dsBg = color;
+  // Auto-update text colors for locked elements
+  const tc = _dsTextColor();
+  _dsElements.forEach(el => {
+    if (el.locked) el.color = tc.replace('111111','000000').replace('ffffff','ffffff');
+    if (el.type === 'nfc') {} // nfc color auto
+  });
+  dsDraw();
+}
+
+function dsSetTextColor(color) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (el && el.type === 'text') { el.color = color; dsDraw(); }
+}
+
+function dsSetFont(val) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (!el || el.type !== 'text') return;
+  const size = parseInt(el.font) || 36;
+  el.font = val.includes('px') ? val : `bold ${size}px ${val.split(' ').pop()}`;
+  dsDraw();
+}
+
+function dsSetFontSize(size) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (!el || el.type !== 'text') return;
+  // Replace size part: e.g. "bold 36px Syne" → "bold 28px Syne"
+  el.font = el.font.replace(/\d+px/, size + 'px');
+  dsDraw();
+}
+
+function dsDeleteSelected() {
+  if (!_dsSelected) return;
+  dsSnapshot();
+  _dsElements = _dsElements.filter(e => e.id !== _dsSelected);
+  _dsSelected = null;
+  document.getElementById('dsBtnDelete').style.display = 'none';
+  dsDraw();
+}
+
+function dsUndo() {
+  if (!_dsHistory.length) return;
+  const state = _dsHistory.pop();
+  _dsElements = JSON.parse(state.els);
+  // Re-attach images
+  _dsElements.forEach(el => {
+    if (el.type === 'image' && el.imgSrc) {
+      const img = new Image(); img.src = el.imgSrc; el.img = img;
+    }
+  });
+  _dsBg = state.bg;
+  document.getElementById('dsBgColorPicker').value = _dsBg;
+  dsDraw();
+}
+
+function dsSnapshot() {
+  // Save current state (strip non-serializable img)
+  const els = _dsElements.map(el => ({ ...el, img: undefined }));
+  _dsHistory.push({ els: JSON.stringify(els), bg: _dsBg });
+  if (_dsHistory.length > 30) _dsHistory.shift();
+}
+
+function dsSaveAndOrder() {
+  // Export canvas as base64
+  const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/png') : null;
+  const elSummary = _dsElements
+    .filter(e => !e.locked && e.type === 'text')
+    .map(e => e.text).join(', ');
+  _dsDesignData = { preview: dataUrl, bgColor: _dsBg, elements: elSummary };
+  closeOverlay('stickerDesignerOverlay');
   const overlay = document.getElementById('stickerOverlay');
   if (overlay) overlay.classList.add('active');
 }
