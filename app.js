@@ -2572,6 +2572,12 @@ function updateCiCount() {
 }
 
 async function submitCardInfo() {
+  const btn = document.getElementById('ciSubmitBtn');
+
+  // Prevent double-submit
+  if (btn && btn.disabled) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Yuklanmoqda...'; }
+
   const fields = [];
   const fieldEls = document.getElementById('ciFieldsList')?.children || [];
   for (const el of fieldEls) {
@@ -2585,6 +2591,7 @@ async function submitCardInfo() {
 
   if (!fields.length) {
     alert('Kamida 1 ta ma\'lumot kiriting.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
     return;
   }
 
@@ -2612,8 +2619,11 @@ async function submitCardInfo() {
     _generatedCardLink = data.cardUrl || '';
     closeOverlay('cardInfoOverlay');
     document.getElementById('successOverlay').classList.add('active');
+    // Reset button for next use
+    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
   } catch (err) {
     alert('Xato: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
   }
 }
 
