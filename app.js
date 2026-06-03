@@ -82,13 +82,17 @@ function updateAuthUI() {
     if (siteNav)    siteNav.style.display    = 'none';
     if (siteFooter) siteFooter.style.display = 'none';
     if (adminDash)  adminDash.style.display  = 'block';
-    document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('section').forEach(s => {
+      if (!s.id.endsWith('-old')) s.style.display = 'none';
+    });
     loadAdminDashboard();
   } else if (currentUser) {
     if (siteNav)    siteNav.style.display    = '';
     if (siteFooter) siteFooter.style.display = '';
     if (adminDash)  adminDash.style.display  = 'none';
-    document.querySelectorAll('section').forEach(s => s.style.display = '');
+    document.querySelectorAll('section').forEach(s => {
+      if (!s.id.endsWith('-old')) s.style.display = '';
+    });
     if (userManagementSection) userManagementSection.style.display = 'none';
 
     // Desktop: hide login/register, show profile picker
@@ -109,7 +113,9 @@ function updateAuthUI() {
     if (siteNav)    siteNav.style.display    = '';
     if (siteFooter) siteFooter.style.display = '';
     if (adminDash)  adminDash.style.display  = 'none';
-    document.querySelectorAll('section').forEach(s => s.style.display = '');
+    document.querySelectorAll('section').forEach(s => {
+      if (!s.id.endsWith('-old')) s.style.display = '';
+    });
     if (userManagementSection) userManagementSection.style.display = 'none';
 
     if (loginBtn)     loginBtn.style.display     = 'inline-block';
@@ -1045,51 +1051,147 @@ function dsCanvasXY(e) {
   return { x:(src.clientX - rect.left)*scaleX, y:(src.clientY - rect.top)*scaleY };
 }
 
+const HANDLE = 8; // resize handle half-size in px
+
 function dsBindEvents() {
   const c = _dsCanvas;
+
+  // Check if point is on a resize handle corner of selected element
+  function hitHandle(x, y) {
+    if (!_dsSelected) return null;
+    const el = _dsElements.find(e => e.id === _dsSelected);
+    if (!el || el.locked) return null;
+    const bb = dsGetBBox(el);
+    const corners = [
+      { cx: bb.x - 6,        cy: bb.y - 6,        dx: -1, dy: -1 },
+      { cx: bb.x + bb.w + 6, cy: bb.y - 6,        dx:  1, dy: -1 },
+      { cx: bb.x - 6,        cy: bb.y + bb.h + 6, dx: -1, dy:  1 },
+      { cx: bb.x + bb.w + 6, cy: bb.y + bb.h + 6, dx:  1, dy:  1 },
+    ];
+    for (const corner of corners) {
+      if (Math.abs(x - corner.cx) <= HANDLE + 2 && Math.abs(y - corner.cy) <= HANDLE + 2) return corner;
+    }
+    return null;
+  }
+
+  let _resizeCorner = null;
+  let _resizeStart  = null;
+  let _resizeOrigEl = null;
+
   const down = (e) => {
     e.preventDefault();
-    const {x,y} = dsCanvasXY(e);
+    const {x, y} = dsCanvasXY(e);
+
+    // Check resize handle first
+    const handle = hitHandle(x, y);
+    if (handle) {
+      _resizeCorner = handle;
+      const el = _dsElements.find(e => e.id === _dsSelected);
+      _resizeStart  = { x, y };
+      _resizeOrigEl = { x: el.x, y: el.y, w: el.w, h: el.h, r: el.r, font: el.font };
+      return;
+    }
+
+    // Normal click/drag
     const hit = dsHitTest(x, y);
     _dsDragging = !!hit;
     _dsSelected = hit ? hit.id : null;
-    if (hit) { _dsDragOff = {x: x - hit.x, y: y - hit.y}; }
-    _dsShowTextControls(hit && hit.type === 'text' && !hit.locked ? hit : null);
-    document.getElementById('dsBtnDelete').style.display = (_dsSelected && !_dsElements.find(e=>e.id===_dsSelected)?.locked) ? '' : 'none';
+    if (hit) _dsDragOff = { x: x - hit.x, y: y - hit.y };
+
+    _dsShowElementControls(hit && !hit.locked ? hit : null);
+    document.getElementById('dsBtnDelete').style.display =
+      (_dsSelected && !_dsElements.find(e => e.id === _dsSelected)?.locked) ? '' : 'none';
     dsDraw();
   };
+
   const move = (e) => {
     e.preventDefault();
+    const {x, y} = dsCanvasXY(e);
+
+    // Resize mode
+    if (_resizeCorner && _dsSelected) {
+      const el = _dsElements.find(e => e.id === _dsSelected);
+      if (!el) return;
+      const dx = x - _resizeStart.x;
+      const dy = y - _resizeStart.y;
+
+      if (el.type === 'text') {
+        // Resize text = change font size
+        const origSize = parseInt(_resizeOrigEl.font) || 36;
+        const delta = _resizeCorner.dx * dx + _resizeCorner.dy * dy;
+        const newSize = Math.max(10, Math.min(100, origSize + delta * 0.5));
+        el.font = el.font.replace(/\d+px/, Math.round(newSize) + 'px');
+        const sizeSlider = document.getElementById('dsFontSize');
+        if (sizeSlider) sizeSlider.value = Math.round(newSize);
+      } else if (el.type === 'image') {
+        // Resize image proportionally
+        const origW = _resizeOrigEl.w, origH = _resizeOrigEl.h;
+        const ratio = origW / Math.max(1, origH);
+        const delta = Math.max(_resizeCorner.dx * dx, _resizeCorner.dy * dy);
+        el.w = Math.max(20, origW + delta);
+        el.h = Math.max(20, el.w / ratio);
+      } else if (el.type === 'nfc') {
+        const delta = (_resizeCorner.dx * dx + _resizeCorner.dy * dy) * 0.5;
+        el.r = Math.max(15, Math.min(100, (_resizeOrigEl.r || 34) + delta));
+      }
+      dsDraw();
+      return;
+    }
+
+    // Drag mode
     if (!_dsDragging || !_dsSelected) return;
-    const {x,y} = dsCanvasXY(e);
-    const el = _dsElements.find(e=>e.id===_dsSelected);
+    const el = _dsElements.find(e => e.id === _dsSelected);
     if (!el || el.locked) return;
     el.x = Math.max(0, Math.min(DS_W, x - _dsDragOff.x));
     el.y = Math.max(0, Math.min(DS_H, y - _dsDragOff.y));
     dsDraw();
   };
-  const up = () => { _dsDragging = false; dsSnapshot(); };
 
-  c.addEventListener('mousedown', down);
-  c.addEventListener('mousemove', move);
-  c.addEventListener('mouseup',   up);
-  c.addEventListener('touchstart', down, {passive:false});
-  c.addEventListener('touchmove',  move, {passive:false});
+  const up = () => {
+    if (_dsDragging || _resizeCorner) dsSnapshot();
+    _dsDragging = false;
+    _resizeCorner = null;
+    _resizeStart  = null;
+    _resizeOrigEl = null;
+  };
+
+  // Cursor hint
+  c.addEventListener('mousemove', (e) => {
+    const {x, y} = dsCanvasXY(e);
+    if (hitHandle(x, y)) c.style.cursor = 'nwse-resize';
+    else if (dsHitTest(x, y)) c.style.cursor = 'move';
+    else c.style.cursor = 'default';
+  });
+
+  c.addEventListener('mousedown',  down);
+  c.addEventListener('mousemove',  move);
+  c.addEventListener('mouseup',    up);
+  c.addEventListener('touchstart', down, { passive: false });
+  c.addEventListener('touchmove',  move, { passive: false });
   c.addEventListener('touchend',   up);
 }
 
-function _dsShowTextControls(el) {
+function _dsShowElementControls(el) {
   const tc = document.getElementById('dsTextControls');
   if (!tc) return;
-  if (el) {
+  if (el && el.type === 'text') {
     tc.style.display = 'flex';
-    document.getElementById('dsTextColorPicker').value = el.color || '#111111';
+    // Show this element's actual color
+    const colorPicker = document.getElementById('dsTextColorPicker');
+    if (colorPicker) {
+      const c = el.color || '#111111';
+      // Convert rgba to hex if needed
+      colorPicker.value = c.startsWith('#') ? c : '#111111';
+    }
     const size = parseInt(el.font) || 36;
-    document.getElementById('dsFontSize').value = size;
+    const sizeSlider = document.getElementById('dsFontSize');
+    if (sizeSlider) sizeSlider.value = size;
   } else {
     tc.style.display = 'none';
   }
 }
+// Keep old name as alias
+const _dsShowTextControls = _dsShowElementControls;
 
 // ── Canvas actions ──
 function dsAddText() {
@@ -1143,8 +1245,8 @@ function dsBgColor(color) {
 }
 
 function dsSetTextColor(color) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (el && el.type === 'text') { el.color = color; dsDraw(); }
+  const el = _dsElements.find(e => e.id === _dsSelected);
+  if (el && el.type === 'text' && !el.locked) { el.color = color; dsDraw(); }
 }
 
 function dsSetFont(val) {
