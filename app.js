@@ -36,16 +36,25 @@ async function _syncUserStatus() {
     if (!res.ok) return;
     const data = await res.json();
     if (!data.success) return;
-    const adminChanged = currentUser.isAdmin !== data.isAdmin
-                      || currentUser.isSuperAdmin !== data.isSuperAdmin;
-    currentUser.isAdmin      = data.isAdmin;
-    currentUser.isSuperAdmin = data.isSuperAdmin;
+
+    // Only update UI when going FROM non-admin TO admin.
+    // Never demote admin→user from this sync — that would hide the admin panel
+    // while user is actively working. Demotion takes effect on next login.
+    const nowAdmin     = data.isAdmin      === true;
+    const nowSuper     = data.isSuperAdmin === true;
+    const wasAdmin     = isAdmin;
+    const wasSuper     = isSuperAdmin;
+
+    currentUser.isAdmin      = nowAdmin;
+    currentUser.isSuperAdmin = nowSuper;
     currentUser.firstName    = data.firstName || currentUser.firstName;
     currentUser.lastName     = data.lastName  || currentUser.lastName;
-    isAdmin      = data.isAdmin;
-    isSuperAdmin = data.isSuperAdmin;
+    isAdmin      = nowAdmin;
+    isSuperAdmin = nowSuper;
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    if (adminChanged) updateAuthUI();
+
+    // Refresh UI only if user GAINED admin rights (not lost them)
+    if (!wasAdmin && nowAdmin) updateAuthUI();
   } catch (_) {
     // silently ignore network errors
   }
@@ -205,7 +214,7 @@ const translations = {
     googleSignIn: 'Sign in with Google',
     telegramSignIn: 'Sign in with Telegram',
     createAccount: 'Create Account',
-    navProfile: '👤 Profile', navOrders: '📦 My Orders', navSettings: '⚙️ Settings',
+    navProfile: '👤 Profile', navOrders: '📦 My Orders', navSettings: '⚙️ Settings', navBiznes: 'Business',
   },
   uz: {
     navWhy: 'Nima uchun NFC', navPricing: 'Narxlar', navTeam: 'Jamoa', navLocation: 'Manzil', navUsers: 'Foydalanuvchilar',
@@ -278,7 +287,7 @@ const translations = {
     googleSignIn: 'Google orqali kirish',
     telegramSignIn: 'Telegram orqali kirish',
     createAccount: 'Hisob Yaratish',
-    navProfile: '👤 Profil', navOrders: '📦 Buyurtmalar', navSettings: '⚙️ Sozlamalar',
+    navProfile: '👤 Profil', navOrders: '📦 Buyurtmalar', navSettings: '⚙️ Sozlamalar', navBiznes: 'Biznes',
   },
   ru: {
     navWhy: 'Почему NFC', navPricing: 'Цены', navTeam: 'Команда', navLocation: 'Адрес', navUsers: 'Пользователи',
@@ -351,7 +360,7 @@ const translations = {
     googleSignIn: 'Войти через Google',
     telegramSignIn: 'Войти через Telegram',
     createAccount: 'Создать аккаунт',
-    navProfile: '👤 Профиль', navOrders: '📦 Заказы', navSettings: '⚙️ Настройки',
+    navProfile: '👤 Профиль', navOrders: '📦 Заказы', navSettings: '⚙️ Настройки', navBiznes: 'Бизнес',
   },
 };
 
@@ -861,6 +870,10 @@ function logout() {
 // ─────────────────────────────────────────────────────────────
 
 function openStickerOrder() {
+  if (!currentUser) {
+    openAuth('register');
+    return;
+  }
   closeOverlay('orderOverlay');
   const overlay = document.getElementById('stickerOverlay');
   if (overlay) overlay.classList.add('active');
@@ -941,6 +954,15 @@ async function placeStickerOrder() {
 function filterCards(category, btn) {
   document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
   btn.classList.add('active');
+}
+
+function filterCatalog(cat, btn) {
+  document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.sticker-card-item').forEach(el => {
+    const match = cat === 'all' || el.dataset.cat === cat;
+    el.classList.toggle('hidden', !match);
+  });
 }
 
 function applyTranslations() {
@@ -1414,7 +1436,12 @@ async function loadAdminDashboard() {
   if (superAdminSection) superAdminSection.style.display = isSuperAdmin ? 'block' : 'none';
   const roleLabel = document.getElementById('adminRoleLabel');
   if (roleLabel) roleLabel.textContent = isSuperAdmin ? 'Super Admin' : 'Admin';
-  await Promise.all([loadAdminStats(), loadAllOrders(), loadAdminUsers()]);
+  await Promise.all([
+    loadAdminStats().catch(()=>{}),
+    loadAllOrders().catch(()=>{}),
+    loadStickerOrders().catch(()=>{}),
+    loadAdminUsers().catch(()=>{})
+  ]);
   if (isSuperAdmin) loadAdminManagement();
 }
 
@@ -1454,19 +1481,25 @@ async function loadAdminUsers() {
       const toggleBtn = isSuperAdmin && u.email !== 'whatififlydidy@gmail.com'
         ? `<button onclick="toggleUserAdmin(${u.id},${isUserAdmin},'${(u.firstName||'')+ ' '+(u.lastName||'')}')"
             style="padding:0.25rem 0.7rem;background:${isUserAdmin?'rgba(255,80,80,0.1)':'rgba(232,255,71,0.1)'};border:1px solid ${isUserAdmin?'rgba(255,80,80,0.3)':'rgba(232,255,71,0.3)'};color:${isUserAdmin?'#ff6b6b':'var(--accent)'};border-radius:6px;font-size:0.75rem;cursor:pointer">${isUserAdmin?'Admin olish':'Admin qilish'}</button>` : '';
+      const fullName = `${u.firstName || u.firstname || ''} ${u.lastName || u.lastname || ''}`.trim();
       return `
-      <tr style="border-bottom:1px solid var(--border)">
+      <tr style="border-bottom:1px solid var(--border);cursor:pointer;"
+          onclick="openUserDetail(${u.id},'${fullName}')"
+          onmouseenter="this.style.background='rgba(255,255,255,0.03)'"
+          onmouseleave="this.style.background=''">
         <td style="padding:0.6rem 0.8rem;font-weight:700;color:var(--accent);font-size:0.85rem">#${u.id}</td>
-        <td style="padding:0.6rem 0.8rem">${u.firstName || u.firstname || ''} ${u.lastName || u.lastname || ''}${adminBadge}</td>
+        <td style="padding:0.6rem 0.8rem">${fullName}${adminBadge}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.email}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.age || '—'}</td>
         <td style="padding:0.6rem 0.8rem;color:var(--muted2)">${u.gender === 'male' ? 'Erkak' : u.gender === 'female' ? 'Ayol' : '—'}</td>
-        <td style="padding:0.6rem 0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <button onclick="openUserEdit(${u.id},'${u.firstName || u.firstname || ''}','${u.lastName || u.lastname || ''}','${u.email}',${u.age || 0},'${u.gender || ''}')"
-            style="padding:0.25rem 0.7rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.75rem;cursor:pointer">Tahrirlash</button>
-          <button onclick="adminDeleteUser(${u.id})"
-            style="padding:0.25rem 0.7rem;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:6px;font-size:0.75rem;cursor:pointer">O'chirish</button>
-          ${toggleBtn}
+        <td style="padding:0.6rem 0.8rem" onclick="event.stopPropagation()">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button onclick="openUserEdit(${u.id},'${u.firstName || u.firstname || ''}','${u.lastName || u.lastname || ''}','${u.email}',${u.age || 0},'${u.gender || ''}')"
+              style="padding:0.25rem 0.7rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.75rem;cursor:pointer">Tahrirlash</button>
+            <button onclick="adminDeleteUser(${u.id})"
+              style="padding:0.25rem 0.7rem;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:6px;font-size:0.75rem;cursor:pointer">O'chirish</button>
+            ${toggleBtn}
+          </div>
         </td>
       </tr>`;
     }).join('');
@@ -1559,6 +1592,161 @@ async function loadAdminManagement() {
     }).join('');
   } catch {
     adminsBody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
+  }
+}
+
+// ─── Stiker buyurtmalar (admin) ───────────────────────────
+async function loadStickerOrders() {
+  const tbody = document.getElementById('adminStickerOrdersBody');
+  if (!tbody) return;
+  try {
+    const res = await fetch(`${API_BASE}/sticker/orders`, {
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    });
+    if (!res.ok) throw new Error();
+    const orders = await res.json();
+    if (!Array.isArray(orders) || !orders.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:1rem;text-align:center;color:var(--muted2)">Stiker buyurtma yo\'q</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orders.map(o => {
+      const sc = o.status === 'delivered' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : '#facc15';
+      const nextMap = {
+        'pending':    { label: '✅ To\'landi',   next: 'paid' },
+        'paid':       { label: '🔧 Tayyorlanmoqda', next: 'processing' },
+        'processing': { label: '📦 Jo\'natildi', next: 'shipped' },
+        'shipped':    { label: '✓ Yetkazildi',   next: 'delivered' },
+      };
+      const nextBtn = nextMap[o.status]
+        ? `<button onclick="updateStickerStatus(${o.id},'${nextMap[o.status].next}',this)"
+             style="padding:0.2rem 0.55rem;border-radius:7px;border:1px solid rgba(232,255,71,0.3);background:rgba(232,255,71,0.07);color:var(--accent);font-size:0.7rem;cursor:pointer;white-space:nowrap;">
+             ${nextMap[o.status].label}
+           </button>` : '';
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:0.5rem 0.7rem;font-weight:700;color:var(--accent);font-size:0.82rem">${o.orderId||'—'}</td>
+        <td style="padding:0.5rem 0.7rem">${o.businessName||'—'}</td>
+        <td style="padding:0.5rem 0.7rem;color:var(--muted2)">${o.category||'—'}</td>
+        <td style="padding:0.5rem 0.7rem">${o.quantity||0}</td>
+        <td style="padding:0.5rem 0.7rem">$${parseFloat(o.total||0).toFixed(2)}</td>
+        <td style="padding:0.5rem 0.7rem">
+          <span style="padding:0.15rem 0.5rem;border-radius:20px;font-size:0.7rem;background:${sc}22;color:${sc}">${o.status||'pending'}</span>
+        </td>
+        <td style="padding:0.5rem 0.7rem">${nextBtn}</td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
+  }
+}
+
+async function updateStickerStatus(id, newStatus, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    const res = await fetch(`${API_BASE}/sticker/orders/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    await loadStickerOrders();
+  } catch(e) {
+    alert('Xato: ' + e.message);
+    if (btn) { btn.disabled = false; }
+  }
+}
+
+// ─── User detail modal ────────────────────────────────────
+function switchUDTab(tab) {
+  ['info', 'orders', 'sticker'].forEach(t => {
+    const sec = document.getElementById('udsection-' + t);
+    const btn = document.getElementById('udtab-' + t);
+    if (sec) sec.style.display = t === tab ? '' : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+}
+
+async function openUserDetail(userId, userName) {
+  document.getElementById('userDetailTitle').textContent = '👤 ' + (userName || 'Foydalanuvchi #' + userId);
+  switchUDTab('info');
+  document.getElementById('udInfoGrid').innerHTML     = '<div style="padding:1rem;color:var(--muted2)">Yuklanmoqda...</div>';
+  document.getElementById('udOrdersBody').innerHTML   = '<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--muted2)">Yuklanmoqda...</td></tr>';
+  document.getElementById('udStickerBody').innerHTML  = '<tr><td colspan="5" style="padding:1rem;text-align:center;color:var(--muted2)">Yuklanmoqda...</td></tr>';
+  document.getElementById('userDetailOverlay').classList.add('active');
+
+  // Load all 3 in parallel
+  const headers = { 'Authorization': `Bearer ${currentUser.token}` };
+  const [uRes, oRes, sRes] = await Promise.all([
+    fetch(`${API_BASE}/users/${userId}`, { headers }),
+    fetch(`${API_BASE}/orders/user/${userId}`, { headers }),
+    fetch(`${API_BASE}/sticker/orders/user/${userId}`, { headers }),
+  ]);
+
+  // --- Info tab ---
+  if (uRes.ok) {
+    const u = await uRes.json();
+    const fields = [
+      { label: 'ID',          val: u.id },
+      { label: 'Ism Familiya', val: `${u.firstName||''} ${u.lastName||''}`.trim() },
+      { label: 'Email',        val: u.email || '—' },
+      { label: 'Telefon',      val: u.phoneNumber || '—' },
+      { label: 'Yosh',         val: u.age || '—' },
+      { label: 'Jins',         val: u.gender === 'male' ? 'Erkak' : u.gender === 'female' ? 'Ayol' : '—' },
+      { label: 'Manzil',       val: u.address || '—' },
+      { label: 'Ish bosqichi', val: u.jobStage || '—' },
+      { label: 'Ro\'l',        val: u.isAdmin ? '🛡 Admin' : '👤 User' },
+      { label: 'Ro\'yxat',     val: u.createdAt ? u.createdAt.substring(0,10) : '—' },
+    ];
+    document.getElementById('udInfoGrid').innerHTML = fields.map(f => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.2rem;">${f.label}</div>
+        <div style="font-size:0.88rem;font-weight:500;">${f.val}</div>
+      </div>`).join('');
+  }
+
+  // --- Orders tab ---
+  if (oRes.ok) {
+    const orders = await oRes.json();
+    const list = Array.isArray(orders) ? orders : [];
+    document.getElementById('udtab-orders').textContent = `📦 Buyurtmalar (${list.length})`;
+    if (!list.length) {
+      document.getElementById('udOrdersBody').innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--muted2)">Buyurtma yo\'q</td></tr>';
+    } else {
+      document.getElementById('udOrdersBody').innerHTML = list.map(o => {
+        const sc = o.status === 'delivered' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : o.status === 'paid' ? '#34d399' : '#facc15';
+        const nextMap = { pending:{ label:'✅ To\'landi', next:'paid' }, pending_payment:{ label:'✅ To\'landi', next:'paid' }, paid:{ label:'🔧 Tayyor', next:'processing' }, processing:{ label:'📦 Jo\'nat', next:'shipped' }, shipped:{ label:'✓ Yetdi', next:'delivered' } };
+        const nb = nextMap[o.status] ? `<button onclick="updateOrderStatus(${o.orderId||o.id},'${nextMap[o.status].next}',this)" style="padding:0.2rem 0.5rem;border-radius:6px;border:1px solid rgba(232,255,71,0.3);background:rgba(232,255,71,0.07);color:var(--accent);font-size:0.7rem;cursor:pointer;">${nextMap[o.status].label}</button>` : '';
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:0.5rem 0.6rem;font-size:0.8rem;color:var(--accent)">#${o.orderId||o.id}</td>
+          <td style="padding:0.5rem 0.6rem;text-transform:capitalize">${o.plan||'—'}</td>
+          <td style="padding:0.5rem 0.6rem">${o.quantity||1}</td>
+          <td style="padding:0.5rem 0.6rem">$${parseFloat(o.total||0).toFixed(2)}</td>
+          <td style="padding:0.5rem 0.6rem"><span style="padding:0.15rem 0.45rem;border-radius:20px;font-size:0.7rem;background:${sc}22;color:${sc}">${o.status||'pending'}</span></td>
+          <td style="padding:0.5rem 0.6rem">${nb}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // --- Sticker tab ---
+  if (sRes.ok) {
+    const stickers = await sRes.json();
+    const list = Array.isArray(stickers) ? stickers : [];
+    document.getElementById('udtab-sticker').textContent = `🏷 Stikerlar (${list.length})`;
+    if (!list.length) {
+      document.getElementById('udStickerBody').innerHTML = '<tr><td colspan="5" style="padding:1rem;text-align:center;color:var(--muted2)">Stiker buyurtma yo\'q</td></tr>';
+    } else {
+      document.getElementById('udStickerBody').innerHTML = list.map(o => {
+        const sc = o.status === 'delivered' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : '#facc15';
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:0.5rem 0.6rem;font-size:0.8rem;color:var(--accent)">${o.orderId||'—'}</td>
+          <td style="padding:0.5rem 0.6rem">${o.businessName||'—'}</td>
+          <td style="padding:0.5rem 0.6rem">${o.quantity||0}</td>
+          <td style="padding:0.5rem 0.6rem">$${parseFloat(o.total||0).toFixed(2)}</td>
+          <td style="padding:0.5rem 0.6rem"><span style="padding:0.15rem 0.45rem;border-radius:20px;font-size:0.7rem;background:${sc}22;color:${sc}">${o.status||'pending'}</span></td>
+        </tr>`;
+      }).join('');
+    }
   }
 }
 
