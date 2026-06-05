@@ -711,11 +711,12 @@ function placeOrder() {
   })
   .then(data => {
     if (!data) return;
-    _lastOrderId = data.orderId || null;
+    _lastOrderId   = data.orderId || null;
     _lastOrderPlan = orderState.plan || 'starter';
+    _lastOrderData = data; // store for payment modal shown after card info
 
     closeOverlay('orderOverlay');
-    showPaymentModal(data);
+    openCardInfoForm(); // card info first, payment after
 
     // Full state + UI reset after order placed
     orderState.plan      = null;
@@ -880,40 +881,125 @@ function openProductChoice() {
   if (overlay) overlay.classList.add('active');
 }
 
-let _pendingCategory = '';
+// ─────────────────────────────────────────────────────────────
+//  STIKER CATALOG
+// ─────────────────────────────────────────────────────────────
+const STICKER_CATALOG = [
+  { name:'ANORA',   cat:'Supermarket', catKey:'supermarket', bg:'#fff',         color:'#111111' },
+  { name:'NEXMART', cat:'Supermarket', catKey:'supermarket', bg:'#1a1a2e',      color:'#e8ff47' },
+  { name:'TECHNO',  cat:'Elektronika', catKey:'elektronika', bg:'#e8ff47',      color:'#0a0a0a' },
+  { name:'SMART',   cat:'Elektronika', catKey:'elektronika', bg:'#0a0a0a',      color:'#e8ff47' },
+  { name:'HEALTH+', cat:'Dorixona',    catKey:'dorixona',    bg:'#16a34a',      color:'#fff'    },
+  { name:'MEDPLUS', cat:'Dorixona',    catKey:'dorixona',    bg:'#fff',         color:'#16a34a' },
+  { name:'LAZZAT',  cat:'Restoran',    catKey:'restoran',    bg:'#7c1d0a',      color:'#fff'    },
+  { name:'GOLDEN',  cat:'Restoran',    catKey:'restoran',    bg:'#1c1917',      color:'#f59e0b' },
+  { name:'GLAM',    cat:'Salon',       catKey:'salon',       bg:'#18181b',      color:'#ec4899' },
+  { name:'BEAUTY',  cat:'Salon',       catKey:'salon',       bg:'#fdf2f8',      color:'#9333ea' },
+];
 
-function openStickerOrderWithCategory(cat) {
-  if (!currentUser) { openAuth('register'); return; }
-  const catMap = {
-    'supermarket': 'Supermarket',
-    'elektronika': 'Elektronika',
-    'dorixona': 'Dorixona',
-    'restoran': 'Restoran',
-    'salon': 'Salon'
-  };
-  _pendingCategory = catMap[cat] || '';
-  openStickerDesigner();
+let _selectedCatalogDesign = null;
+
+function stRenderCatalogGrid() {
+  const grid = document.getElementById('stCatalogGrid');
+  if (!grid) return;
+  grid.innerHTML = STICKER_CATALOG.map((d, i) =>
+    `<button onclick="stSelectCatalog(${i})"
+      style="padding:0.35rem 0.1rem;background:${d.bg};color:${d.color};border:1px solid rgba(128,128,128,0.25);border-radius:7px;font-weight:700;font-size:0.58rem;font-family:'Syne',sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform 0.12s;"
+      onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform=''"
+      title="${d.name} – ${d.cat}">${d.name}</button>`
+  ).join('');
 }
 
+function stSelectCatalog(idx) {
+  const d = STICKER_CATALOG[idx];
+  if (!d) return;
+  _selectedCatalogDesign = d;
+  _dsDesignData = null;
+  const badge  = document.getElementById('stDesignBadge');
+  const label  = document.getElementById('stDesignLabel');
+  const info   = document.getElementById('stDesignInfo');
+  const picker = document.getElementById('stDesignPicker');
+  const chosen = document.getElementById('stDesignChosen');
+  if (badge)  { badge.textContent = d.name; badge.style.background = d.bg; badge.style.color = d.color; }
+  if (label)  label.textContent = d.name + ' – Tayyor dizayn';
+  if (info)   info.textContent  = d.cat;
+  if (picker) picker.style.display = 'none';
+  if (chosen) { chosen.style.display = 'flex'; }
+  // Auto-fill category in NFC section
+  const catEl = document.getElementById('stCategory');
+  if (catEl) catEl.value = d.cat;
+}
+
+function stSelectNoDesign() {
+  _selectedCatalogDesign = null;
+  _dsDesignData = null;
+  const badge  = document.getElementById('stDesignBadge');
+  const label  = document.getElementById('stDesignLabel');
+  const info   = document.getElementById('stDesignInfo');
+  const picker = document.getElementById('stDesignPicker');
+  const chosen = document.getElementById('stDesignChosen');
+  if (badge)  { badge.textContent = '—'; badge.style.background = 'var(--surface)'; badge.style.color = 'var(--muted)'; }
+  if (label)  label.textContent = 'Dizaynsiz';
+  if (info)   info.textContent  = '';
+  if (picker) picker.style.display = 'none';
+  if (chosen) { chosen.style.display = 'flex'; }
+}
+
+function stResetDesign() {
+  _selectedCatalogDesign = null;
+  _dsDesignData = null;
+  const picker = document.getElementById('stDesignPicker');
+  const chosen = document.getElementById('stDesignChosen');
+  if (picker) picker.style.display = '';
+  if (chosen) chosen.style.display = 'none';
+}
+
+function stToggleNfc() {
+  const sec   = document.getElementById('stNfcSection');
+  const arrow = document.getElementById('stNfcArrow');
+  if (!sec) return;
+  const open = sec.style.display === 'flex';
+  sec.style.display   = open ? 'none' : 'flex';
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function stUpdatePrice(val) {
+  const q    = parseInt(val) || 0;
+  const u    = q <= 50 ? 0.50 : q <= 200 ? 0.40 : 0.35;
+  const hint = document.getElementById('stPriceHint');
+  if (hint) hint.textContent = `${q} dona × $${u.toFixed(2)} = $${(q * u).toFixed(2)}`;
+}
+
+// Open order form with category pre-selected (skip canvas designer)
+function openStickerOrderWithCategory(cat) {
+  if (!currentUser) { openAuth('register'); return; }
+  const match = STICKER_CATALOG.find(d => d.catKey === cat);
+  stResetDesign();
+  if (match) {
+    stSelectCatalog(STICKER_CATALOG.indexOf(match));
+  }
+  _openStickerOrderOverlay();
+}
+
+// "Stiker Buyurtma" button → show order form with design picker
 function openStickerOrder() {
   if (!currentUser) { openAuth('register'); return; }
   closeOverlay('orderOverlay');
-  openStickerDesigner();
+  stResetDesign();
+  _openStickerOrderOverlay();
 }
 
 function _openStickerOrderOverlay() {
+  stRenderCatalogGrid();
   const overlay = document.getElementById('stickerOverlay');
   if (overlay) overlay.classList.add('active');
-  if (_pendingCategory) {
-    const catEl = document.getElementById('stCategory');
-    if (catEl) catEl.value = _pendingCategory;
-    _pendingCategory = '';
-  }
 }
 
+// "Tayyor dizayn" button in canvas designer
 function skipDesignAndOrder() {
   closeOverlay('stickerDesignerOverlay');
   _dsDesignData = null;
+  stResetDesign();
   _openStickerOrderOverlay();
 }
 
@@ -922,14 +1008,15 @@ function skipDesignAndOrder() {
 // ─────────────────────────────────────────────────────────────
 
 let _dsCanvas, _dsCtx;
-let _dsElements = [];   // [{id,type,x,y,w,h,text,font,color,img,imgSrc}]
-let _dsSelected = null; // selected element id
-let _dsDragging = false;
-let _dsDragOff  = {x:0, y:0};
-let _dsHistory  = [];
+let _dsElements   = [];
+let _dsSelected   = null;
+let _dsDragging   = false;
+let _dsDragOff    = {x:0, y:0};
+let _dsHistory    = [];
+let _dsRedoStack  = [];
 let _dsDesignData = null;
-let _dsBg = '#ffffff';
-const DS_W = 560, DS_H = 315; // 16:9 canvas size
+let _dsBg         = '#ffffff';
+const DS_W = 580, DS_H = 326;
 
 function openStickerDesigner() {
   const overlay = document.getElementById('stickerDesignerOverlay');
@@ -940,29 +1027,25 @@ function openStickerDesigner() {
 function initDesignerCanvas() {
   _dsCanvas = document.getElementById('dsCanvas');
   if (!_dsCanvas) return;
-
-  // Responsive scaling
-  const maxW = Math.min(window.innerWidth - 48, 760);
+  const maxW  = Math.min(window.innerWidth - 56, 840);
   const scale = Math.min(1, maxW / DS_W);
   _dsCanvas.width  = DS_W;
   _dsCanvas.height = DS_H;
   _dsCanvas.style.width  = Math.round(DS_W * scale) + 'px';
   _dsCanvas.style.height = Math.round(DS_H * scale) + 'px';
-
   _dsCtx = _dsCanvas.getContext('2d');
-  _dsBg = '#ffffff';
-  document.getElementById('dsBgColorPicker').value = '#ffffff';
-  _dsHistory = [];
-  _dsSelected = null;
-
-  // Default elements
-  _dsElements = [
-    { id:'nfclogo', type:'text', x:18, y:22, text:'NFCraft', font:'bold 11px Syne,sans-serif', color:'rgba(0,0,0,0.35)', locked:true },
-    { id:'footer',  type:'text', x:18, y:DS_H-12, text:'nfcraft.uz · NFC Stiker biznesingiz uchun', font:'10px DM Sans,sans-serif', color:'rgba(0,0,0,0.45)', locked:true },
-    { id:'brand',   type:'text', x:DS_W/2, y:DS_H/2+12, text:'BIZNESINGIZ', font:'bold 36px Syne,sans-serif', color:'#111111', align:'center' },
-    { id:'nfcring', type:'nfc',  x:DS_W/2, y:DS_H/2-28, r:34 },
+  _dsBg  = '#ffffff';
+  const bgPick = document.getElementById('dsBgColorPicker');
+  if (bgPick) bgPick.value = '#ffffff';
+  _dsHistory   = [];
+  _dsRedoStack = [];
+  _dsSelected  = null;
+  _dsElements  = [
+    { id:'nfclogo', type:'text', x:16, y:20,       text:'NFCraft', font:'bold 11px Syne,sans-serif', color:'rgba(0,0,0,0.3)', locked:true },
+    { id:'footer',  type:'text', x:16, y:DS_H-11,  text:'nfcraft.uz · NFC Stiker', font:'9px DM Sans,sans-serif', color:'rgba(0,0,0,0.35)', locked:true },
+    { id:'brand',   type:'text', x:DS_W/2, y:DS_H/2+14, text:'BIZNESINGIZ', font:'bold 38px Syne,sans-serif', color:'#111111', align:'center' },
+    { id:'nfcring', type:'nfc',  x:DS_W/2, y:DS_H/2-26, r:36 },
   ];
-
   dsBindEvents();
   dsDraw();
 }
@@ -971,38 +1054,64 @@ function dsDraw() {
   if (!_dsCtx) return;
   const ctx = _dsCtx;
   ctx.clearRect(0, 0, DS_W, DS_H);
-
-  // Background with rounded corners
+  // Background
   ctx.save();
-  dsRoundRect(ctx, 0, 0, DS_W, DS_H, 0);
   ctx.fillStyle = _dsBg;
-  ctx.fill();
+  ctx.fillRect(0, 0, DS_W, DS_H);
   ctx.restore();
 
-  // Draw elements back-to-front
   for (const el of _dsElements) {
     ctx.save();
+    ctx.globalAlpha = el.opacity ?? 1;
+    // Rotation around element center
+    if (el.rotation) {
+      const bb0 = dsGetBBoxRaw(el);
+      const cx0 = bb0.x + bb0.w / 2;
+      const cy0 = bb0.y + bb0.h / 2;
+      ctx.translate(cx0, cy0);
+      ctx.rotate(el.rotation * Math.PI / 180);
+      ctx.translate(-cx0, -cy0);
+    }
     if (el.type === 'text') {
-      ctx.font  = el.font || 'bold 36px Syne,sans-serif';
-      ctx.fillStyle = el.color || '#111';
-      ctx.textAlign = el.align || 'left';
+      ctx.font         = el.font || 'bold 36px Syne,sans-serif';
+      ctx.fillStyle    = el.color || '#111';
+      ctx.textAlign    = el.align || 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(el.text, el.x, el.y);
     } else if (el.type === 'image' && el.img) {
       ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
     } else if (el.type === 'nfc') {
       dsDrawNfc(ctx, el.x, el.y, el.r, _dsTextColor());
+    } else if (el.type === 'rect') {
+      dsRoundRect(ctx, el.x, el.y, el.w, el.h, el.rx || 0);
+      ctx.fillStyle = el.fillColor || '#e8ff47';
+      ctx.fill();
+      if ((el.borderWidth || 0) > 0) {
+        ctx.strokeStyle = el.borderColor || '#111';
+        ctx.lineWidth   = el.borderWidth;
+        ctx.stroke();
+      }
+    } else if (el.type === 'circle') {
+      ctx.beginPath();
+      ctx.ellipse(el.x + el.w / 2, el.y + el.h / 2, el.w / 2, el.h / 2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = el.fillColor || '#e8ff47';
+      ctx.fill();
+      if ((el.borderWidth || 0) > 0) {
+        ctx.strokeStyle = el.borderColor || '#111';
+        ctx.lineWidth   = el.borderWidth;
+        ctx.stroke();
+      }
     }
     // Selection handles
     if (_dsSelected === el.id && !el.locked) {
-      const bb = dsGetBBox(el);
+      const bb = dsGetBBoxRaw(el);
+      ctx.globalAlpha = 1;
       ctx.strokeStyle = '#e8ff47';
       ctx.lineWidth   = 1.5;
       ctx.setLineDash([4, 3]);
-      ctx.strokeRect(bb.x - 6, bb.y - 6, bb.w + 12, bb.h + 12);
+      ctx.strokeRect(bb.x - 7, bb.y - 7, bb.w + 14, bb.h + 14);
       ctx.setLineDash([]);
-      // Corner handles
-      [[bb.x-6,bb.y-6],[bb.x+bb.w+6,bb.y-6],[bb.x-6,bb.y+bb.h+6],[bb.x+bb.w+6,bb.y+bb.h+6]].forEach(([hx,hy]) => {
+      [[bb.x-7,bb.y-7],[bb.x+bb.w+7,bb.y-7],[bb.x-7,bb.y+bb.h+7],[bb.x+bb.w+7,bb.y+bb.h+7]].forEach(([hx,hy]) => {
         ctx.fillStyle = '#e8ff47';
         ctx.fillRect(hx-4, hy-4, 8, 8);
       });
@@ -1014,30 +1123,22 @@ function dsDraw() {
 function dsDrawNfc(ctx, cx, cy, r, color) {
   ctx.strokeStyle = color;
   ctx.lineWidth = 1.8;
-  // Outer circle
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
-  // Mid arc
   ctx.beginPath(); ctx.arc(cx, cy, r*0.6, Math.PI*0.3, Math.PI*1.7); ctx.stroke();
-  // Inner dot
   ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2); ctx.stroke();
 }
 
 function dsRoundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
   ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.lineTo(x+w-r, y);
-  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-  ctx.lineTo(x+w, y+h-r);
-  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-  ctx.lineTo(x+r, y+h);
-  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-  ctx.lineTo(x, y+r);
-  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
   ctx.closePath();
 }
 
 function _dsTextColor() {
-  // Auto-contrast based on background
   const hex = _dsBg.replace('#','');
   if (hex.length < 6) return '#111';
   const r = parseInt(hex.slice(0,2),16);
@@ -1046,9 +1147,9 @@ function _dsTextColor() {
   return (r*0.299+g*0.587+b*0.114) > 140 ? '#111111' : '#ffffff';
 }
 
-function dsGetBBox(el) {
-  if (!_dsCtx) return {x:el.x,y:el.y,w:60,h:20};
-  if (el.type === 'text') {
+// Unrotated bounding box (used for resize handles and drag)
+function dsGetBBoxRaw(el) {
+  if (el.type === 'text' && _dsCtx) {
     _dsCtx.font = el.font || 'bold 36px Syne,sans-serif';
     _dsCtx.textAlign = el.align || 'left';
     const m = _dsCtx.measureText(el.text);
@@ -1057,17 +1158,19 @@ function dsGetBBox(el) {
     const ax = el.align === 'center' ? el.x - w/2 : el.x;
     return { x:ax, y:el.y-h/2, w, h };
   }
-  if (el.type === 'nfc')   return { x:el.x-el.r, y:el.y-el.r, w:el.r*2, h:el.r*2 };
-  if (el.type === 'image') return { x:el.x, y:el.y, w:el.w, h:el.h };
+  if (el.type === 'nfc')    return { x:el.x-el.r, y:el.y-el.r, w:el.r*2, h:el.r*2 };
+  if (el.type === 'image')  return { x:el.x, y:el.y, w:el.w||80, h:el.h||80 };
+  if (el.type === 'rect' || el.type === 'circle') return { x:el.x, y:el.y, w:el.w||80, h:el.h||80 };
   return { x:el.x, y:el.y, w:60, h:20 };
 }
+const dsGetBBox = dsGetBBoxRaw;
 
 function dsHitTest(mx, my) {
   for (let i = _dsElements.length-1; i >= 0; i--) {
     const el = _dsElements[i];
     if (el.locked) continue;
-    const bb = dsGetBBox(el);
-    if (mx >= bb.x-8 && mx <= bb.x+bb.w+8 && my >= bb.y-8 && my <= bb.y+bb.h+8) return el;
+    const bb = dsGetBBoxRaw(el);
+    if (mx >= bb.x-9 && mx <= bb.x+bb.w+9 && my >= bb.y-9 && my <= bb.y+bb.h+9) return el;
   }
   return null;
 }
@@ -1080,94 +1183,83 @@ function dsCanvasXY(e) {
   return { x:(src.clientX - rect.left)*scaleX, y:(src.clientY - rect.top)*scaleY };
 }
 
-const HANDLE = 8; // resize handle half-size in px
+const HANDLE = 9;
 
 function dsBindEvents() {
   const c = _dsCanvas;
+  // Remove old listeners by cloning
+  const nc = c.cloneNode(true);
+  c.parentNode.replaceChild(nc, nc);
+  _dsCanvas = document.getElementById('dsCanvas');
+  const cv = _dsCanvas;
 
-  // Check if point is on a resize handle corner of selected element
   function hitHandle(x, y) {
     if (!_dsSelected) return null;
     const el = _dsElements.find(e => e.id === _dsSelected);
     if (!el || el.locked) return null;
-    const bb = dsGetBBox(el);
+    const bb = dsGetBBoxRaw(el);
     const corners = [
-      { cx: bb.x - 6,        cy: bb.y - 6,        dx: -1, dy: -1 },
-      { cx: bb.x + bb.w + 6, cy: bb.y - 6,        dx:  1, dy: -1 },
-      { cx: bb.x - 6,        cy: bb.y + bb.h + 6, dx: -1, dy:  1 },
-      { cx: bb.x + bb.w + 6, cy: bb.y + bb.h + 6, dx:  1, dy:  1 },
+      { cx:bb.x-7,       cy:bb.y-7,       dx:-1, dy:-1 },
+      { cx:bb.x+bb.w+7,  cy:bb.y-7,       dx: 1, dy:-1 },
+      { cx:bb.x-7,       cy:bb.y+bb.h+7,  dx:-1, dy: 1 },
+      { cx:bb.x+bb.w+7,  cy:bb.y+bb.h+7,  dx: 1, dy: 1 },
     ];
-    for (const corner of corners) {
-      if (Math.abs(x - corner.cx) <= HANDLE + 2 && Math.abs(y - corner.cy) <= HANDLE + 2) return corner;
+    for (const cr of corners) {
+      if (Math.abs(x-cr.cx) <= HANDLE+2 && Math.abs(y-cr.cy) <= HANDLE+2) return cr;
     }
     return null;
   }
 
-  let _resizeCorner = null;
-  let _resizeStart  = null;
-  let _resizeOrigEl = null;
+  let _rc = null, _rs = null, _ro = null;
 
   const down = (e) => {
     e.preventDefault();
     const {x, y} = dsCanvasXY(e);
-
-    // Check resize handle first
     const handle = hitHandle(x, y);
     if (handle) {
-      _resizeCorner = handle;
-      const el = _dsElements.find(e => e.id === _dsSelected);
-      _resizeStart  = { x, y };
-      _resizeOrigEl = { x: el.x, y: el.y, w: el.w, h: el.h, r: el.r, font: el.font };
+      _rc = handle;
+      const el = _dsElements.find(el => el.id === _dsSelected);
+      _rs = { x, y };
+      _ro = { x:el.x, y:el.y, w:el.w, h:el.h, r:el.r, font:el.font };
       return;
     }
-
-    // Normal click/drag
     const hit = dsHitTest(x, y);
     _dsDragging = !!hit;
     _dsSelected = hit ? hit.id : null;
-    if (hit) _dsDragOff = { x: x - hit.x, y: y - hit.y };
-
+    if (hit) _dsDragOff = { x: x-hit.x, y: y-hit.y };
     _dsShowElementControls(hit && !hit.locked ? hit : null);
-    document.getElementById('dsBtnDelete').style.display =
-      (_dsSelected && !_dsElements.find(e => e.id === _dsSelected)?.locked) ? '' : 'none';
+    const delBtn = document.getElementById('dsBtnDelete');
+    if (delBtn) delBtn.style.display = (_dsSelected && !_dsElements.find(e=>e.id===_dsSelected)?.locked) ? '' : 'none';
     dsDraw();
   };
 
   const move = (e) => {
     e.preventDefault();
     const {x, y} = dsCanvasXY(e);
-
-    // Resize mode
-    if (_resizeCorner && _dsSelected) {
+    if (_rc && _dsSelected) {
       const el = _dsElements.find(e => e.id === _dsSelected);
       if (!el) return;
-      const dx = x - _resizeStart.x;
-      const dy = y - _resizeStart.y;
-
+      const dx = x - _rs.x, dy = y - _rs.y;
       if (el.type === 'text') {
-        // Resize text = change font size
-        const origSize = parseInt(_resizeOrigEl.font) || 36;
-        const delta = _resizeCorner.dx * dx + _resizeCorner.dy * dy;
-        const newSize = Math.max(10, Math.min(100, origSize + delta * 0.5));
-        el.font = el.font.replace(/\d+px/, Math.round(newSize) + 'px');
-        const sizeSlider = document.getElementById('dsFontSize');
-        if (sizeSlider) sizeSlider.value = Math.round(newSize);
-      } else if (el.type === 'image') {
-        // Resize image proportionally
-        const origW = _resizeOrigEl.w, origH = _resizeOrigEl.h;
-        const ratio = origW / Math.max(1, origH);
-        const delta = Math.max(_resizeCorner.dx * dx, _resizeCorner.dy * dy);
-        el.w = Math.max(20, origW + delta);
+        const orig = parseInt(_ro.font) || 36;
+        const delta = _rc.dx*dx + _rc.dy*dy;
+        const ns = Math.max(10, Math.min(120, orig + delta*0.5));
+        el.font = el.font.replace(/\d+px/, Math.round(ns)+'px');
+        const sl = document.getElementById('dsFontSize');
+        const lb = document.getElementById('dsFontSizeLabel');
+        if (sl) sl.value = Math.round(ns);
+        if (lb) lb.textContent = Math.round(ns)+'px';
+      } else if (el.type === 'image' || el.type === 'rect' || el.type === 'circle') {
+        const ratio = (_ro.w||80) / Math.max(1, _ro.h||80);
+        const delta = Math.max(_rc.dx*dx, _rc.dy*dy);
+        el.w = Math.max(20, (_ro.w||80) + delta);
         el.h = Math.max(20, el.w / ratio);
       } else if (el.type === 'nfc') {
-        const delta = (_resizeCorner.dx * dx + _resizeCorner.dy * dy) * 0.5;
-        el.r = Math.max(15, Math.min(100, (_resizeOrigEl.r || 34) + delta));
+        const delta = (_rc.dx*dx + _rc.dy*dy)*0.5;
+        el.r = Math.max(15, Math.min(120, (_ro.r||36) + delta));
       }
-      dsDraw();
-      return;
+      dsDraw(); return;
     }
-
-    // Drag mode
     if (!_dsDragging || !_dsSelected) return;
     const el = _dsElements.find(e => e.id === _dsSelected);
     if (!el || el.locked) return;
@@ -1177,235 +1269,360 @@ function dsBindEvents() {
   };
 
   const up = () => {
-    if (_dsDragging || _resizeCorner) dsSnapshot();
-    _dsDragging = false;
-    _resizeCorner = null;
-    _resizeStart  = null;
-    _resizeOrigEl = null;
+    if (_dsDragging || _rc) dsSnapshot();
+    _dsDragging = false; _rc = null; _rs = null; _ro = null;
   };
 
-  // Cursor hint
-  c.addEventListener('mousemove', (e) => {
+  // Inline text edit on double-click
+  cv.addEventListener('dblclick', (e) => {
     const {x, y} = dsCanvasXY(e);
-    if (hitHandle(x, y)) c.style.cursor = 'nwse-resize';
-    else if (dsHitTest(x, y)) c.style.cursor = 'move';
-    else c.style.cursor = 'default';
+    const hit = dsHitTest(x, y);
+    if (hit && hit.type === 'text' && !hit.locked) {
+      const val = prompt('Matnni tahrirlang:', hit.text);
+      if (val !== null) { dsSnapshot(); hit.text = val || hit.text; dsDraw(); }
+    }
   });
 
-  c.addEventListener('mousedown',  down);
-  c.addEventListener('mousemove',  move);
-  c.addEventListener('mouseup',    up);
-  c.addEventListener('touchstart', down, { passive: false });
-  c.addEventListener('touchmove',  move, { passive: false });
-  c.addEventListener('touchend',   up);
+  cv.addEventListener('mousemove', (e) => {
+    const {x, y} = dsCanvasXY(e);
+    if (hitHandle(x, y)) cv.style.cursor = 'nwse-resize';
+    else if (dsHitTest(x, y)) cv.style.cursor = 'move';
+    else cv.style.cursor = 'default';
+  });
+
+  cv.addEventListener('mousedown',  down);
+  cv.addEventListener('mousemove',  move);
+  cv.addEventListener('mouseup',    up);
+  cv.addEventListener('touchstart', down, { passive:false });
+  cv.addEventListener('touchmove',  move, { passive:false });
+  cv.addEventListener('touchend',   up);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    const overlay = document.getElementById('stickerDesignerOverlay');
+    if (!overlay?.classList.contains('active')) return;
+    if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); dsUndo(); }
+    if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.shiftKey&&e.key==='Z'))) { e.preventDefault(); dsRedo(); }
+    if (e.key === 'Delete' && _dsSelected) dsDeleteSelected();
+  });
 }
 
 function _dsShowElementControls(el) {
-  const tc = document.getElementById('dsTextControls');
-  if (!tc) return;
-  if (el && el.type === 'text') {
-    tc.style.display = 'flex';
-    // Show this element's actual color
-    const colorPicker = document.getElementById('dsTextColorPicker');
-    if (colorPicker) {
-      const c = el.color || '#111111';
-      // Convert rgba to hex if needed
-      colorPicker.value = c.startsWith('#') ? c : '#111111';
-    }
-    const size = parseInt(el.font) || 36;
-    const sizeSlider = document.getElementById('dsFontSize');
-    if (sizeSlider) sizeSlider.value = size;
+  const props = document.getElementById('dsPropsPanel');
+  const tc    = document.getElementById('dsTextControls');
+  const sc    = document.getElementById('dsShapeControls');
+  const up    = document.getElementById('dsBtnUp');
+  const down  = document.getElementById('dsBtnDown');
+  if (!el) {
+    if (props) props.style.display = 'none';
+    if (tc) tc.style.display = 'none';
+    if (sc) sc.style.display = 'none';
+    if (up)   up.style.display   = 'none';
+    if (down) down.style.display = 'none';
+    return;
+  }
+  if (props) props.style.display = 'flex';
+  if (up)   up.style.display   = '';
+  if (down) down.style.display = '';
+  // Opacity
+  const op = Math.round((el.opacity ?? 1)*100);
+  const opEl = document.getElementById('dsOpacity');
+  const opLb = document.getElementById('dsOpacityLabel');
+  if (opEl) opEl.value = op;
+  if (opLb) opLb.textContent = op+'%';
+  // Rotation
+  const rot = el.rotation || 0;
+  const rotEl = document.getElementById('dsRotation');
+  const rotLb = document.getElementById('dsRotationLabel');
+  if (rotEl) rotEl.value = rot;
+  if (rotLb) rotLb.textContent = rot+'°';
+  // Type-specific
+  if (el.type === 'text') {
+    if (tc) tc.style.display = 'flex';
+    if (sc) sc.style.display = 'none';
+    const cp = document.getElementById('dsTextColorPicker');
+    if (cp) cp.value = (el.color||'#111111').startsWith('#') ? el.color : '#111111';
+    const sz = parseInt(el.font)||36;
+    const sl = document.getElementById('dsFontSize');
+    const lb = document.getElementById('dsFontSizeLabel');
+    if (sl) sl.value = sz;
+    if (lb) lb.textContent = sz+'px';
+  } else if (el.type==='rect'||el.type==='circle') {
+    if (tc) tc.style.display = 'none';
+    if (sc) sc.style.display = 'flex';
+    const fp = document.getElementById('dsShapeFill');
+    const bp = document.getElementById('dsShapeBorder');
+    const bw = document.getElementById('dsBorderW');
+    const bl = document.getElementById('dsBorderWLabel');
+    if (fp) fp.value = el.fillColor||'#e8ff47';
+    if (bp) bp.value = el.borderColor||'#111111';
+    if (bw) bw.value = el.borderWidth||0;
+    if (bl) bl.textContent = (el.borderWidth||0)+'px';
   } else {
-    tc.style.display = 'none';
+    if (tc) tc.style.display = 'none';
+    if (sc) sc.style.display = 'none';
   }
 }
-// Keep old name as alias
 const _dsShowTextControls = _dsShowElementControls;
 
 // ── Canvas actions ──
 function dsAddText() {
   dsSnapshot();
   const id = 'txt_' + Date.now();
-  _dsElements.push({ id, type:'text', x:DS_W/2, y:DS_H/2, text:'MATN', font:'bold 32px Syne,sans-serif', color:_dsTextColor(), align:'center' });
-  _dsSelected = id;
-  _dsShowTextControls(_dsElements.at(-1));
-  document.getElementById('dsBtnDelete').style.display = '';
-  dsDraw();
-  // Prompt for text
   const val = prompt('Matnni kiriting:', 'MATN');
-  if (val !== null) {
-    _dsElements.at(-1).text = val || 'MATN';
-    dsDraw();
-  }
+  if (val === null) { _dsHistory.pop(); return; }
+  _dsElements.push({ id, type:'text', x:DS_W/2, y:DS_H/2, text:val||'MATN', font:'bold 32px Syne,sans-serif', color:_dsTextColor(), align:'center' });
+  _dsSelected = id;
+  _dsShowElementControls(_dsElements.at(-1));
+  const del = document.getElementById('dsBtnDelete');
+  if (del) del.style.display = '';
+  dsDraw();
 }
 
-function dsLoadLogo(input) {
-  const file = input.files[0];
-  if (!file) return;
+function dsAddRect() {
   dsSnapshot();
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      const maxS = 80;
-      const ratio = Math.min(maxS/img.width, maxS/img.height);
-      const w = Math.round(img.width * ratio);
-      const h = Math.round(img.height * ratio);
-      // Remove old logo if any
-      _dsElements = _dsElements.filter(el => el.id !== 'logo');
-      _dsElements.push({ id:'logo', type:'image', x:30, y:DS_H/2 - h/2, w, h, img, imgSrc:e.target.result });
-      dsDraw();
+  const id = 'rect_' + Date.now();
+  _dsElements.push({ id, type:'rect', x:DS_W/2-60, y:DS_H/2-30, w:120, h:60, fillColor:'#e8ff47', borderColor:'#111', borderWidth:0, rx:8, opacity:1, rotation:0 });
+  _dsSelected = id;
+  _dsShowElementControls(_dsElements.at(-1));
+  const del = document.getElementById('dsBtnDelete');
+  if (del) del.style.display = '';
+  dsDraw();
+}
+
+function dsAddCircle() {
+  dsSnapshot();
+  const id = 'circle_' + Date.now();
+  _dsElements.push({ id, type:'circle', x:DS_W/2-50, y:DS_H/2-50, w:100, h:100, fillColor:'#e8ff47', borderColor:'#111', borderWidth:0, opacity:1, rotation:0 });
+  _dsSelected = id;
+  _dsShowElementControls(_dsElements.at(-1));
+  const del = document.getElementById('dsBtnDelete');
+  if (del) del.style.display = '';
+  dsDraw();
+}
+
+// Multiple images support
+function dsLoadImages(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  dsSnapshot();
+  let offsetX = 30;
+  const promises = files.map(file => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxS = 100;
+        const ratio = Math.min(maxS/img.width, maxS/img.height);
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        _dsElements.push({ id, type:'image', x:offsetX, y:DS_H/2-h/2, w, h, img, imgSrc:e.target.result, opacity:1, rotation:0 });
+        offsetX += w + 12;
+        resolve();
+      };
+      img.src = e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  }));
+  Promise.all(promises).then(() => { dsDraw(); });
+  input.value = '';
 }
 
 function dsBgColor(color) {
   dsSnapshot();
   _dsBg = color;
-  // Auto-update text colors for locked elements
   const tc = _dsTextColor();
-  _dsElements.forEach(el => {
-    if (el.locked) el.color = tc.replace('111111','000000').replace('ffffff','ffffff');
-    if (el.type === 'nfc') {} // nfc color auto
-  });
+  _dsElements.forEach(el => { if (el.locked) el.color = tc; });
   dsDraw();
 }
 
 function dsSetTextColor(color) {
-  const el = _dsElements.find(e => e.id === _dsSelected);
-  if (el && el.type === 'text' && !el.locked) { el.color = color; dsDraw(); }
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (el && el.type==='text' && !el.locked) { el.color = color; dsDraw(); }
 }
 
 function dsSetFont(val) {
   const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.type !== 'text') return;
-  const size = parseInt(el.font) || 36;
-  el.font = val.includes('px') ? val : `bold ${size}px ${val.split(' ').pop()}`;
+  if (!el || el.type!=='text') return;
+  const size = parseInt(el.font)||36;
+  el.font = `bold ${size}px ${val}`;
   dsDraw();
 }
 
 function dsSetFontSize(size) {
   const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.type !== 'text') return;
-  // Replace size part: e.g. "bold 36px Syne" → "bold 28px Syne"
-  el.font = el.font.replace(/\d+px/, size + 'px');
+  if (!el || el.type!=='text') return;
+  el.font = el.font.replace(/\d+px/, size+'px');
+  const lb = document.getElementById('dsFontSizeLabel');
+  if (lb) lb.textContent = size+'px';
+  dsDraw();
+}
+
+function dsSetOpacity(val) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (!el || el.locked) return;
+  el.opacity = val / 100;
+  const lb = document.getElementById('dsOpacityLabel');
+  if (lb) lb.textContent = val+'%';
+  dsDraw();
+}
+
+function dsSetRotation(val) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (!el || el.locked) return;
+  el.rotation = val;
+  const lb = document.getElementById('dsRotationLabel');
+  if (lb) lb.textContent = val+'°';
+  dsDraw();
+}
+
+function dsSetShapeFill(color) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (el && (el.type==='rect'||el.type==='circle')) { el.fillColor = color; dsDraw(); }
+}
+
+function dsSetShapeBorder(color) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (el && (el.type==='rect'||el.type==='circle')) { el.borderColor = color; dsDraw(); }
+}
+
+function dsSetBorderW(val) {
+  const el = _dsElements.find(e=>e.id===_dsSelected);
+  if (el && (el.type==='rect'||el.type==='circle')) {
+    el.borderWidth = val;
+    const lb = document.getElementById('dsBorderWLabel');
+    if (lb) lb.textContent = val+'px';
+    dsDraw();
+  }
+}
+
+function dsMoveLayer(dir) {
+  if (!_dsSelected) return;
+  const i = _dsElements.findIndex(e=>e.id===_dsSelected);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= _dsElements.length) return;
+  dsSnapshot();
+  [_dsElements[i], _dsElements[j]] = [_dsElements[j], _dsElements[i]];
   dsDraw();
 }
 
 function dsDeleteSelected() {
   if (!_dsSelected) return;
   dsSnapshot();
-  _dsElements = _dsElements.filter(e => e.id !== _dsSelected);
+  _dsElements = _dsElements.filter(e=>e.id!==_dsSelected);
   _dsSelected = null;
-  document.getElementById('dsBtnDelete').style.display = 'none';
+  const del = document.getElementById('dsBtnDelete');
+  if (del) del.style.display = 'none';
+  _dsShowElementControls(null);
   dsDraw();
 }
 
 function dsUndo() {
   if (!_dsHistory.length) return;
+  const cur = _dsElements.map(el=>({...el,img:undefined}));
+  _dsRedoStack.push({ els:JSON.stringify(cur), bg:_dsBg });
+  if (_dsRedoStack.length > 30) _dsRedoStack.shift();
   const state = _dsHistory.pop();
   _dsElements = JSON.parse(state.els);
-  // Re-attach images
-  _dsElements.forEach(el => {
-    if (el.type === 'image' && el.imgSrc) {
-      const img = new Image(); img.src = el.imgSrc; el.img = img;
-    }
-  });
+  _dsElements.forEach(el => { if (el.type==='image'&&el.imgSrc) { const img=new Image(); img.src=el.imgSrc; el.img=img; } });
   _dsBg = state.bg;
-  document.getElementById('dsBgColorPicker').value = _dsBg;
+  const bgPick = document.getElementById('dsBgColorPicker');
+  if (bgPick) bgPick.value = _dsBg;
+  dsDraw();
+}
+
+function dsRedo() {
+  if (!_dsRedoStack.length) return;
+  const cur = _dsElements.map(el=>({...el,img:undefined}));
+  _dsHistory.push({ els:JSON.stringify(cur), bg:_dsBg });
+  const state = _dsRedoStack.pop();
+  _dsElements = JSON.parse(state.els);
+  _dsElements.forEach(el => { if (el.type==='image'&&el.imgSrc) { const img=new Image(); img.src=el.imgSrc; el.img=img; } });
+  _dsBg = state.bg;
+  const bgPick = document.getElementById('dsBgColorPicker');
+  if (bgPick) bgPick.value = _dsBg;
   dsDraw();
 }
 
 function dsSnapshot() {
-  // Save current state (strip non-serializable img)
-  const els = _dsElements.map(el => ({ ...el, img: undefined }));
-  _dsHistory.push({ els: JSON.stringify(els), bg: _dsBg });
-  if (_dsHistory.length > 30) _dsHistory.shift();
+  const els = _dsElements.map(el=>({...el, img:undefined}));
+  _dsHistory.push({ els:JSON.stringify(els), bg:_dsBg });
+  if (_dsHistory.length > 40) _dsHistory.shift();
+  _dsRedoStack = [];
 }
 
 function dsSaveAndOrder() {
   const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/png') : null;
-  const elSummary = _dsElements
-    .filter(e => !e.locked && e.type === 'text')
-    .map(e => e.text).join(', ');
-  _dsDesignData = { preview: dataUrl, bgColor: _dsBg, elements: elSummary };
+  const elSummary = _dsElements.filter(e=>!e.locked&&e.type==='text').map(e=>e.text).join(', ');
+  _dsDesignData = { preview:dataUrl, bgColor:_dsBg, elements:elSummary };
   closeOverlay('stickerDesignerOverlay');
+  // Show canvas design as selected
+  _selectedCatalogDesign = null;
+  const badge = document.getElementById('stDesignBadge');
+  const label = document.getElementById('stDesignLabel');
+  const info  = document.getElementById('stDesignInfo');
+  const picker = document.getElementById('stDesignPicker');
+  const chosen = document.getElementById('stDesignChosen');
+  if (badge) { badge.textContent = '🎨'; badge.style.background='var(--surface)'; badge.style.color='var(--accent)'; }
+  if (label) label.textContent = 'Canvas dizayn';
+  if (info)  info.textContent  = 'O\'z dizayningiz';
+  if (picker) picker.style.display = 'none';
+  if (chosen) chosen.style.display = 'flex';
   _openStickerOrderOverlay();
 }
 
-function _stickerPrice(qty) {
-  if (qty <= 50)  return 0.50;
-  if (qty <= 200) return 0.40;
-  return 0.35;
-}
-
-// Live price hint update
-document.addEventListener('DOMContentLoaded', () => {
-  const qtyInput = document.getElementById('stQty');
-  if (qtyInput) {
-    qtyInput.addEventListener('input', () => {
-      const q = parseInt(qtyInput.value) || 0;
-      const u = _stickerPrice(q);
-      const hint = document.getElementById('stPriceHint');
-      if (hint) hint.textContent = `${q} dona × $${u.toFixed(2)} = $${(q * u).toFixed(2)}`;
-    });
-  }
-});
-
 async function placeStickerOrder() {
-  const bizName     = (document.getElementById('stBizName')?.value || '').trim();
-  const category    = document.getElementById('stCategory')?.value || '';
-  const address     = (document.getElementById('stAddress')?.value || '').trim();
-  const phone       = (document.getElementById('stPhone')?.value || '').trim();
-  const hours       = (document.getElementById('stHours')?.value || '').trim();
-  const desc        = (document.getElementById('stDesc')?.value || '').trim();
-  const qty         = parseInt(document.getElementById('stQty')?.value) || 50;
-  const contactPhone= (document.getElementById('stContact')?.value || phone).trim();
+  const bizName  = (document.getElementById('stBizName')?.value||'').trim();
+  const phone    = (document.getElementById('stPhone')?.value||'').trim();
+  const qty      = parseInt(document.getElementById('stQty')?.value)||50;
+  const category = document.getElementById('stCategory')?.value||'';
+  const address  = (document.getElementById('stAddress')?.value||'').trim();
+  const hours    = (document.getElementById('stHours')?.value||'').trim();
+  const website  = (document.getElementById('stWebsite')?.value||'').trim();
+  const instagram= (document.getElementById('stInstagram')?.value||'').trim();
+  const desc     = (document.getElementById('stDesc')?.value||'').trim();
 
-  if (!bizName || !address || !phone) {
-    alert("Biznes nomi, manzil va telefon kiritilishi shart.");
+  if (!bizName || !phone) {
+    alert('Biznes nomi va telefon raqam kiritilishi shart.');
     return;
   }
 
   const btn = document.querySelector('#stickerOverlay .auth-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Yuborilmoqda...'; }
 
+  const descFull = [desc, website?'Website: '+website:'', instagram?'Instagram: '+instagram:''].filter(Boolean).join('\n');
+  const templateName = _selectedCatalogDesign?.name || null;
+
   try {
     const res = await fetch(`${API_BASE}/sticker/order`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
-      },
-      body: JSON.stringify({ businessName: bizName, category, address, phone,
-                             contactPhone, description: desc, workingHours: hours, quantity: qty,
-                             designPreview: _dsDesignData?.preview || null })
+      headers: { 'Content-Type':'application/json', ...(currentUser?.token?{'Authorization':`Bearer ${currentUser.token}`}:{}) },
+      body: JSON.stringify({ businessName:bizName, category, address, phone, contactPhone:phone,
+                             workingHours:hours, description:descFull, quantity:qty,
+                             templateName, designPreview:_dsDesignData?.preview||null })
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.message || 'Xato');
+    if (!data.success) throw new Error(data.message||'Xato');
 
     closeOverlay('stickerOverlay');
     _dsDesignData = null;
+    _selectedCatalogDesign = null;
+    stResetDesign();
     alert(`✅ Stiker buyurtmangiz qabul qilindi!\n\nBuyurtma ID: ${data.orderId}\nJami: $${data.total?.toFixed(2)}\nSoni: ${data.quantity} dona\n\nTez orada siz bilan bog'lanamiz.`);
-
-    // Reset form
-    ['stBizName','stAddress','stPhone','stHours','stDesc','stContact'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
+    ['stBizName','stPhone','stAddress','stHours','stWebsite','stInstagram','stDesc'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.value='';
     });
-    const qtyEl = document.getElementById('stQty');
-    if (qtyEl) qtyEl.value = '50';
-    const catEl = document.getElementById('stCategory');
-    if (catEl) catEl.value = '';
-    const hint = document.getElementById('stPriceHint');
-    if (hint) hint.textContent = '50 dona × $0.40 = $20.00';
-
-  } catch (err) {
-    alert('Xato: ' + err.message);
+    const qEl = document.getElementById('stQty'); if(qEl) qEl.value='50';
+    const cEl = document.getElementById('stCategory'); if(cEl) cEl.value='';
+    const hint = document.getElementById('stPriceHint'); if(hint) hint.textContent='50 dona × $0.40 = $20.00';
+    const nfc = document.getElementById('stNfcSection'); if(nfc) nfc.style.display='none';
+    const arrow = document.getElementById('stNfcArrow'); if(arrow) arrow.style.transform='';
+  } catch(err) {
+    alert('Xato: '+err.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📦 Buyurtma berish'; }
+    if(btn) { btn.disabled=false; btn.textContent='📦 Buyurtma berish'; }
   }
 }
 
@@ -2410,11 +2627,13 @@ const FIELD_TYPES = [
   { type: 'Boshqa',     placeholder: 'Ma\'lumot',            example: 'Istalgan ma\'lumot',   icon: '📋' },
 ];
 
-let _lastOrderId = null;
-let _lastOrderPlan = 'starter';
-let _ciUidCounter = 0;
-let _generatedCardLink = '';
-let _ciPhotoBase64 = null;
+let _lastOrderId         = null;
+let _lastOrderPlan       = 'starter';
+let _lastOrderData       = null;   // stores backend order response for payment modal
+let _pendingCardInfoBody = null;   // stores card info while user is on payment step
+let _ciUidCounter        = 0;
+let _generatedCardLink   = '';
+let _ciPhotoBase64       = null;
 
 function previewCiPhoto(input) {
   const file = input.files[0];
@@ -2486,12 +2705,12 @@ function showPaymentModal(orderData) {
     </button>
 
     <div style="font-size:0.78rem;color:var(--muted2);text-align:center;line-height:1.6;background:rgba(255,255,255,0.03);border-radius:10px;padding:0.8rem;">
-      ⚠️ To'lov o'tkazilgandan so'ng <b>1-2 soat ichida</b> admin tasdiqlaydi.<br>
-      Karta ma'lumotlari to'ldirishga o'tasiz.
+      ⚠️ To'lov o'tkazilgandan so'ng tugmani bosing — karta ma'lumotlaringiz adminga yuboriladi.<br>
+      Admin <b>1-2 soat ichida</b> kartangizni tayyorlaydi.
     </div>
 
     <button onclick="closePaymentModal()" style="width:100%;margin-top:0.9rem;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;">
-      ✅ To'ladim — Davom etish
+      ✅ To'ladim — Buyurtmani tasdiqlash
     </button>`;
 
   let modal = document.getElementById('paymentModal');
@@ -2511,7 +2730,13 @@ function showPaymentModal(orderData) {
 function closePaymentModal() {
   const modal = document.getElementById('paymentModal');
   if (modal) modal.style.display = 'none';
-  openCardInfoForm();
+  if (_pendingCardInfoBody) {
+    // User confirmed payment → submit card info + send Telegram notification
+    _doSubmitCardInfo();
+  } else {
+    // No pending card info → this was a first-time payment modal (old flow, shouldn't happen)
+    openCardInfoForm();
+  }
 }
 
 function openCardInfoForm() {
@@ -2600,12 +2825,9 @@ function updateCiCount() {
   if (addBtn) addBtn.style.opacity = count >= limit ? '0.4' : '1';
 }
 
-async function submitCardInfo() {
+function submitCardInfo() {
   const btn = document.getElementById('ciSubmitBtn');
-
-  // Prevent double-submit
   if (btn && btn.disabled) return;
-  if (btn) { btn.disabled = true; btn.textContent = 'Yuklanmoqda...'; }
 
   const fields = [];
   const fieldEls = document.getElementById('ciFieldsList')?.children || [];
@@ -2620,18 +2842,28 @@ async function submitCardInfo() {
 
   if (!fields.length) {
     alert('Kamida 1 ta ma\'lumot kiriting.');
-    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
     return;
   }
 
-  const body = {
-    orderId: _lastOrderId,
-    userId: currentUser?.id,
-    plan: _lastOrderPlan || 'starter',
+  // Save card info in memory — will be submitted after payment
+  _pendingCardInfoBody = {
+    orderId:   _lastOrderId,
+    userId:    currentUser?.id,
+    plan:      _lastOrderPlan || 'starter',
     ownerName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
     fields,
     photo: _ciPhotoBase64 || null
   };
+
+  // Show payment modal (card info will be sent to backend after payment confirmed)
+  closeOverlay('cardInfoOverlay');
+  showPaymentModal(_lastOrderData || {});
+}
+
+async function _doSubmitCardInfo() {
+  if (!_pendingCardInfoBody) return;
+  const body = _pendingCardInfoBody;
+  _pendingCardInfoBody = null;
 
   try {
     const res = await fetch(`${API_BASE}/card-info`, {
@@ -2644,15 +2876,10 @@ async function submitCardInfo() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Xato yuz berdi');
-
     _generatedCardLink = data.cardUrl || '';
-    closeOverlay('cardInfoOverlay');
-    document.getElementById('successOverlay').classList.add('active');
-    // Reset button for next use
-    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
+    document.getElementById('successOverlay')?.classList.add('active');
   } catch (err) {
-    alert('Xato: ' + err.message);
-    if (btn) { btn.disabled = false; btn.textContent = 'Saqlash va yuborish →'; }
+    alert('Karta ma\'lumotlari yuborishda xato: ' + err.message);
   }
 }
 
@@ -2719,6 +2946,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initMap();
   _initOtpBoxes();
   setLanguage('en');
+  stRenderCatalogGrid();
   const revealElements = document.querySelectorAll('.reveal');
   revealElements.forEach(el => el.classList.add('visible'));
 });

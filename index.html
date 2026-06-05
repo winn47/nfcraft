@@ -762,52 +762,81 @@
 
 <!-- ══ STIKER DESIGNER MODAL ══ -->
 <div class="overlay" id="stickerDesignerOverlay">
-  <div class="modal" style="max-width:860px;max-height:96vh;overflow-y:auto;margin:1rem;">
+  <div class="modal" style="max-width:920px;max-height:96vh;overflow-y:auto;margin:1rem;">
     <div class="modal-header">
       <div class="modal-title">🎨 Stiker Dizaynlash</div>
       <button class="modal-close" onclick="closeOverlay('stickerDesignerOverlay')">✕</button>
     </div>
-    <!-- Toolbar -->
-    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.8rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface2);">
-      <label class="ds-tool-btn" title="Logo yuklash">
-        📸 Logo
-        <input type="file" accept="image/*" onchange="dsLoadLogo(this)" style="display:none;"/>
+
+    <!-- Toolbar Row -->
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;padding:0.65rem 1rem;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center;">
+      <label class="ds-tool-btn" title="Rasm qo'shish (bir nechta ruxsat)">
+        🖼 Rasm
+        <input type="file" accept="image/*" multiple onchange="dsLoadImages(this)" style="display:none;"/>
       </label>
       <button class="ds-tool-btn" onclick="dsAddText()" title="Matn qo'shish">✏️ Matn</button>
-      <button class="ds-tool-btn" onclick="dsUndo()" title="Orqaga">↩ Undo</button>
-      <button class="ds-tool-btn" onclick="dsDeleteSelected()" title="O'chirish" id="dsBtnDelete" style="display:none;color:#ff8888;">🗑 O'chir</button>
-      <div style="display:flex;align-items:center;gap:0.4rem;margin-left:0.3rem;">
-        <span style="font-size:0.72rem;color:var(--muted);">Fon:</span>
-        <input type="color" id="dsBgColorPicker" value="#ffffff" oninput="dsBgColor(this.value)" style="width:30px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:1px;background:var(--surface);"/>
+      <button class="ds-tool-btn" onclick="dsAddRect()" title="To'rtburchak shakl">▭ Rect</button>
+      <button class="ds-tool-btn" onclick="dsAddCircle()" title="Doira / Ellips">⬤ Doira</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 0.15rem;flex-shrink:0;"></div>
+      <button class="ds-tool-btn" onclick="dsUndo()" title="Orqaga (Ctrl+Z)">↩ Undo</button>
+      <button class="ds-tool-btn" onclick="dsRedo()" title="Oldinga (Ctrl+Y)">↪ Redo</button>
+      <button class="ds-tool-btn" onclick="dsDeleteSelected()" id="dsBtnDelete" style="display:none;color:#ff8888;" title="O'chirish (Del)">🗑</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 0.15rem;flex-shrink:0;"></div>
+      <div style="display:flex;align-items:center;gap:0.3rem;">
+        <span style="font-size:0.71rem;color:var(--muted);">Fon:</span>
+        <input type="color" id="dsBgColorPicker" value="#ffffff" oninput="dsBgColor(this.value)" style="width:28px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:1px;background:var(--surface);"/>
       </div>
-      <div style="display:flex;align-items:center;gap:0.4rem;" id="dsTextControls" style="display:none;">
-        <span style="font-size:0.72rem;color:var(--muted);">Rang:</span>
-        <input type="color" id="dsTextColorPicker" value="#111111" oninput="dsSetTextColor(this.value)" style="width:30px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:1px;background:var(--surface);"/>
-        <select id="dsFontPicker" onchange="dsSetFont(this.value)" style="padding:0.3rem 0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;cursor:pointer;">
-          <option value="bold 700 Syne,sans-serif">Syne Bold</option>
-          <option value="500 DM Sans,sans-serif">DM Sans</option>
-          <option value="bold Georgia,serif">Serif</option>
-          <option value="bold monospace">Mono</option>
+      <button class="ds-tool-btn" onclick="dsMoveLayer(1)"  id="dsBtnUp"   style="display:none;" title="Yuqori qatlam">↑ Layer</button>
+      <button class="ds-tool-btn" onclick="dsMoveLayer(-1)" id="dsBtnDown" style="display:none;" title="Pastki qatlam">↓ Layer</button>
+    </div>
+
+    <!-- Properties Panel (context-sensitive) -->
+    <div id="dsPropsPanel" style="display:none;flex-wrap:wrap;gap:0.5rem;padding:0.5rem 1rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.25);align-items:center;">
+      <div id="dsTextControls" style="display:none;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.71rem;color:var(--muted);">Rang:</span>
+        <input type="color" id="dsTextColorPicker" value="#111111" oninput="dsSetTextColor(this.value)" style="width:28px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:1px;background:var(--surface);"/>
+        <select id="dsFontPicker" onchange="dsSetFont(this.value)" style="padding:0.28rem 0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.77rem;cursor:pointer;">
+          <option value="Syne,sans-serif">Syne Bold</option>
+          <option value="DM Sans,sans-serif">DM Sans</option>
+          <option value="Georgia,serif">Serif</option>
+          <option value="monospace">Mono</option>
         </select>
-        <input type="range" id="dsFontSize" min="12" max="80" value="36" oninput="dsSetFontSize(+this.value)" style="width:70px;accent-color:var(--accent);" title="Hajm"/>
+        <input type="range" id="dsFontSize" min="10" max="120" value="36" oninput="dsSetFontSize(+this.value)" style="width:80px;accent-color:var(--accent);" title="Shrift hajmi"/>
+        <span id="dsFontSizeLabel" style="font-size:0.71rem;color:var(--muted);min-width:28px;">36px</span>
+      </div>
+      <div id="dsShapeControls" style="display:none;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.71rem;color:var(--muted);">To'ldir:</span>
+        <input type="color" id="dsShapeFill" value="#e8ff47" oninput="dsSetShapeFill(this.value)" style="width:28px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:1px;background:var(--surface);"/>
+        <span style="font-size:0.71rem;color:var(--muted);">Chegara:</span>
+        <input type="color" id="dsShapeBorder" value="#111111" oninput="dsSetShapeBorder(this.value)" style="width:28px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:1px;background:var(--surface);"/>
+        <input type="range" id="dsBorderW" min="0" max="12" value="0" oninput="dsSetBorderW(+this.value)" style="width:60px;accent-color:var(--accent);" title="Chegara qalinligi"/>
+        <span id="dsBorderWLabel" style="font-size:0.71rem;color:var(--muted);">0px</span>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-left:auto;">
+        <span style="font-size:0.71rem;color:var(--muted);">Opacity:</span>
+        <input type="range" id="dsOpacity" min="10" max="100" value="100" oninput="dsSetOpacity(+this.value)" style="width:70px;accent-color:var(--accent);"/>
+        <span id="dsOpacityLabel" style="font-size:0.71rem;color:var(--muted);min-width:30px;">100%</span>
+        <span style="font-size:0.71rem;color:var(--muted);margin-left:0.3rem;">Burish:</span>
+        <input type="range" id="dsRotation" min="-180" max="180" value="0" oninput="dsSetRotation(+this.value)" style="width:80px;accent-color:var(--accent);"/>
+        <span id="dsRotationLabel" style="font-size:0.71rem;color:var(--muted);min-width:26px;">0°</span>
       </div>
     </div>
 
     <!-- Canvas area -->
-    <div style="padding:1.2rem;background:#111;display:flex;justify-content:center;">
+    <div style="padding:1.1rem;background:#111;display:flex;justify-content:center;overflow-x:auto;">
       <div style="position:relative;display:inline-block;">
-        <canvas id="dsCanvas" style="border-radius:16px;display:block;touch-action:none;box-shadow:0 8px 40px rgba(0,0,0,0.6);cursor:crosshair;max-width:100%;"></canvas>
-        <div style="position:absolute;bottom:0.5rem;right:0.8rem;font-size:0.6rem;color:rgba(255,255,255,0.3);font-family:'Syne',sans-serif;pointer-events:none;">Elementni sudrab joylashtiring</div>
+        <canvas id="dsCanvas" style="border-radius:14px;display:block;touch-action:none;box-shadow:0 8px 40px rgba(0,0,0,0.7);cursor:default;max-width:100%;"></canvas>
+        <div style="position:absolute;bottom:0.5rem;right:0.8rem;font-size:0.58rem;color:rgba(255,255,255,0.22);font-family:'Syne',sans-serif;pointer-events:none;">Bosib tanlang · Torting · 2x-bosib tahrirlang</div>
       </div>
     </div>
 
     <!-- Bottom actions -->
-    <div style="display:flex;gap:0.7rem;padding:1rem 1.4rem;border-top:1px solid var(--border);">
+    <div style="display:flex;gap:0.7rem;padding:1rem 1.2rem;border-top:1px solid var(--border);">
       <button onclick="dsSaveAndOrder()" style="flex:1;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;">
         Buyurtma Berish →
       </button>
-      <button onclick="skipDesignAndOrder()" style="padding:0.85rem 1.2rem;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;">
-        Dizaynsiz
+      <button onclick="skipDesignAndOrder()" style="padding:0.85rem 1.1rem;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;" title="Tayyor katalog dizaynlardan tanlang">
+        Tayyor dizayn
       </button>
     </div>
   </div>
@@ -815,65 +844,100 @@
 
 <!-- ══ STIKER ORDER MODAL ══ -->
 <div class="overlay" id="stickerOverlay" onclick="handleOverlayClick(event)">
-  <div class="modal" style="max-width:480px;">
+  <div class="modal" style="max-width:510px;max-height:95vh;overflow-y:auto;">
     <div class="modal-header">
       <div class="modal-title">🏷 Stiker Buyurtma</div>
       <button class="modal-close" onclick="closeOverlay('stickerOverlay')">✕</button>
     </div>
-    <div class="modal-body" style="padding:1.6rem;display:flex;flex-direction:column;gap:1rem;">
+    <div class="modal-body" style="padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:0.85rem;">
 
-      <div class="input-group">
-        <div class="input-label">Biznes / Do'kon nomi <span style="color:#ff6b6b">*</span></div>
-        <input class="input-field" id="stBizName" type="text" placeholder="Masalan: Anora Supermarket" required/>
+      <!-- DIZAYN TANLASH -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <!-- Picker state -->
+        <div id="stDesignPicker">
+          <div style="padding:0.45rem 0.85rem;font-size:0.7rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid var(--border);">Dizayn tanlang</div>
+          <div id="stCatalogGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.3rem;padding:0.6rem;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;padding:0 0.6rem 0.6rem;">
+            <button onclick="stSelectNoDesign()" style="padding:0.42rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted2);font-size:0.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">📄 Dizaynsiz</button>
+            <button onclick="closeOverlay('stickerOverlay');openStickerDesigner()" style="padding:0.42rem;background:rgba(232,255,71,0.07);border:1px solid rgba(232,255,71,0.2);border-radius:8px;color:var(--accent);font-size:0.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">🎨 Canvas dizayn</button>
+          </div>
+        </div>
+        <!-- Selected state -->
+        <div id="stDesignChosen" style="display:none;padding:0.7rem 0.85rem;align-items:center;gap:0.75rem;">
+          <div id="stDesignBadge" style="padding:0.3rem 0.85rem;border-radius:8px;font-weight:700;font-size:0.82rem;font-family:'Syne',sans-serif;flex-shrink:0;border:1px solid rgba(128,128,128,0.2);">—</div>
+          <div style="flex:1;">
+            <div style="font-size:0.8rem;font-weight:600;color:var(--text);" id="stDesignLabel">Tanlangan dizayn</div>
+            <div style="font-size:0.7rem;color:var(--muted2);margin-top:0.15rem;" id="stDesignInfo"></div>
+          </div>
+          <button onclick="stResetDesign()" style="padding:0.28rem 0.55rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:0.7rem;color:var(--muted2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">↺ O'zgartir</button>
+        </div>
       </div>
 
-      <div class="input-group">
-        <div class="input-label">Kategoriya</div>
-        <select class="input-field" id="stCategory">
-          <option value="">— Tanlang —</option>
-          <option value="Supermarket">🛒 Supermarket</option>
-          <option value="Dorixona">💊 Dorixona</option>
-          <option value="Elektronika">📱 Elektronika</option>
-          <option value="Kiyim">👕 Kiyim do'koni</option>
-          <option value="Oziq-ovqat">🥦 Oziq-ovqat</option>
-          <option value="Restoran">🍽 Restoran / Cafe</option>
-          <option value="Salon">✂️ Go'zallik saloni</option>
-          <option value="Boshqa">📦 Boshqa</option>
-        </select>
+      <!-- ASOSIY MAYDONLAR -->
+      <div style="display:flex;flex-direction:column;gap:0.65rem;">
+        <div class="input-group">
+          <div class="input-label">Biznes / Do'kon nomi <span style="color:#ff6b6b">*</span></div>
+          <input class="input-field" id="stBizName" type="text" placeholder="Masalan: Anora Supermarket"/>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Telefon <span style="color:#ff6b6b">*</span></div>
+          <input class="input-field" id="stPhone" type="tel" placeholder="+998 90 123 45 67"/>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Stiker soni <span style="color:#ff6b6b">*</span></div>
+          <input class="input-field" id="stQty" type="number" min="1" max="10000" value="50" oninput="stUpdatePrice(this.value)"/>
+          <div style="font-size:0.73rem;color:var(--muted2);margin-top:0.28rem;" id="stPriceHint">50 dona × $0.40 = $20.00</div>
+        </div>
       </div>
 
-      <div class="input-group">
-        <div class="input-label">Manzil <span style="color:#ff6b6b">*</span></div>
-        <input class="input-field" id="stAddress" type="text" placeholder="Masalan: Toshkent, Yunusobod, Navruz ko'chasi 12" required/>
+      <!-- NFC CHIP MA'LUMOTLARI (collapsible) -->
+      <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <button onclick="stToggleNfc()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.85rem;background:var(--surface2);border:none;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;text-align:left;">
+          <span>📡 NFC chip ma'lumotlari <span style="font-size:0.68rem;color:var(--muted);margin-left:0.3rem;">(ixtiyoriy)</span></span>
+          <span id="stNfcArrow" style="color:var(--accent);font-size:0.68rem;transition:transform 0.25s;line-height:1;">▼</span>
+        </button>
+        <div id="stNfcSection" style="display:none;flex-direction:column;gap:0.6rem;padding:0.75rem 0.85rem;border-top:1px solid var(--border);">
+          <div style="font-size:0.72rem;color:var(--muted2);line-height:1.65;background:rgba(232,255,71,0.05);border:1px solid rgba(232,255,71,0.12);border-radius:8px;padding:0.45rem 0.65rem;">
+            📱 Bu ma'lumotlar NFC chipga yoziladi — mijoz stikerni teginganida telefonida ko'radi
+          </div>
+          <div class="input-group">
+            <div class="input-label">Kategoriya</div>
+            <select class="input-field" id="stCategory">
+              <option value="">— Tanlang —</option>
+              <option value="Supermarket">🛒 Supermarket</option>
+              <option value="Dorixona">💊 Dorixona</option>
+              <option value="Elektronika">📱 Elektronika</option>
+              <option value="Kiyim">👕 Kiyim do'koni</option>
+              <option value="Oziq-ovqat">🥦 Oziq-ovqat</option>
+              <option value="Restoran">🍽 Restoran / Cafe</option>
+              <option value="Salon">✂️ Go'zallik saloni</option>
+              <option value="Boshqa">📦 Boshqa</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Manzil</div>
+            <input class="input-field" id="stAddress" type="text" placeholder="Toshkent, Yunusobod, ..."/>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Ish vaqti</div>
+            <input class="input-field" id="stHours" type="text" placeholder="Dush–Shan: 09:00–21:00"/>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Veb-sayt</div>
+            <input class="input-field" id="stWebsite" type="url" placeholder="https://sizningsite.uz"/>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Instagram</div>
+            <input class="input-field" id="stInstagram" type="text" placeholder="@username"/>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Qo'shimcha</div>
+            <textarea class="input-field" id="stDesc" rows="2" placeholder="Biznes haqida qisqacha..." style="resize:vertical;"></textarea>
+          </div>
+        </div>
       </div>
 
-      <div class="input-group">
-        <div class="input-label">Telefon <span style="color:#ff6b6b">*</span></div>
-        <input class="input-field" id="stPhone" type="tel" placeholder="+998 90 123 45 67" required/>
-      </div>
-
-      <div class="input-group">
-        <div class="input-label">Ish vaqti (ixtiyoriy)</div>
-        <input class="input-field" id="stHours" type="text" placeholder="Dush–Shan: 09:00–21:00"/>
-      </div>
-
-      <div class="input-group">
-        <div class="input-label">Qo'shimcha ma'lumot (ixtiyoriy)</div>
-        <textarea class="input-field" id="stDesc" rows="2" placeholder="Do'kon haqida qisqacha..." style="resize:vertical;"></textarea>
-      </div>
-
-      <div class="input-group">
-        <div class="input-label">Stiker soni <span style="color:#ff6b6b">*</span></div>
-        <input class="input-field" id="stQty" type="number" min="1" max="10000" value="50"/>
-        <div style="font-size:0.74rem;color:var(--muted2);margin-top:0.35rem;" id="stPriceHint">50 dona × $0.40 = $20.00</div>
-      </div>
-
-      <div class="input-group">
-        <div class="input-label">Yetkazish telefoni</div>
-        <input class="input-field" id="stContact" type="tel" placeholder="+998 90 123 45 67"/>
-      </div>
-
-      <button class="auth-submit" onclick="placeStickerOrder()" style="margin-top:0.4rem;">
+      <button class="auth-submit" onclick="placeStickerOrder()" style="margin-top:0.1rem;">
         📦 Buyurtma berish
       </button>
 
