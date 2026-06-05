@@ -296,7 +296,7 @@
       </div>
     </div>
   </div>
-  <button class="nav-cta" onclick="openOrder()" data-i18n="getStarted">Get Started</button>
+  <button class="nav-cta" onclick="openProductChoice()" data-i18n="getStarted">Get Started</button>
 
   <div class="mobile-menu-wrap">
     <button class="three-dots-btn" onclick="toggleMobileMenu()" aria-label="Menu">
@@ -336,7 +336,7 @@
   <h1>Modern<br/><em>NFC Cards</em></h1>
   <p class="hero-sub" data-i18n="heroSub">Share your contact, portfolio, or links with a single tap. No app required. Just your card — and the future in your pocket.</p>
   <div class="hero-btns">
-    <button class="btn-primary" onclick="openOrder()" data-i18n="orderNow">⚡ Order Now</button>
+    <button class="btn-primary" onclick="openProductChoice()" data-i18n="orderNow">⚡ Order Now</button>
     <a class="btn-secondary" href="#pricing" data-i18n="exploreCards">Explore Plans</a>
   </div>
   <div class="hero-visual">
@@ -518,11 +518,11 @@
       </p>
     </div>
 
-    <!-- Two-column: left = flow, right = mockup preview -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-bottom:4rem;" class="reveal biz-split-grid">
+    <!-- Info + CTA (single column, centered) -->
+    <div style="display:grid;grid-template-columns:1fr;gap:3rem;align-items:center;margin-bottom:4rem;" class="reveal biz-split-grid">
 
-      <!-- Left: How it works steps -->
-      <div style="display:flex;flex-direction:column;gap:1.2rem;">
+      <!-- How it works steps + pricing + CTA (centered, max-width) -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem;max-width:640px;margin:0 auto;width:100%;">
 
         <div style="display:flex;gap:1rem;align-items:flex-start;">
           <div style="width:40px;height:40px;border-radius:12px;background:rgba(232,255,71,0.1);border:1px solid rgba(232,255,71,0.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);font-size:1rem;flex-shrink:0;">1</div>
@@ -572,46 +572,7 @@
         </button>
       </div>
 
-      <!-- Right: Sticker mockup preview (3 cards) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
-
-        <div class="sticker-mockup" style="background:#fff;color:#111;">
-          <span class="sm-nfc-logo" style="color:#111;opacity:0.4;">NFCraft</span>
-          <div class="sm-logo-area" style="color:#111;">
-            <div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div>
-            <span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">ANORA</span>
-          </div>
-          <div class="sm-footer" style="color:#666;">nfcraft.uz · NFC Stiker</div>
-        </div>
-
-        <div class="sticker-mockup" style="background:#e8ff47;color:#111;">
-          <span class="sm-nfc-logo" style="color:#111;opacity:0.4;">NFCraft</span>
-          <div class="sm-logo-area" style="color:#111;">
-            <div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div>
-            <span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">TECHNO</span>
-          </div>
-          <div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker</div>
-        </div>
-
-        <div class="sticker-mockup" style="background:#0f172a;color:#fff;">
-          <span class="sm-nfc-logo" style="color:#fff;opacity:0.35;">NFCraft</span>
-          <div class="sm-logo-area">
-            <div class="sm-nfc-icon" style="border-color:#e8ff47;"><svg viewBox="0 0 24 24" fill="none" stroke="#e8ff47" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div>
-            <span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;color:#e8ff47;">SMART</span>
-          </div>
-          <div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker</div>
-        </div>
-
-        <div class="sticker-mockup" style="background:#16a34a;color:#fff;">
-          <span class="sm-nfc-logo" style="color:#fff;opacity:0.35;">NFCraft</span>
-          <div class="sm-logo-area">
-            <div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.5);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div>
-            <span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">HEALTH+</span>
-          </div>
-          <div class="sm-footer" style="color:rgba(255,255,255,0.55);">nfcraft.uz · NFC Stiker</div>
-        </div>
-
-      </div>
+      <!-- Steps, pricing, CTA are in left column above — no right column needed -->
     </div>
 
     <!-- Category chips -->
@@ -643,16 +604,16 @@
       </div>
       <div class="sticker-catalog-grid" id="stickerCatalogGrid">
         <!-- catalog items (same as before) -->
-        <div class="sticker-card-item" data-cat="supermarket"><div class="sticker-mockup" style="background:#fff;color:#111;"><div class="sm-logo-area" style="color:#111;"><div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.3rem;font-weight:800;">ANORA</span></div><div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Supermarket · Oq</div></div>
-        <div class="sticker-card-item" data-cat="supermarket"><div class="sticker-mockup" style="background:#1a1a2e;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.4);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.3rem;font-weight:800;">NEXMART</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Supermarket · Qora</div></div>
-        <div class="sticker-card-item" data-cat="elektronika"><div class="sticker-mockup" style="background:#e8ff47;color:#111;"><div class="sm-logo-area" style="color:#111;"><div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">TECHNO</span></div><div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Elektronika · Neon</div></div>
-        <div class="sticker-card-item" data-cat="elektronika"><div class="sticker-mockup" style="background:#0a0a0a;color:#fff;border:1px solid rgba(255,255,255,0.1);"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#e8ff47;"><svg viewBox="0 0 24 24" fill="none" stroke="#e8ff47" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;color:#e8ff47;">SMART</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Elektronika · Premium qora</div></div>
-        <div class="sticker-card-item" data-cat="dorixona"><div class="sticker-mockup" style="background:#16a34a;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.5);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">HEALTH+</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.5);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Dorixona · Yashil</div></div>
-        <div class="sticker-card-item" data-cat="dorixona"><div class="sticker-mockup" style="background:#fff;color:#16a34a;"><div class="sm-logo-area" style="color:#16a34a;"><div class="sm-nfc-icon" style="border-color:#16a34a;"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">MEDPLUS</span></div><div class="sm-footer" style="color:#888;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Dorixona · Oq/Yashil</div></div>
-        <div class="sticker-card-item" data-cat="restoran"><div class="sticker-mockup" style="background:#7c1d0a;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.4);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">LAZZAT</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.45);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Restoran · Bordo</div></div>
-        <div class="sticker-card-item" data-cat="restoran"><div class="sticker-mockup" style="background:#1c1917;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#f59e0b;"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;color:#f59e0b;">GOLDEN</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.35);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Restoran · Oltin</div></div>
-        <div class="sticker-card-item" data-cat="salon"><div class="sticker-mockup" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.5);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">GLAM</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.55);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Salon · Gradient</div></div>
-        <div class="sticker-card-item" data-cat="salon"><div class="sticker-mockup" style="background:#18181b;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#ec4899;"><svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">BEAUTY</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.35);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Salon · Qora/Pink</div></div>
+        <div class="sticker-card-item" data-cat="supermarket" onclick="openStickerOrderWithCategory('supermarket')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#fff;color:#111;"><div class="sm-logo-area" style="color:#111;"><div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.3rem;font-weight:800;">ANORA</span></div><div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Supermarket · Oq</div></div>
+        <div class="sticker-card-item" data-cat="supermarket" onclick="openStickerOrderWithCategory('supermarket')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#1a1a2e;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.4);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.3rem;font-weight:800;">NEXMART</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Supermarket · Qora</div></div>
+        <div class="sticker-card-item" data-cat="elektronika" onclick="openStickerOrderWithCategory('elektronika')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#e8ff47;color:#111;"><div class="sm-logo-area" style="color:#111;"><div class="sm-nfc-icon" style="border-color:#111;"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">TECHNO</span></div><div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Elektronika · Neon</div></div>
+        <div class="sticker-card-item" data-cat="elektronika" onclick="openStickerOrderWithCategory('elektronika')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#0a0a0a;color:#fff;border:1px solid rgba(255,255,255,0.1);"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#e8ff47;"><svg viewBox="0 0 24 24" fill="none" stroke="#e8ff47" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;color:#e8ff47;">SMART</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Elektronika · Premium qora</div></div>
+        <div class="sticker-card-item" data-cat="dorixona" onclick="openStickerOrderWithCategory('dorixona')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#16a34a;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.5);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">HEALTH+</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.5);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Dorixona · Yashil</div></div>
+        <div class="sticker-card-item" data-cat="dorixona" onclick="openStickerOrderWithCategory('dorixona')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#fff;color:#16a34a;"><div class="sm-logo-area" style="color:#16a34a;"><div class="sm-nfc-icon" style="border-color:#16a34a;"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">MEDPLUS</span></div><div class="sm-footer" style="color:#888;">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Dorixona · Oq/Yashil</div></div>
+        <div class="sticker-card-item" data-cat="restoran" onclick="openStickerOrderWithCategory('restoran')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#7c1d0a;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.4);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;">LAZZAT</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.45);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Restoran · Bordo</div></div>
+        <div class="sticker-card-item" data-cat="restoran" onclick="openStickerOrderWithCategory('restoran')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#1c1917;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#f59e0b;"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.2rem;font-weight:800;color:#f59e0b;">GOLDEN</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.35);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Restoran · Oltin</div></div>
+        <div class="sticker-card-item" data-cat="salon" onclick="openStickerOrderWithCategory('salon')" style="cursor:pointer;"><div class="sticker-mockup" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:rgba(255,255,255,0.5);"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">GLAM</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.55);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Salon · Gradient</div></div>
+        <div class="sticker-card-item" data-cat="salon" onclick="openStickerOrderWithCategory('salon')" style="cursor:pointer;"><div class="sticker-mockup" style="background:#18181b;color:#fff;"><div class="sm-logo-area"><div class="sm-nfc-icon" style="border-color:#ec4899;"><svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"/><path d="M10 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2"/></svg></div><span class="sm-brand-name" style="font-size:1.1rem;font-weight:800;">BEAUTY</span></div><div class="sm-footer" style="color:rgba(255,255,255,0.35);">nfcraft.uz · NFC Stiker biznesingiz uchun</div></div><div class="sticker-card-label">Salon · Qora/Pink</div></div>
       </div>
     </div>
 
@@ -770,6 +731,34 @@
   </div>
 
 </section>
+
+<!-- ══ PRODUCT CHOICE MODAL ══ -->
+<div class="overlay" id="productChoiceOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <div class="modal-title">Mahsulot tanlang</div>
+      <button class="modal-close" onclick="closeOverlay('productChoiceOverlay')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <button onclick="closeOverlay('productChoiceOverlay');openOrder()"
+              style="display:flex;flex-direction:column;align-items:center;gap:0.7rem;padding:1.6rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:16px;cursor:pointer;transition:border-color 0.2s,background 0.2s;color:var(--text);"
+              onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(232,255,71,0.05)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+        <span style="font-size:2.4rem;">💳</span>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;">NFC Karta</div>
+        <div style="font-size:0.78rem;color:var(--muted2);text-align:center;line-height:1.5;">Shaxsiy va biznes NFC kartalar</div>
+      </button>
+      <button onclick="closeOverlay('productChoiceOverlay');openStickerOrder()"
+              style="display:flex;flex-direction:column;align-items:center;gap:0.7rem;padding:1.6rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:16px;cursor:pointer;transition:border-color 0.2s,background 0.2s;color:var(--text);"
+              onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(232,255,71,0.05)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+        <span style="font-size:2.4rem;">🏷</span>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;">NFC Stiker</div>
+        <div style="font-size:0.78rem;color:var(--muted2);text-align:center;line-height:1.5;">Mahsulotlarga yopishtiriladi</div>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ STIKER DESIGNER MODAL ══ -->
 <div class="overlay" id="stickerDesignerOverlay">

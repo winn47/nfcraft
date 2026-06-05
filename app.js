@@ -875,17 +875,46 @@ function logout() {
 //  STIKER ORDER
 // ─────────────────────────────────────────────────────────────
 
+function openProductChoice() {
+  const overlay = document.getElementById('productChoiceOverlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+let _pendingCategory = '';
+
+function openStickerOrderWithCategory(cat) {
+  if (!currentUser) { openAuth('register'); return; }
+  const catMap = {
+    'supermarket': 'Supermarket',
+    'elektronika': 'Elektronika',
+    'dorixona': 'Dorixona',
+    'restoran': 'Restoran',
+    'salon': 'Salon'
+  };
+  _pendingCategory = catMap[cat] || '';
+  openStickerDesigner();
+}
+
 function openStickerOrder() {
   if (!currentUser) { openAuth('register'); return; }
   closeOverlay('orderOverlay');
   openStickerDesigner();
 }
 
+function _openStickerOrderOverlay() {
+  const overlay = document.getElementById('stickerOverlay');
+  if (overlay) overlay.classList.add('active');
+  if (_pendingCategory) {
+    const catEl = document.getElementById('stCategory');
+    if (catEl) catEl.value = _pendingCategory;
+    _pendingCategory = '';
+  }
+}
+
 function skipDesignAndOrder() {
   closeOverlay('stickerDesignerOverlay');
   _dsDesignData = null;
-  const overlay = document.getElementById('stickerOverlay');
-  if (overlay) overlay.classList.add('active');
+  _openStickerOrderOverlay();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1297,15 +1326,13 @@ function dsSnapshot() {
 }
 
 function dsSaveAndOrder() {
-  // Export canvas as base64
   const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/png') : null;
   const elSummary = _dsElements
     .filter(e => !e.locked && e.type === 'text')
     .map(e => e.text).join(', ');
   _dsDesignData = { preview: dataUrl, bgColor: _dsBg, elements: elSummary };
   closeOverlay('stickerDesignerOverlay');
-  const overlay = document.getElementById('stickerOverlay');
-  if (overlay) overlay.classList.add('active');
+  _openStickerOrderOverlay();
 }
 
 function _stickerPrice(qty) {
@@ -1353,12 +1380,14 @@ async function placeStickerOrder() {
         ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
       },
       body: JSON.stringify({ businessName: bizName, category, address, phone,
-                             contactPhone, description: desc, workingHours: hours, quantity: qty })
+                             contactPhone, description: desc, workingHours: hours, quantity: qty,
+                             designPreview: _dsDesignData?.preview || null })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message || 'Xato');
 
     closeOverlay('stickerOverlay');
+    _dsDesignData = null;
     alert(`✅ Stiker buyurtmangiz qabul qilindi!\n\nBuyurtma ID: ${data.orderId}\nJami: $${data.total?.toFixed(2)}\nSoni: ${data.quantity} dona\n\nTez orada siz bilan bog'lanamiz.`);
 
     // Reset form
