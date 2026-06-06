@@ -2,6 +2,44 @@ let currentUser = null;
 let isAdmin = false;
 let isSuperAdmin = false;
 
+function showToast(message, type = 'info', duration = 3500) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const icons = { success: '✓', error: '✕', info: '◆', warning: '⚠' };
+  const el = document.createElement('div');
+  el.className = `toast-item toast-${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type] || '◆'}</span><span>${message}</span>`;
+  container.appendChild(el);
+  const remove = () => {
+    if (el.classList.contains('removing')) return;
+    el.classList.add('removing');
+    setTimeout(() => el.remove(), 260);
+  };
+  const timer = setTimeout(remove, duration);
+  el.addEventListener('click', () => { clearTimeout(timer); remove(); });
+}
+
+function showConfirm(message) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirmModal');
+    if (!modal) { resolve(window.confirm(message)); return; }
+    document.getElementById('confirmMessage').textContent = message;
+    modal.style.display = 'flex';
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    const cleanup = result => {
+      modal.style.display = 'none';
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      resolve(result);
+    };
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+  });
+}
+
 function initAuth() {
   const saved = localStorage.getItem('currentUser');
   if (saved) {
@@ -15,7 +53,6 @@ function initAuth() {
       isAdmin = currentUser.isAdmin === true || currentUser.isAdmin === 1 || currentUser.isAdmin === 'true';
       isSuperAdmin = currentUser.isSuperAdmin === true || currentUser.isSuperAdmin === 1 || currentUser.isSuperAdmin === 'true';
     } catch (e) {
-      console.error('Error loading user:', e);
       localStorage.removeItem('currentUser');
     }
   }
@@ -630,7 +667,7 @@ function goToStep(n) {
 function nextStep(step) {
   if (step === 1 && !orderState.plan) {
     const t = translations[currentLang];
-    alert(t ? t.iltimosRejani : 'Please select a plan.');
+    showToast(t ? t.iltimosRejani : 'Iltimos, reja tanlang.', 'warning');
     return;
   }
   goToStep(step + 1);
@@ -642,7 +679,6 @@ function prevStep(step) {
 
 function placeOrder() {
   if (!currentUser) {
-    alert('Please login to place an order');
     closeOverlay('orderOverlay');
     openAuth('login');
     return;
@@ -653,13 +689,13 @@ function placeOrder() {
   const phoneDigits = phoneRaw.replace(/\D/g, '').replace(/^998/, '');
   if (!phoneRaw) {
     if (phoneInput) phoneInput.style.borderColor = '#ff6b6b';
-    alert('Iltimos, telefon raqamingizni kiriting.');
+    showToast('Iltimos, telefon raqamingizni kiriting.', 'warning');
     phoneInput && phoneInput.focus();
     return;
   }
   if (phoneDigits.length !== 9) {
     if (phoneInput) phoneInput.style.borderColor = '#ff6b6b';
-    alert('O\'zbekiston telefon raqami 9 xonali bo\'lishi kerak.\nMasalan: +998 90 123 45 67');
+    showToast('O\'zbekiston telefon raqami 9 xonali bo\'lishi kerak. Masalan: +998 90 123 45 67', 'warning');
     phoneInput && phoneInput.focus();
     return;
   }
@@ -700,7 +736,7 @@ function placeOrder() {
         currentUser = null; isAdmin = false; isSuperAdmin = false;
         localStorage.removeItem('currentUser');
         closeOverlay('orderOverlay');
-        alert('Sessiya tugagan. Iltimos qayta login qiling.');
+        showToast('Sessiya tugagan. Iltimos qayta login qiling.', 'warning');
         updateAuthUI();
         openAuth('login');
         return;
@@ -734,7 +770,7 @@ function placeOrder() {
     document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
   })
   .catch(err => {
-    alert('Xato: ' + err.message);
+    showToast('Buyurtmada xato: ' + err.message, 'error');
   });
 }
 
@@ -770,7 +806,7 @@ async function handleRegister(e) {
   const gender    = document.getElementById('regGender').value;
 
   if (!firstName || !lastName || !email || !password || !age || !address || !gender) {
-    alert('Barcha maydonlarni to\'ldiring.');
+    showToast('Barcha maydonlarni to\'ldiring.', 'warning');
     return;
   }
 
@@ -782,7 +818,7 @@ async function handleRegister(e) {
     });
 
     if (res.status === 409) {
-      const go = confirm('Bu email allaqachon ro\'yxatdan o\'tgan.\n\nKirish sahifasiga o\'tishni xohlaysizmi?');
+      const go = await showConfirm('Bu email allaqachon ro\'yxatdan o\'tgan. Kirish sahifasiga o\'tishni xohlaysizmi?');
       if (go) switchAuthTab('login');
       return;
     }
@@ -798,7 +834,7 @@ async function handleRegister(e) {
     closeOverlay('authOverlay');
     openOtpVerify(email);
   } catch (err) {
-    alert('Ro\'yxatdan o\'tish xatosi: ' + err.message);
+    showToast('Ro\'yxatdan o\'tish xatosi: ' + err.message, 'error');
   }
 }
 
@@ -809,7 +845,7 @@ async function handleLogin(e) {
   const password = document.getElementById('loginPassword').value;
 
   if (!email || !password) {
-    alert('Iltimos, email va parolni kiriting.');
+    showToast('Iltimos, email va parolni kiriting.', 'warning');
     return;
   }
 
@@ -821,7 +857,7 @@ async function handleLogin(e) {
     });
 
     if (res.status === 401) {
-      alert('Email yoki parol noto\'g\'ri');
+      showToast('Email yoki parol noto\'g\'ri', 'error');
       return;
     }
 
@@ -856,7 +892,7 @@ async function handleLogin(e) {
     closeOverlay('authOverlay');
     _afterAuth();
   } catch (err) {
-    alert('Kirish xatosi: ' + err.message);
+    showToast('Kirish xatosi: ' + err.message, 'error');
   }
 }
 
@@ -1585,7 +1621,7 @@ async function placeStickerOrder() {
   const desc     = (document.getElementById('stDesc')?.value||'').trim();
 
   if (!bizName || !phone) {
-    alert('Biznes nomi va telefon raqam kiritilishi shart.');
+    showToast('Biznes nomi va telefon raqam kiritilishi shart.', 'warning');
     return;
   }
 
@@ -1606,11 +1642,14 @@ async function placeStickerOrder() {
     const data = await res.json();
     if (!data.success) throw new Error(data.message||'Xato');
 
+    // Store for sticker NFC info step (after payment)
+    _lastStickerOrderData = data;
+
+    // Reset & close order form
     closeOverlay('stickerOverlay');
     _dsDesignData = null;
     _selectedCatalogDesign = null;
     stResetDesign();
-    alert(`✅ Stiker buyurtmangiz qabul qilindi!\n\nBuyurtma ID: ${data.orderId}\nJami: $${data.total?.toFixed(2)}\nSoni: ${data.quantity} dona\n\nTez orada siz bilan bog'lanamiz.`);
     ['stBizName','stPhone','stAddress','stHours','stWebsite','stInstagram','stDesc'].forEach(id=>{
       const el = document.getElementById(id); if(el) el.value='';
     });
@@ -1619,8 +1658,12 @@ async function placeStickerOrder() {
     const hint = document.getElementById('stPriceHint'); if(hint) hint.textContent='50 dona × $0.40 = $20.00';
     const nfc = document.getElementById('stNfcSection'); if(nfc) nfc.style.display='none';
     const arrow = document.getElementById('stNfcArrow'); if(arrow) arrow.style.transform='';
+
+    // Go to payment modal (like card orders)
+    showPaymentModal(data);
+
   } catch(err) {
-    alert('Xato: '+err.message);
+    showToast('Xato: ' + err.message, 'error');
   } finally {
     if(btn) { btn.disabled=false; btn.textContent='📦 Buyurtma berish'; }
   }
@@ -1719,14 +1762,10 @@ function _otpUnlockEmail() {
   if (editBtn) editBtn.style.display = 'none';
 }
 
-function otpEnableEmailEdit() {
-  // Agar account allaqachon yaratilgan bo'lsa (register orqali kelgan)
-  // email o'zgartirilsa — eski email bilan account qoladi
-  // Shuning uchun qaytadan ro'yxatdan o'tishni taklif qilamiz
+async function otpEnableEmailEdit() {
   if (currentUser && currentUser.token) {
-    const confirmed = confirm(
-      'Emailni o\'zgartirish uchun qaytadan ro\'yxatdan o\'tishingiz kerak.\n\n' +
-      'Hozirgi ma\'lumotlar o\'chib ketadi. Davom etasizmi?'
+    const confirmed = await showConfirm(
+      'Emailni o\'zgartirish uchun qaytadan ro\'yxatdan o\'tishingiz kerak. Hozirgi ma\'lumotlar o\'chib ketadi. Davom etasizmi?'
     );
     if (!confirmed) return;
     // Avval yaratilgan accountni tozalaymiz
@@ -2012,7 +2051,7 @@ async function submitUserForm(event) {
   const gender    = document.getElementById('gender').value;
 
   if (!firstName || !lastName || !email || !age || !gender) {
-    alert('Barcha majburiy maydonlarni to\'ldiring.');
+    showToast('Barcha majburiy maydonlarni to\'ldiring.', 'warning');
     return;
   }
 
@@ -2040,11 +2079,11 @@ async function submitUserForm(event) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || 'Server xatosi: ' + res.status);
     }
-    alert(id ? 'Foydalanuvchi muvaffaqiyatli yangilandi' : 'Foydalanuvchi muvaffaqiyatli qo\'shildi');
+    showToast(id ? 'Foydalanuvchi muvaffaqiyatli yangilandi' : 'Foydalanuvchi muvaffaqiyatli qo\'shildi', 'success');
     cancelEditUser();
     loadUsers();
   } catch (err) {
-    alert('Xato: ' + err.message);
+    showToast('Xato: ' + err.message, 'error');
   } finally {
     submitBtn.textContent = id ? 'Yangilash' : 'Qo\'shish';
     submitBtn.disabled = false;
@@ -2076,12 +2115,12 @@ async function editUser(id) {
     document.getElementById('userFormCancelBtn').style.display = 'block';
     document.getElementById('userManagement').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
-    alert('Ma\'lumotlarni yuklab bo\'lmadi: ' + err.message);
+    showToast('Ma\'lumotlarni yuklab bo\'lmadi: ' + err.message, 'error');
   }
 }
 
 async function deleteUser(id) {
-  if (!confirm('Bu foydalanuvchini o\'chirishni tasdiqlaysizmi?')) return;
+  if (!await showConfirm('Bu foydalanuvchini o\'chirishni tasdiqlaysizmi?')) return;
   try {
     const res = await fetch(`${API_BASE}/users/${id}`, {
       method: 'DELETE',
@@ -2091,10 +2130,10 @@ async function deleteUser(id) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || 'Server xatosi: ' + res.status);
     }
-    alert('Foydalanuvchi muvaffaqiyatli o\'chirildi');
+    showToast('Foydalanuvchi o\'chirildi', 'success');
     loadUsers();
   } catch (err) {
-    alert('Xato: ' + err.message);
+    showToast('Xato: ' + err.message, 'error');
   }
 }
 
@@ -2202,7 +2241,7 @@ async function saveUserEdit() {
   const gender    = document.getElementById('editGender').value;
 
   if (!firstName || !lastName || !email || !age) {
-    alert('Barcha maydonlarni to\'ldiring');
+    showToast('Barcha maydonlarni to\'ldiring', 'warning');
     return;
   }
   try {
@@ -2219,12 +2258,12 @@ async function saveUserEdit() {
     loadAdminUsers();
     loadAdminStats();
   } catch {
-    alert('Xato yuz berdi');
+    showToast('Xato yuz berdi', 'error');
   }
 }
 
 async function adminDeleteUser(id) {
-  if (!confirm('Bu foydalanuvchini o\'chirishni tasdiqlaysizmi?')) return;
+  if (!await showConfirm('Bu foydalanuvchini o\'chirishni tasdiqlaysizmi?')) return;
   try {
     const res = await fetch(`${API_BASE}/users/${id}`, {
       method: 'DELETE',
@@ -2234,7 +2273,7 @@ async function adminDeleteUser(id) {
     loadAdminUsers();
     loadAdminStats();
   } catch {
-    alert('Xato yuz berdi');
+    showToast('Xato yuz berdi', 'error');
   }
 }
 
@@ -2326,7 +2365,7 @@ async function updateStickerStatus(id, newStatus, btn) {
     if (!data.success) throw new Error(data.message);
     await loadStickerOrders();
   } catch(e) {
-    alert('Xato: ' + e.message);
+    showToast('Xato: ' + e.message, 'error');
     if (btn) { btn.disabled = false; }
   }
 }
@@ -2440,14 +2479,14 @@ async function updateOrderStatus(orderId, newStatus, btn) {
     if (!data.success) throw new Error(data.message || 'Xato');
     await loadAllOrders();
   } catch (e) {
-    alert('Xato: ' + e.message);
+    showToast('Xato: ' + e.message, 'error');
     if (btn) { btn.disabled = false; btn.textContent = '?'; }
   }
 }
 
 async function toggleUserAdmin(userId, currentAdminStatus, name) {
   const action = currentAdminStatus ? 'admin huquqini olib tashlash' : 'admin qilish';
-  if (!confirm(`"${name.trim()}" foydalanuvchisini ${action}ni tasdiqlaysizmi?`)) return;
+  if (!await showConfirm(`"${name.trim()}" foydalanuvchisini ${action}ni tasdiqlaysizmi?`)) return;
   try {
     const res = await fetch(`${API_BASE}/users/${userId}/toggle-admin`, {
       method: 'PATCH',
@@ -2457,7 +2496,7 @@ async function toggleUserAdmin(userId, currentAdminStatus, name) {
     if (!data.success) throw new Error(data.message || 'Xato');
     await Promise.all([loadAdminUsers(), loadAdminManagement()]);
   } catch (e) {
-    alert('Xato: ' + (e.message || 'Noma\'lum xato'));
+    showToast('Xato: ' + (e.message || 'Noma\'lum xato'), 'error');
   }
 }
 
@@ -2605,7 +2644,7 @@ async function loadUserOrders() {
         </tr>`;
     }).join('');
   } catch (err) {
-    console.error('Error loading user orders:', err);
+    // silent — user panel just stays empty on network error
   }
 }
 
@@ -2627,10 +2666,11 @@ const FIELD_TYPES = [
   { type: 'Boshqa',     placeholder: 'Ma\'lumot',            example: 'Istalgan ma\'lumot',   icon: '📋' },
 ];
 
-let _lastOrderId         = null;
-let _lastOrderPlan       = 'starter';
-let _lastOrderData       = null;   // stores backend order response for payment modal
-let _pendingCardInfoBody = null;   // stores card info while user is on payment step
+let _lastOrderId          = null;
+let _lastOrderPlan        = 'starter';
+let _lastOrderData        = null;   // NFC card order response (for payment modal shown after card info)
+let _lastStickerOrderData = null;   // sticker order response (for sticker NFC info step)
+let _pendingCardInfoBody  = null;   // card info saved while user is on payment step
 let _ciUidCounter        = 0;
 let _generatedCardLink   = '';
 let _ciPhotoBase64       = null;
@@ -2661,14 +2701,34 @@ function previewCiPhoto(input) {
 }
 
 function showPaymentModal(orderData) {
-  const cardNum  = orderData.cardNumber || '—';
-  const holder   = orderData.cardHolder || '—';
+  const cardNum  = orderData.cardNumber || '';
+  const holder   = orderData.cardHolder || '';
   const bank     = orderData.cardBank   || '';
   const total    = parseFloat(orderData.total || 0).toFixed(2);
   const orderId  = orderData.orderId || '—';
+  const hasCard  = cardNum.length > 4;
 
   // Format card number with spaces: 1234 5678 9012 3456
-  const fmt = cardNum.replace(/\s/g,'').replace(/(.{4})/g,'$1 ').trim();
+  const fmt = hasCard ? cardNum.replace(/\s/g,'').replace(/(.{4})/g,'$1 ').trim() : '';
+
+  const cardSection = hasCard ? `
+    <div style="background:var(--surface2);border:1px solid rgba(232,255,71,0.2);border-radius:14px;padding:1.4rem;margin-bottom:1rem;">
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.4rem;letter-spacing:0.05em;">KARTA RAQAMI</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.1em;margin-bottom:0.2rem;" id="pmCardNum">${fmt}</div>
+      <div style="font-size:0.8rem;color:var(--muted2);">${holder}${bank ? ' · ' + bank : ''}</div>
+    </div>
+    <button onclick="
+      navigator.clipboard.writeText('${cardNum.replace(/\s/g,'')}');
+      this.textContent='✓ Nusxalandi!';
+      setTimeout(()=>this.textContent='📋 Karta raqamini nusxalash',2000)
+    " style="width:100%;padding:0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;margin-bottom:0.7rem;">
+      📋 Karta raqamini nusxalash
+    </button>` : `
+    <div style="background:var(--surface2);border:1px solid rgba(232,255,71,0.15);border-radius:14px;padding:1.4rem;margin-bottom:1rem;text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:0.5rem;">📲</div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.3rem;">To'lov ma'lumotlari</div>
+      <div style="font-size:0.8rem;color:var(--muted2);line-height:1.6;">Admin sizga to'lov rekvizitlarini<br>WhatsApp/Telegram orqali yuboradi.</div>
+    </div>`;
 
   const html = `
     <div style="text-align:center;padding:0.5rem 0 1.2rem;">
@@ -2679,11 +2739,7 @@ function showPaymentModal(orderData) {
       <div style="font-size:0.82rem;color:var(--muted2);">Buyurtma #${orderId} tasdiqlangach tayyorlanadi</div>
     </div>
 
-    <div style="background:var(--surface2);border:1px solid rgba(232,255,71,0.2);border-radius:14px;padding:1.4rem;margin-bottom:1rem;">
-      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.4rem;letter-spacing:0.05em;">KARTA RAQAMI</div>
-      <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.1em;margin-bottom:0.2rem;" id="pmCardNum">${fmt}</div>
-      <div style="font-size:0.8rem;color:var(--muted2);">${holder} · ${bank}</div>
-    </div>
+    ${cardSection}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:1.2rem;">
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
@@ -2696,21 +2752,13 @@ function showPaymentModal(orderData) {
       </div>
     </div>
 
-    <button onclick="
-      navigator.clipboard.writeText('${cardNum.replace(/\s/g,'')}');
-      this.textContent='✓ Nusxalandi!';
-      setTimeout(()=>this.textContent='📋 Karta raqamini nusxalash',2000)
-    " style="width:100%;padding:0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;margin-bottom:0.7rem;">
-      📋 Karta raqamini nusxalash
-    </button>
-
-    <div style="font-size:0.78rem;color:var(--muted2);text-align:center;line-height:1.6;background:rgba(255,255,255,0.03);border-radius:10px;padding:0.8rem;">
-      ⚠️ To'lov o'tkazilgandan so'ng tugmani bosing — karta ma'lumotlaringiz adminga yuboriladi.<br>
-      Admin <b>1-2 soat ichida</b> kartangizni tayyorlaydi.
+    <div style="font-size:0.76rem;color:var(--muted2);text-align:center;line-height:1.65;background:rgba(255,255,255,0.03);border-radius:10px;padding:0.75rem;">
+      ⚠️ To'lov o'tkazilgandan so'ng quyidagi tugmani bosing —<br>
+      Admin <b>1-2 soat ichida</b> buyurtmangizni tasdiqlaydi.
     </div>
 
     <button onclick="closePaymentModal()" style="width:100%;margin-top:0.9rem;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;">
-      ✅ To'ladim — Buyurtmani tasdiqlash
+      ✅ To'ladim — Davom etish
     </button>`;
 
   let modal = document.getElementById('paymentModal');
@@ -2730,12 +2778,16 @@ function showPaymentModal(orderData) {
 function closePaymentModal() {
   const modal = document.getElementById('paymentModal');
   if (modal) modal.style.display = 'none';
+
   if (_pendingCardInfoBody) {
-    // User confirmed payment → submit card info + send Telegram notification
+    // NFC card flow: user confirmed payment → submit card info → Telegram
     _doSubmitCardInfo();
+  } else if (_lastStickerOrderData) {
+    // Sticker flow: payment done → open NFC chip info form
+    openStickerInfoForm();
   } else {
-    // No pending card info → this was a first-time payment modal (old flow, shouldn't happen)
-    openCardInfoForm();
+    // Fallback: show success overlay
+    document.getElementById('successOverlay')?.classList.add('active');
   }
 }
 
@@ -2768,7 +2820,7 @@ function addCardField() {
   const limit = PLAN_LIMITS[plan] || 3;
   const currentCount = document.getElementById('ciFieldsList')?.children.length || 0;
   if (currentCount >= limit) {
-    alert(`${plan.charAt(0).toUpperCase()+plan.slice(1)} rejasida maksimal ${limit} ta ma'lumot kiritish mumkin.`);
+    showToast(`${plan.charAt(0).toUpperCase()+plan.slice(1)} rejasida maksimal ${limit} ta ma'lumot kiritish mumkin.`, 'warning');
     return;
   }
 
@@ -2841,7 +2893,7 @@ function submitCardInfo() {
   }
 
   if (!fields.length) {
-    alert('Kamida 1 ta ma\'lumot kiriting.');
+    showToast('Kamida 1 ta ma\'lumot kiriting.', 'warning');
     return;
   }
 
@@ -2879,14 +2931,113 @@ async function _doSubmitCardInfo() {
     _generatedCardLink = data.cardUrl || '';
     document.getElementById('successOverlay')?.classList.add('active');
   } catch (err) {
-    alert('Karta ma\'lumotlari yuborishda xato: ' + err.message);
+    showToast('Karta ma\'lumotlari yuborishda xato: ' + err.message, 'error');
   }
 }
 
 function copyCardLink() {
   navigator.clipboard.writeText(_generatedCardLink).then(() => {
-    alert('Link nusxalandi!');
+    showToast('Link nusxalandi!', 'success', 2000);
   });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  STIKER NFC INFO FORM
+// ─────────────────────────────────────────────────────────────
+let _siLogoBase64 = null;
+
+function openStickerInfoForm() {
+  // Pre-fill biznes nomi from order data
+  const bizNameEl = document.getElementById('siBizName');
+  const phoneEl   = document.getElementById('siPhone');
+  if (bizNameEl && _lastStickerOrderData?.businessName) bizNameEl.value = _lastStickerOrderData.businessName;
+  if (phoneEl   && _lastStickerOrderData?.phone)        phoneEl.value   = _lastStickerOrderData.phone;
+  const overlay = document.getElementById('stickerInfoOverlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+function previewSiLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const canvas = document.createElement('canvas');
+    const img = new Image();
+    img.onload = () => {
+      const size = 300;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const s = Math.min(img.width, img.height);
+      const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+      ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+      _siLogoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      const imgEl  = document.getElementById('siLogoImg');
+      const plusEl = document.getElementById('siLogoPlus');
+      const label  = document.getElementById('siLogoLabel');
+      if (imgEl)  { imgEl.src = _siLogoBase64; imgEl.style.display = 'block'; }
+      if (plusEl) plusEl.style.display = 'none';
+      if (label)  label.style.borderStyle = 'solid';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitStickerInfo() {
+  const bizName  = (document.getElementById('siBizName')?.value||'').trim();
+  const phone    = (document.getElementById('siPhone')?.value||'').trim();
+  const category = document.getElementById('siCategory')?.value||'';
+  const address  = (document.getElementById('siAddress')?.value||'').trim();
+  const hours    = (document.getElementById('siHours')?.value||'').trim();
+  const desc     = (document.getElementById('siDesc')?.value||'').trim();
+
+  if (!bizName || !phone) {
+    showToast('Biznes nomi va telefon kiritilishi shart.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('siSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Yuklanmoqda...'; }
+
+  try {
+    const res = await fetch(`${API_BASE}/sticker/info`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentUser?.token ? {'Authorization': `Bearer ${currentUser.token}`} : {})
+      },
+      body: JSON.stringify({
+        orderId:      _lastStickerOrderData?.orderId || null,
+        businessName: bizName,
+        category,
+        address,
+        phone,
+        workingHours: hours,
+        description:  desc,
+        logo:         _siLogoBase64 || null
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Xato');
+
+    // Reset form
+    ['siBizName','siPhone','siAddress','siHours','siDesc'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    const catEl = document.getElementById('siCategory'); if(catEl) catEl.value='';
+    const imgEl = document.getElementById('siLogoImg'); if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
+    const plusEl = document.getElementById('siLogoPlus'); if(plusEl) plusEl.style.display='';
+    _siLogoBase64 = null;
+    _lastStickerOrderData = null;
+
+    closeOverlay('stickerInfoOverlay');
+    document.getElementById('successOverlay')?.classList.add('active');
+
+  } catch(err) {
+    showToast('Xato: ' + err.message, 'error');
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='💾 Saqlash va yuborish →'; }
+  }
 }
 
 function initMap() {
@@ -2987,7 +3138,7 @@ function renderGoogleBtn() {
 
 function triggerGoogleSignIn() {
   if (typeof google === 'undefined') {
-    alert('Google yuklanmadi. Sahifani yangilang.');
+    showToast('Google yuklanmadi. Sahifani yangilang.', 'warning');
     return;
   }
   google.accounts.id.prompt();
@@ -3023,7 +3174,7 @@ async function handleGoogleCredential(response) {
     closeOverlay('authOverlay');
     _afterAuth();
   } catch (err) {
-    alert('Google orqali kirish amalga oshmadi: ' + err.message);
+    showToast('Google orqali kirish amalga oshmadi: ' + err.message, 'error');
   }
 }
 
@@ -3059,7 +3210,7 @@ function triggerTelegramLogin() {
   );
 
   if (!popup) {
-    alert("Popup bloklandi. Brauzerdagi popup ruxsatini yoqing.");
+    showToast('Popup bloklandi. Brauzerdagi popup ruxsatini yoqing.', 'warning');
     return;
   }
 
@@ -3115,6 +3266,6 @@ async function handleTelegramAuth(tgUser) {
     closeOverlay('authOverlay');
     _afterAuth();
   } catch (err) {
-    alert('Telegram orqali kirish amalga oshmadi: ' + err.message);
+    showToast('Telegram orqali kirish amalga oshmadi: ' + err.message, 'error');
   }
 }
