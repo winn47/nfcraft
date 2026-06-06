@@ -258,6 +258,21 @@ const translations = {
     telegramSignIn: 'Sign in with Telegram',
     createAccount: 'Create Account',
     navProfile: '👤 Profile', navOrders: '📦 My Orders', navSettings: '⚙️ Settings', navBiznes: 'Business',
+    b2bBadge: 'B2B · FOR BUSINESS',
+    b2bTitle: 'Stick <span style="color:var(--accent);">NFC Stickers</span><br/>on Your Products',
+    b2bSub: 'When a customer has an issue — tapping the sticker instantly opens your phone number and address. No app needed.',
+    b2bStep1Title: 'Enter your business info',
+    b2bStep1Desc: 'Name, address, phone — enter once',
+    b2bStep2Title: 'Order stickers',
+    b2bStep2Desc: 'Any quantity — we deliver across Uzbekistan',
+    b2bStep3Title: 'Stick on your products',
+    b2bStep3Desc: 'Customer taps — connected to you instantly ✓',
+    b2bPriceLabel: 'PRICES (per sticker)',
+    b2bOrderBtn: '📦 Order Stickers →',
+    b2bForWho: 'WHO IS IT FOR',
+    b2bMoreBiz: '+ any other business',
+    b2bDesigns: 'DESIGN TEMPLATES',
+    b2bFilterAll: 'All',
   },
   uz: {
     navWhy: 'Nima uchun NFC', navPricing: 'Narxlar', navTeam: 'Jamoa', navLocation: 'Manzil', navUsers: 'Foydalanuvchilar',
@@ -331,6 +346,21 @@ const translations = {
     telegramSignIn: 'Telegram orqali kirish',
     createAccount: 'Hisob Yaratish',
     navProfile: '👤 Profil', navOrders: '📦 Buyurtmalar', navSettings: '⚙️ Sozlamalar', navBiznes: 'Biznes',
+    b2bBadge: 'B2B · BIZNES UCHUN',
+    b2bTitle: 'Mahsulotingizga <span style="color:var(--accent);">NFC Stiker</span><br/>yopishtirib bering',
+    b2bSub: 'Mijoz biror muammo yuzaga kelsa — stikerni tegintirganda darhol sizning telefon raqamingiz va manzilingizga kiradi. Hech qanday app kerak emas.',
+    b2bStep1Title: 'Biznesingiz ma\'lumotlarini kiriting',
+    b2bStep1Desc: 'Nomi, manzil, telefon — bir marta kiritasiz',
+    b2bStep2Title: 'Stiker buyurtma bering',
+    b2bStep2Desc: 'Kerakli miqdorda — butun O\'zbekistonga yetkazamiz',
+    b2bStep3Title: 'Mahsulotlarga yopishtirasiz',
+    b2bStep3Desc: 'Mijoz tegintirganda — darhol siz bilan bog\'lanadi ✓',
+    b2bPriceLabel: 'NARXLAR (1 dona)',
+    b2bOrderBtn: '📦 Stiker Buyurtma →',
+    b2bForWho: 'KIMLAR UCHUN MO\'LJALLANGAN',
+    b2bMoreBiz: '+ boshqa har qanday biznes',
+    b2bDesigns: 'DIZAYN NAMUNALARI',
+    b2bFilterAll: 'Hammasi',
   },
   ru: {
     navWhy: 'Почему NFC', navPricing: 'Цены', navTeam: 'Команда', navLocation: 'Адрес', navUsers: 'Пользователи',
@@ -404,6 +434,21 @@ const translations = {
     telegramSignIn: 'Войти через Telegram',
     createAccount: 'Создать аккаунт',
     navProfile: '👤 Профиль', navOrders: '📦 Заказы', navSettings: '⚙️ Настройки', navBiznes: 'Бизнес',
+    b2bBadge: 'B2B · ДЛЯ БИЗНЕСА',
+    b2bTitle: 'Наклейте <span style="color:var(--accent);">NFC-стикер</span><br/>на ваши товары',
+    b2bSub: 'Если у клиента возникла проблема — касание стикера мгновенно открывает ваш телефон и адрес. Никаких приложений.',
+    b2bStep1Title: 'Введите данные бизнеса',
+    b2bStep1Desc: 'Название, адрес, телефон — вводите один раз',
+    b2bStep2Title: 'Закажите стикеры',
+    b2bStep2Desc: 'Любое количество — доставляем по всему Узбекистану',
+    b2bStep3Title: 'Наклейте на товары',
+    b2bStep3Desc: 'Клиент касается — мгновенно связывается с вами ✓',
+    b2bPriceLabel: 'ЦЕНЫ (за штуку)',
+    b2bOrderBtn: '📦 Заказать стикеры →',
+    b2bForWho: 'ДЛЯ КОГО ЭТО',
+    b2bMoreBiz: '+ любой другой бизнес',
+    b2bDesigns: 'ШАБЛОНЫ ДИЗАЙНА',
+    b2bFilterAll: 'Все',
   },
 };
 
@@ -961,42 +1006,45 @@ function stSelectCatalog(idx) {
   if (info)   info.textContent  = d.cat;
   if (picker) picker.style.display = 'none';
   if (chosen) { chosen.style.display = 'flex'; }
-  // Auto-fill category in NFC section
-  const catEl = document.getElementById('stCategory');
-  if (catEl) catEl.value = d.cat;
+  const colorRow = document.getElementById('stDzColorRow');
+  if (colorRow) colorRow.style.display = 'none';
 }
 
 function stSelectNoDesign() {
   _selectedCatalogDesign = null;
   _dsDesignData = null;
-  const badge  = document.getElementById('stDesignBadge');
-  const label  = document.getElementById('stDesignLabel');
-  const info   = document.getElementById('stDesignInfo');
-  const picker = document.getElementById('stDesignPicker');
-  const chosen = document.getElementById('stDesignChosen');
-  if (badge)  { badge.textContent = '—'; badge.style.background = 'var(--surface)'; badge.style.color = 'var(--muted)'; }
-  if (label)  label.textContent = 'Dizaynsiz';
-  if (info)   info.textContent  = '';
-  if (picker) picker.style.display = 'none';
-  if (chosen) { chosen.style.display = 'flex'; }
+  const badge    = document.getElementById('stDesignBadge');
+  const label    = document.getElementById('stDesignLabel');
+  const info     = document.getElementById('stDesignInfo');
+  const picker   = document.getElementById('stDesignPicker');
+  const chosen   = document.getElementById('stDesignChosen');
+  const colorRow = document.getElementById('stDzColorRow');
+  const bg  = document.getElementById('stDzBg')?.value  || '#ffffff';
+  const tx  = document.getElementById('stDzColor')?.value || '#111111';
+  if (badge)    { badge.textContent = 'Dz'; badge.style.background = bg; badge.style.color = tx; }
+  if (label)    label.textContent = 'Dizaynsiz';
+  if (info)     info.textContent  = 'Rang tanlang';
+  if (picker)   picker.style.display = 'none';
+  if (chosen)   chosen.style.display = 'flex';
+  if (colorRow) colorRow.style.display = 'flex';
+}
+
+function stDzPreview() {
+  const badge = document.getElementById('stDesignBadge');
+  const bg  = document.getElementById('stDzBg')?.value  || '#ffffff';
+  const tx  = document.getElementById('stDzColor')?.value || '#111111';
+  if (badge) { badge.style.background = bg; badge.style.color = tx; }
 }
 
 function stResetDesign() {
   _selectedCatalogDesign = null;
   _dsDesignData = null;
-  const picker = document.getElementById('stDesignPicker');
-  const chosen = document.getElementById('stDesignChosen');
-  if (picker) picker.style.display = '';
-  if (chosen) chosen.style.display = 'none';
-}
-
-function stToggleNfc() {
-  const sec   = document.getElementById('stNfcSection');
-  const arrow = document.getElementById('stNfcArrow');
-  if (!sec) return;
-  const open = sec.style.display === 'flex';
-  sec.style.display   = open ? 'none' : 'flex';
-  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+  const picker   = document.getElementById('stDesignPicker');
+  const chosen   = document.getElementById('stDesignChosen');
+  const colorRow = document.getElementById('stDzColorRow');
+  if (picker)   picker.style.display = '';
+  if (chosen)   chosen.style.display = 'none';
+  if (colorRow) colorRow.style.display = 'none';
 }
 
 function stUpdatePrice(val) {
@@ -1610,15 +1658,9 @@ function dsSaveAndOrder() {
 }
 
 async function placeStickerOrder() {
-  const bizName  = (document.getElementById('stBizName')?.value||'').trim();
-  const phone    = (document.getElementById('stPhone')?.value||'').trim();
-  const qty      = parseInt(document.getElementById('stQty')?.value)||50;
-  const category = document.getElementById('stCategory')?.value||'';
-  const address  = (document.getElementById('stAddress')?.value||'').trim();
-  const hours    = (document.getElementById('stHours')?.value||'').trim();
-  const website  = (document.getElementById('stWebsite')?.value||'').trim();
-  const instagram= (document.getElementById('stInstagram')?.value||'').trim();
-  const desc     = (document.getElementById('stDesc')?.value||'').trim();
+  const bizName = (document.getElementById('stBizName')?.value||'').trim();
+  const phone   = (document.getElementById('stPhone')?.value||'').trim();
+  const qty     = parseInt(document.getElementById('stQty')?.value)||50;
 
   if (!bizName || !phone) {
     showToast('Biznes nomi va telefon raqam kiritilishi shart.', 'warning');
@@ -1628,38 +1670,39 @@ async function placeStickerOrder() {
   const btn = document.querySelector('#stickerOverlay .auth-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Yuborilmoqda...'; }
 
-  const descFull = [desc, website?'Website: '+website:'', instagram?'Instagram: '+instagram:''].filter(Boolean).join('\n');
-  const templateName = _selectedCatalogDesign?.name || null;
+  // Determine template name
+  let templateName = null;
+  if (_dsDesignData?.preview) {
+    templateName = 'Canvas dizayn';
+  } else if (_selectedCatalogDesign) {
+    templateName = _selectedCatalogDesign.name;
+  } else {
+    // Dizaynsiz — include chosen colors
+    const bg = document.getElementById('stDzBg')?.value || '#ffffff';
+    const tx = document.getElementById('stDzColor')?.value || '#111111';
+    templateName = `Dizaynsiz (Fon:${bg} Matn:${tx})`;
+  }
 
   try {
     const res = await fetch(`${API_BASE}/sticker/order`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', ...(currentUser?.token?{'Authorization':`Bearer ${currentUser.token}`}:{}) },
-      body: JSON.stringify({ businessName:bizName, category, address, phone, contactPhone:phone,
-                             workingHours:hours, description:descFull, quantity:qty,
+      body: JSON.stringify({ businessName:bizName, phone, contactPhone:phone, quantity:qty,
                              templateName, designPreview:_dsDesignData?.preview||null })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message||'Xato');
 
-    // Store for sticker NFC info step (after payment)
     _lastStickerOrderData = data;
 
-    // Reset & close order form
     closeOverlay('stickerOverlay');
     _dsDesignData = null;
     _selectedCatalogDesign = null;
     stResetDesign();
-    ['stBizName','stPhone','stAddress','stHours','stWebsite','stInstagram','stDesc'].forEach(id=>{
-      const el = document.getElementById(id); if(el) el.value='';
-    });
+    ['stBizName','stPhone'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     const qEl = document.getElementById('stQty'); if(qEl) qEl.value='50';
-    const cEl = document.getElementById('stCategory'); if(cEl) cEl.value='';
     const hint = document.getElementById('stPriceHint'); if(hint) hint.textContent='50 dona × $0.40 = $20.00';
-    const nfc = document.getElementById('stNfcSection'); if(nfc) nfc.style.display='none';
-    const arrow = document.getElementById('stNfcArrow'); if(arrow) arrow.style.transform='';
 
-    // Go to payment modal (like card orders)
     showPaymentModal(data);
 
   } catch(err) {
@@ -1695,6 +1738,11 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const key = el.getAttribute('data-i18n-ph');
     if (t[key] !== undefined) el.placeholder = t[key];
+  });
+
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (t[key] !== undefined) el.innerHTML = t[key];
   });
 
   const heroBadge = document.querySelector('.hero-badge');
@@ -2780,13 +2828,11 @@ function closePaymentModal() {
   if (modal) modal.style.display = 'none';
 
   if (_pendingCardInfoBody) {
-    // NFC card flow: user confirmed payment → submit card info → Telegram
     _doSubmitCardInfo();
-  } else if (_lastStickerOrderData) {
-    // Sticker flow: payment done → open NFC chip info form
-    openStickerInfoForm();
   } else {
-    // Fallback: show success overlay
+    // Show success overlay; for sticker orders also show optional NFC fill button
+    const nfcBtn = document.getElementById('successNfcBtn');
+    if (nfcBtn) nfcBtn.style.display = _lastStickerOrderData ? 'block' : 'none';
     document.getElementById('successOverlay')?.classList.add('active');
   }
 }
@@ -2841,9 +2887,14 @@ function addCardField() {
       </select>
       <button onclick="removeCiField(${idx})" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:8px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;">✕</button>
     </div>
-    <input id="ci-input-${idx}" type="text"
-      placeholder="${defaultType.placeholder}"
-      style="width:100%;box-sizing:border-box;padding:0.55rem 0.7rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;outline:none;" />
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <input id="ci-input-${idx}" type="text"
+        placeholder="${defaultType.placeholder}"
+        style="flex:1;box-sizing:border-box;padding:0.55rem 0.7rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;outline:none;" />
+      <button id="ci-mapbtn-${idx}" onclick="openMapPicker('ci-input-${idx}')"
+        title="Xaritadan tanlash"
+        style="display:none;padding:0.42rem 0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.9rem;flex-shrink:0;line-height:1;">🗺</button>
+    </div>
     <div id="ci-label-${idx}" style="font-size:15px;font-weight:600;margin-top:0.45rem;color:var(--text);">${defaultType.icon} ${defaultType.type}</div>
     <div id="ci-example-${idx}" style="font-size:10px;color:var(--muted2);margin-top:0.15rem;">Misol: ${defaultType.example}</div>
   `;
@@ -2857,9 +2908,11 @@ function onCiTypeChange(idx) {
   const input = document.getElementById(`ci-input-${idx}`);
   const label = document.getElementById(`ci-label-${idx}`);
   const example = document.getElementById(`ci-example-${idx}`);
+  const mapBtn = document.getElementById(`ci-mapbtn-${idx}`);
   if (input) input.placeholder = ft.placeholder;
   if (label) label.textContent = `${ft.icon} ${ft.type}`;
   if (example) example.textContent = `Misol: ${ft.example}`;
+  if (mapBtn) mapBtn.style.display = ft.type === 'Manzil' ? '' : 'none';
 }
 
 function removeCiField(idx) {
@@ -2875,6 +2928,92 @@ function updateCiCount() {
   if (countEl) countEl.textContent = `${count} / ${limit}`;
   const addBtn = document.getElementById('ciAddBtn');
   if (addBtn) addBtn.style.opacity = count >= limit ? '0.4' : '1';
+}
+
+// ── Map Picker ────────────────────────────────────────────
+let _mapPickerTargetId = null;
+let _mapPickerMap      = null;
+let _mapPickerMarker   = null;
+let _mapPickerAddr     = '';
+
+const _mapMarkerIcon = () => L.divIcon({
+  html: `<div style="position:relative;width:28px;height:36px;">
+    <div style="width:28px;height:28px;background:#e8ff47;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,0.5);border:2px solid rgba(0,0,0,0.15);"></div>
+    <div style="position:absolute;top:6px;left:6px;width:16px;height:16px;background:rgba(0,0,0,0.25);border-radius:50%;transform:rotate(0deg);"></div>
+  </div>`,
+  iconSize: [28, 36], iconAnchor: [14, 36], className: ''
+});
+
+function openMapPicker(inputId) {
+  _mapPickerTargetId = inputId;
+  _mapPickerAddr     = '';
+  document.getElementById('mapPickerAddr').textContent = 'Xaritada istalgan joyni bosing...';
+
+  const overlay = document.getElementById('mapPickerOverlay');
+  overlay.style.display = 'flex';
+
+  // Destroy previous map instance before creating new one
+  if (_mapPickerMap) { _mapPickerMap.remove(); _mapPickerMap = null; _mapPickerMarker = null; }
+
+  setTimeout(() => {
+    // Default center: Tashkent
+    _mapPickerMap = L.map('mapPickerMap', { zoomControl: true }).setView([41.2995, 69.2401], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(_mapPickerMap);
+
+    // Try to pre-fill from existing input value (geosearch)
+    const existingVal = document.getElementById(inputId)?.value?.trim();
+    if (existingVal) {
+      document.getElementById('mapPickerAddr').textContent = existingVal;
+      _mapPickerAddr = existingVal;
+    }
+
+    _mapPickerMap.on('click', async e => {
+      const { lat, lng } = e.latlng;
+      if (_mapPickerMarker) _mapPickerMarker.setLatLng(e.latlng);
+      else _mapPickerMarker = L.marker(e.latlng, { icon: _mapMarkerIcon() }).addTo(_mapPickerMap);
+
+      document.getElementById('mapPickerAddr').textContent = 'Manzil aniqlanmoqda...';
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=uz`,
+          { headers: { 'Accept-Language': 'uz' } }
+        );
+        const d = await r.json();
+        const a = d.address || {};
+        // Build a compact readable address
+        const parts = [
+          a.road || a.pedestrian || a.path,
+          a.suburb || a.neighbourhood || a.quarter,
+          a.city || a.town || a.village || a.county,
+        ].filter(Boolean);
+        _mapPickerAddr = parts.length ? parts.join(', ') : (d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      } catch {
+        _mapPickerAddr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      }
+      document.getElementById('mapPickerAddr').textContent = _mapPickerAddr;
+    });
+  }, 60);
+}
+
+function confirmMapLocation() {
+  if (!_mapPickerAddr) { showToast('Avval xaritadan joy tanlang', 'warning'); return; }
+  const input = document.getElementById(_mapPickerTargetId);
+  if (input) { input.value = _mapPickerAddr; input.dispatchEvent(new Event('input')); }
+  _closeMapPickerModal();
+}
+
+function closeMapPicker(event) {
+  if (event && event.target.id !== 'mapPickerOverlay') return;
+  _closeMapPickerModal();
+}
+
+function _closeMapPickerModal() {
+  document.getElementById('mapPickerOverlay').style.display = 'none';
+  if (_mapPickerMap) { _mapPickerMap.remove(); _mapPickerMap = null; _mapPickerMarker = null; }
+  _mapPickerAddr = '';
 }
 
 function submitCardInfo() {
@@ -2947,7 +3086,7 @@ function copyCardLink() {
 let _siLogoBase64 = null;
 
 function openStickerInfoForm() {
-  // Pre-fill biznes nomi from order data
+  closeOverlay('successOverlay');
   const bizNameEl = document.getElementById('siBizName');
   const phoneEl   = document.getElementById('siPhone');
   if (bizNameEl && _lastStickerOrderData?.businessName) bizNameEl.value = _lastStickerOrderData.businessName;
@@ -3029,9 +3168,8 @@ async function submitStickerInfo() {
     const plusEl = document.getElementById('siLogoPlus'); if(plusEl) plusEl.style.display='';
     _siLogoBase64 = null;
     _lastStickerOrderData = null;
-
     closeOverlay('stickerInfoOverlay');
-    document.getElementById('successOverlay')?.classList.add('active');
+    showToast('NFC ma\'lumotlari saqlandi! Admin Telegram orqali xabar oladi.', 'success', 4500);
 
   } catch(err) {
     showToast('Xato: ' + err.message, 'error');

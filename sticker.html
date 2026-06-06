@@ -191,7 +191,15 @@
 
 <div class="top-bar">
   <div class="brand">NF<span>Craft</span></div>
-  <div class="sticker-badge">NFC STIKER</div>
+  <div style="display:flex;align-items:center;gap:0.6rem;">
+    <div class="sticker-badge">NFC STIKER</div>
+    <select id="langSelect" onchange="changeLang(this.value)"
+      style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.28rem 0.5rem;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;outline:none;">
+      <option value="uz">🇺🇿 UZ</option>
+      <option value="en">🇬🇧 EN</option>
+      <option value="ru">🇷🇺 RU</option>
+    </select>
+  </div>
 </div>
 
 <div id="mainContent" style="width:100%;max-width:480px;display:none;">
@@ -211,7 +219,7 @@
         <a class="info-row" id="phoneRow" href="#">
           <div class="info-icon">📞</div>
           <div class="info-text-wrap">
-            <span class="info-label">Telefon</span>
+            <span class="info-label" id="phoneLabel">Telefon</span>
             <span class="info-value" id="bizPhone">—</span>
           </div>
         </a>
@@ -219,7 +227,7 @@
         <div class="info-row">
           <div class="info-icon">📍</div>
           <div class="info-text-wrap">
-            <span class="info-label">Manzil</span>
+            <span class="info-label" id="addressLabel">Manzil</span>
             <span class="info-value" id="bizAddress">—</span>
           </div>
         </div>
@@ -227,7 +235,7 @@
         <div class="info-row" id="hoursRow" style="display:none;">
           <div class="info-icon">🕐</div>
           <div class="info-text-wrap">
-            <span class="info-label">Ish vaqti</span>
+            <span class="info-label" id="hoursLabel">Ish vaqti</span>
             <span class="info-value" id="bizHours">—</span>
           </div>
         </div>
@@ -235,20 +243,15 @@
       </div>
 
       <div class="cta-group">
-        <a class="btn-call" id="callBtn" href="#">
-          📞 Qo'ng'iroq qilish
-        </a>
-        <a class="btn-map" id="mapBtn"
-           href="#" target="_blank" rel="noopener">
-          🗺 Xaritada ko'rish
-        </a>
+        <a class="btn-call" id="callBtn" href="#">📞 Qo'ng'iroq qilish</a>
+        <a class="btn-map" id="mapBtn" href="#" target="_blank" rel="noopener">🗺 Xaritada ko'rish</a>
       </div>
 
     </div>
   </div>
 
   <div class="complaint-box">
-    <div class="complaint-title">⚠️ Muammo yoki shikoyat bormi?</div>
+    <div class="complaint-title" id="complaintTitle">⚠️ Muammo yoki shikoyat bormi?</div>
     <div class="complaint-text" id="complaintText">
       Ushbu mahsulotni sotib olgan market bilan bog'laning.<br>
       Yuqoridagi telefon raqamini bosib aloqa qiling.
@@ -270,73 +273,111 @@
 <script>
 const API = 'https://nfcraftbackend1-production.up.railway.app/api';
 
+// ── Translations ──────────────────────────────────────────
+const LANG_T = {
+  uz: {
+    phone: 'Telefon', address: 'Manzil', hours: 'Ish vaqti',
+    call: '📞 Qo\'ng\'iroq qilish', map: '🗺 Xaritada ko\'rish',
+    complaint: '⚠️ Muammo yoki shikoyat bormi?',
+    complaintFn: (name, addr) => `"${name}" do'konida mahsulotingiz bilan muammo yuzaga kelsa, yuqoridagi telefonga qo'ng'iroq qiling.\nManzil: ${addr}`,
+    loading: 'Yuklanmoqda...', errorMain: 'Stiker ma\'lumotlari topilmadi.',
+    errorSub: 'Iltimos, to\'g\'ri QR/NFC stikerdan foydalaning.',
+  },
+  en: {
+    phone: 'Phone', address: 'Address', hours: 'Working hours',
+    call: '📞 Call Now', map: '🗺 View on Map',
+    complaint: '⚠️ Problem or complaint?',
+    complaintFn: (name, addr) => `If you have an issue with a product from "${name}", call the number above.\nAddress: ${addr}`,
+    loading: 'Loading...', errorMain: 'Sticker info not found.',
+    errorSub: 'Please use the correct QR/NFC sticker.',
+  },
+  ru: {
+    phone: 'Телефон', address: 'Адрес', hours: 'Режим работы',
+    call: '📞 Позвонить', map: '🗺 На карте',
+    complaint: '⚠️ Проблема или жалоба?',
+    complaintFn: (name, addr) => `Если у вас проблема с товаром из "${name}", позвоните по номеру выше.\nАдрес: ${addr}`,
+    loading: 'Загрузка...', errorMain: 'Данные стикера не найдены.',
+    errorSub: 'Используйте правильный QR/NFC стикер.',
+  },
+};
+
+let currentLang = localStorage.getItem('stickerLang') || 'uz';
+let _cachedData  = null;
+
 function getUUID() {
   const p = new URLSearchParams(location.search);
   return p.get('uuid') || p.get('id') || '';
 }
-
 function show(id)  { const el = document.getElementById(id); if (el) el.style.display = ''; }
 function hide(id)  { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
-function text(id, val) { const el = document.getElementById(id); if (el) el.textContent = val || '—'; }
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; }
+
+function applyLang() {
+  const t = LANG_T[currentLang] || LANG_T.uz;
+  document.getElementById('langSelect').value = currentLang;
+  setText('phoneLabel',    t.phone);
+  setText('addressLabel',  t.address);
+  setText('hoursLabel',    t.hours);
+  document.getElementById('callBtn').textContent = t.call;
+  document.getElementById('mapBtn').textContent  = t.map;
+  setText('complaintTitle', t.complaint);
+  setText('loadingMsg',     t.loading);
+  // Error message
+  const errEl = document.getElementById('errorMsg');
+  if (errEl) errEl.innerHTML = `${t.errorMain}<br><span style="font-size:0.8rem;color:var(--muted);">${t.errorSub}</span>`;
+  // If data already loaded, update complaint text
+  if (_cachedData) {
+    setText('complaintText', t.complaintFn(_cachedData.businessName, _cachedData.address || ''));
+  }
+}
+
+function changeLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('stickerLang', lang);
+  applyLang();
+}
 
 async function loadSticker() {
+  applyLang();
   const uuid = getUUID();
   if (!uuid) { hide('loadingMsg'); show('errorMsg'); return; }
 
   try {
     const res  = await fetch(`${API}/sticker/info/${uuid}`);
     const data = await res.json();
-
     if (!res.ok || !data.businessName) { hide('loadingMsg'); show('errorMsg'); return; }
 
-    // Business name
-    text('bizName', data.businessName);
+    _cachedData = data;
+    const t = LANG_T[currentLang] || LANG_T.uz;
+
+    setText('bizName', data.businessName);
     document.title = data.businessName + ' — NFCraft';
 
-    // Logo
     const logoEl = document.getElementById('bizLogo');
     if (data.logo && data.logo.startsWith('data:')) {
       logoEl.innerHTML = `<img src="${data.logo}" alt="logo"/>`;
     } else {
-      const icons = { supermarket:'🛒', dorixona:'💊', elektronika:'📱', oziq:'🥦', kiyim:'👕', restaurant:'🍽', cafe:'☕', salon:'✂️' };
+      const icons = { supermarket:'🛒', dorixona:'💊', elektronika:'📱', oziq:'🥦', kiyim:'👕', restoran:'🍽', cafe:'☕', salon:'✂️' };
       const cat = (data.category || '').toLowerCase();
       logoEl.textContent = icons[cat] || '🏪';
     }
 
-    // Category
-    if (data.category) {
-      const pill = document.getElementById('categoryPill');
-      pill.textContent = data.category;
-      show('categoryPill');
-    }
+    if (data.category) { setText('categoryPill', data.category); show('categoryPill'); }
+    if (data.description) { setText('bizDesc', data.description); show('bizDesc'); }
 
-    // Description
-    if (data.description) {
-      text('bizDesc', data.description);
-      show('bizDesc');
-    }
-
-    // Phone
     const phone = data.phone || '';
-    text('bizPhone', phone);
-    document.getElementById('phoneRow').href = 'tel:' + phone.replace(/\s/g,'');
-    document.getElementById('callBtn').href  = 'tel:' + phone.replace(/\s/g,'');
+    setText('bizPhone', phone);
+    document.getElementById('phoneRow').href = 'tel:' + phone.replace(/\s/g, '');
+    document.getElementById('callBtn').href  = 'tel:' + phone.replace(/\s/g, '');
 
-    // Address
-    text('bizAddress', data.address);
-    const mapUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(data.address);
-    document.getElementById('mapBtn').href = mapUrl;
-
-    // Working hours
-    if (data.workingHours) {
-      text('bizHours', data.workingHours);
-      show('hoursRow');
+    setText('bizAddress', data.address);
+    if (data.address) {
+      document.getElementById('mapBtn').href = 'https://www.google.com/maps/search/' + encodeURIComponent(data.address);
     }
 
-    // Complaint text
-    text('complaintText',
-      `"${data.businessName}" do'konida mahsulotingiz bilan muammo yuzaga kelsa, yuqoridagi telefonga qo'ng'iroq qiling.\nManzil: ${data.address}`
-    );
+    if (data.workingHours) { setText('bizHours', data.workingHours); show('hoursRow'); }
+
+    setText('complaintText', t.complaintFn(data.businessName, data.address || ''));
 
     hide('loadingMsg');
     show('mainContent');
