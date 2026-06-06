@@ -157,7 +157,7 @@
     </div>
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 1.5rem;">
       <button class="upanel-tab active" id="udtab-info"    onclick="switchUDTab('info')">👤 Ma'lumot</button>
-      <button class="upanel-tab"        id="udtab-orders"  onclick="switchUDTab('orders')">📦 Buyurtmalar</button>
+      <button class="upanel-tab"        id="udtab-orders"  onclick="switchUDTab('orders')">💳 Cardlar</button>
       <button class="upanel-tab"        id="udtab-sticker" onclick="switchUDTab('sticker')">🏷 Stikerlar</button>
     </div>
     <div class="modal-body" style="padding:1.4rem;">
@@ -276,7 +276,7 @@
       </button>
       <div class="lang-dropdown profile-dropdown" id="profileDropdown">
         <button onclick="closeProfileDropdown(); openUserPanel('profile')" data-i18n="navProfile">👤 Profil</button>
-        <button onclick="closeProfileDropdown(); openUserPanel('orders')"  data-i18n="navOrders">📦 Buyurtmalar</button>
+        <button onclick="closeProfileDropdown(); openUserPanel('orders')"  data-i18n="navOrders">💳 Cardlar</button>
         <button onclick="closeProfileDropdown(); openUserPanel('settings')" data-i18n="navSettings">⚙️ Sozlamalar</button>
         <div class="profile-drop-divider"></div>
         <button onclick="closeProfileDropdown(); logout()" class="profile-logout-btn" data-i18n="logout">↪ Chiqish</button>
@@ -315,7 +315,7 @@
       <div id="mProfileMenu" style="display:none;">
         <div class="mobile-profile-name" id="mProfileName">—</div>
         <button onclick="closeMobileMenu(); openUserPanel('profile')"  data-i18n="navProfile">👤 Profil</button>
-        <button onclick="closeMobileMenu(); openUserPanel('orders')"   data-i18n="navOrders">📦 Buyurtmalar</button>
+        <button onclick="closeMobileMenu(); openUserPanel('orders')"   data-i18n="navOrders">💳 Cardlar</button>
         <button onclick="closeMobileMenu(); openUserPanel('settings')" data-i18n="navSettings">⚙️ Sozlamalar</button>
         <button onclick="closeMobileMenu(); logout()" style="color:#ff8888;" data-i18n="logout">↪ Chiqish</button>
       </div>
@@ -573,20 +573,6 @@
       </div>
 
       <!-- Steps, pricing, CTA are in left column above — no right column needed -->
-    </div>
-
-    <!-- Category chips -->
-    <div class="reveal" style="text-align:center;margin-bottom:2.5rem;">
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem;letter-spacing:0.04em;" data-i18n="b2bForWho">KIMLAR UCHUN MO'LJALLANGAN</div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;">
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">🛒 Supermarketlar</span>
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">📱 Elektronika</span>
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">💊 Dorixonalar</span>
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">🍽 Restoranlar</span>
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">✂️ Go'zallik salonlari</span>
-        <span style="padding:0.45rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.82rem;color:var(--muted2);">🏥 Klinikalar</span>
-        <span style="padding:0.45rem 1rem;background:rgba(232,255,71,0.08);border:1px solid rgba(232,255,71,0.2);border-radius:20px;font-size:0.82rem;color:var(--accent);" data-i18n="b2bMoreBiz">+ boshqa har qanday biznes</span>
-      </div>
     </div>
 
     <!-- Catalog strip -->
@@ -1372,7 +1358,6 @@
         <form class="auth-form" id="form-register" onsubmit="handleRegister(event)">
           <div class="input-group"><div class="input-label" data-i18n="firstName">First Name</div><input class="input-field" id="regFirstName" type="text" data-i18n-ph="enterFirstName" placeholder="Enter first name" required /></div>
           <div class="input-group"><div class="input-label" data-i18n="lastName">Last Name</div><input class="input-field" id="regLastName" type="text" data-i18n-ph="enterLastName" placeholder="Enter last name" required /></div>
-          <div class="input-group"><div class="input-label" data-i18n="age">Age</div><input class="input-field" id="regAge" type="number" data-i18n-ph="enterAge" placeholder="Enter age" required /></div>
           <div class="input-group"><div class="input-label" data-i18n="regionLabel">Region</div><select class="input-field" id="regAddress" required><option value="">— Viloyatni tanlang —</option><option>Toshkent shahri</option><option>Toshkent viloyati</option><option>Andijon viloyati</option><option>Farg'ona viloyati</option><option>Namangan viloyati</option><option>Samarqand viloyati</option><option>Buxoro viloyati</option><option>Navoiy viloyati</option><option>Qashqadaryo viloyati</option><option>Surxondaryo viloyati</option><option>Jizzax viloyati</option><option>Sirdaryo viloyati</option><option>Xorazm viloyati</option><option>Qoraqalpog'iston Respublikasi</option></select></div>
           <div class="input-group"><div class="input-label" data-i18n="gender">Gender</div><select class="input-field" id="regGender" required><option value="" data-i18n="select">Select</option><option value="male" data-i18n="male">Male</option><option value="female" data-i18n="female">Female</option></select></div>
           <div class="input-group"><div class="input-label" data-i18n="emailLabel">Email</div><input class="input-field" id="regEmail" type="email" data-i18n-ph="enterEmail" placeholder="Enter email" required /></div>
@@ -1532,7 +1517,7 @@
       <div style="display:flex;flex-direction:column;gap:0.72rem;">
         <div class="input-group">
           <div class="input-label">Biznes / Do'kon nomi <span style="color:#ff6b6b">*</span></div>
-          <input class="input-field" id="siBizName" type="text" placeholder="Masalan: Anora Supermarket"/>
+          <input class="input-field" id="siBizName" type="text" placeholder="Masalan: Anora Supermarket" oninput="updateSiPreview()"/>
         </div>
         <div class="input-group">
           <div class="input-label">Kategoriya</div>
@@ -1550,25 +1535,27 @@
         </div>
         <div class="input-group">
           <div class="input-label">Telefon <span style="color:#ff6b6b">*</span></div>
-          <input class="input-field" id="siPhone" type="tel" placeholder="+998 90 123 45 67"/>
+          <input class="input-field" id="siPhone" type="tel" placeholder="+998 90 123 45 67" oninput="updateSiPreview()"/>
         </div>
-        <div class="input-group">
-          <div class="input-label">Manzil</div>
-          <div style="display:flex;gap:0.5rem;align-items:center;">
-            <input class="input-field" id="siAddress" type="text" placeholder="Toshkent, Yunusobod, ..." style="flex:1;margin:0;"/>
-            <button onclick="openMapPicker('siAddress')"
-              title="Xaritadan tanlash"
-              style="padding:0.52rem 0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-size:1rem;flex-shrink:0;line-height:1;">🗺</button>
-          </div>
+      </div>
+
+      <!-- Dynamic optional fields -->
+      <div style="border-top:1px solid var(--border);margin-top:0.9rem;padding-top:0.85rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.65rem;">
+          <div style="font-size:0.78rem;color:var(--muted2);">Qo'shimcha ma'lumotlar</div>
+          <span id="siFieldCount" style="font-size:0.7rem;color:var(--muted);background:var(--surface2);padding:0.15rem 0.5rem;border-radius:20px;border:1px solid var(--border);">0 / 7</span>
         </div>
-        <div class="input-group">
-          <div class="input-label">Ish vaqti</div>
-          <input class="input-field" id="siHours" type="text" placeholder="Dush–Shan: 09:00–21:00"/>
-        </div>
-        <div class="input-group">
-          <div class="input-label">Qo'shimcha ma'lumot</div>
-          <textarea class="input-field" id="siDesc" rows="2" placeholder="Biznes haqida qisqacha..." style="resize:vertical;"></textarea>
-        </div>
+        <div id="siFieldsList"></div>
+        <button id="siAddBtn" onclick="addSiField()"
+          style="width:100%;padding:0.55rem;background:transparent;border:1.5px dashed var(--border);border-radius:10px;color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;margin-top:0.2rem;transition:border-color 0.2s;">
+          + Ma'lumot qo'shish
+        </button>
+      </div>
+
+      <!-- Live preview -->
+      <div id="siPreviewWrap" style="border-top:1px solid var(--border);margin-top:1rem;padding-top:0.85rem;display:none;">
+        <div style="font-size:0.68rem;color:var(--muted);letter-spacing:0.07em;margin-bottom:0.55rem;">MIJOZ KO'RADIGAN SAHIFA</div>
+        <div id="siPreviewCard" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:0.9rem 1rem;"></div>
       </div>
 
       <button onclick="submitStickerInfo()" id="siSubmitBtn" style="width:100%;margin-top:1.1rem;padding:0.88rem;background:var(--accent);color:#000;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.93rem;cursor:pointer;">
@@ -1592,7 +1579,7 @@
     <!-- Tab bar -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 1.5rem;">
       <button class="upanel-tab active" id="utab-profile"  onclick="switchUserTab('profile')">👤 Profil</button>
-      <button class="upanel-tab"        id="utab-orders"   onclick="switchUserTab('orders')">📦 Buyurtmalar</button>
+      <button class="upanel-tab"        id="utab-orders"   onclick="switchUserTab('orders')">💳 Cardlar</button>
       <button class="upanel-tab"        id="utab-settings" onclick="switchUserTab('settings')">⚙️ Sozlamalar</button>
     </div>
 

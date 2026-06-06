@@ -846,11 +846,10 @@ async function handleRegister(e) {
   const lastName  = document.getElementById('regLastName').value.trim();
   const email     = document.getElementById('regEmail').value.trim();
   const password  = document.getElementById('regPassword').value;
-  const age       = parseInt(document.getElementById('regAge').value);
   const address   = document.getElementById('regAddress').value;
   const gender    = document.getElementById('regGender').value;
 
-  if (!firstName || !lastName || !email || !password || !age || !address || !gender) {
+  if (!firstName || !lastName || !email || !password || !address || !gender) {
     showToast('Barcha maydonlarni to\'ldiring.', 'warning');
     return;
   }
@@ -859,7 +858,7 @@ async function handleRegister(e) {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, firstName, lastName, age, address, gender })
+      body: JSON.stringify({ email, password, firstName, lastName, address, gender })
     });
 
     if (res.status === 409) {
@@ -875,7 +874,7 @@ async function handleRegister(e) {
 
     // Faqat OTP yuborildi — user hali DB da yo'q
     // Pending ma'lumotni saqlaymiz
-    _pendingRegData = { email, firstName, lastName, age, address, gender };
+    _pendingRegData = { email, firstName, lastName, address, gender };
     closeOverlay('authOverlay');
     openOtpVerify(email);
   } catch (err) {
@@ -1008,6 +1007,9 @@ function stSelectCatalog(idx) {
   if (chosen) { chosen.style.display = 'flex'; }
   const colorRow = document.getElementById('stDzColorRow');
   if (colorRow) colorRow.style.display = 'none';
+  // Auto-fill business name with template name (user can overwrite)
+  const bizEl = document.getElementById('stBizName');
+  if (bizEl && !bizEl.value.trim()) bizEl.value = d.name;
 }
 
 function stSelectNoDesign() {
@@ -2064,6 +2066,7 @@ function renderUsersTable(users) {
     tbody.innerHTML = '<tr><td colspan="7" style="padding:1.5rem;text-align:center;color:var(--muted2)">Foydalanuvchilar topilmadi</td></tr>';
     return;
   }
+  users.sort((a, b) => (a.id || 0) - (b.id || 0));
   tbody.innerHTML = users.map(u => {
     const firstName = u.firstname || u.firstName || '';
     const lastName  = u.lastname  || u.lastName  || '';
@@ -2470,7 +2473,7 @@ async function openUserDetail(userId, userName) {
   if (oRes.ok) {
     const orders = await oRes.json();
     const list = Array.isArray(orders) ? orders : [];
-    document.getElementById('udtab-orders').textContent = `📦 Buyurtmalar (${list.length})`;
+    document.getElementById('udtab-orders').textContent = `💳 Cardlar (${list.length})`;
     if (!list.length) {
       document.getElementById('udOrdersBody').innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--muted2)">Buyurtma yo\'q</td></tr>';
     } else {
@@ -3068,6 +3071,8 @@ async function _doSubmitCardInfo() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Xato yuz berdi');
     _generatedCardLink = data.cardUrl || '';
+    const nfcBtn = document.getElementById('successNfcBtn');
+    if (nfcBtn) nfcBtn.style.display = 'none';
     document.getElementById('successOverlay')?.classList.add('active');
   } catch (err) {
     showToast('Karta ma\'lumotlari yuborishda xato: ' + err.message, 'error');
@@ -3084,13 +3089,121 @@ function copyCardLink() {
 //  STIKER NFC INFO FORM
 // ─────────────────────────────────────────────────────────────
 let _siLogoBase64 = null;
+let _siUidCounter = 0;
+const SI_MAX = 7;
+
+const STICKER_FIELD_TYPES = [
+  { type: 'Manzil',    icon: '📍', placeholder: "Shahar, Ko'cha, ..." },
+  { type: 'Ish vaqti', icon: '🕐', placeholder: 'Dush–Shan: 09:00–21:00' },
+  { type: 'WhatsApp',  icon: '💬', placeholder: '+998 90 123 45 67' },
+  { type: 'Telegram',  icon: '✈️', placeholder: '@username' },
+  { type: 'Instagram', icon: '📸', placeholder: '@username' },
+  { type: 'Website',   icon: '🌐', placeholder: 'https://yoursite.uz' },
+  { type: 'Tavsif',    icon: '📋', placeholder: 'Biznes haqida qisqacha...' },
+];
+
+function addSiField() {
+  const count = document.getElementById('siFieldsList')?.children.length || 0;
+  if (count >= SI_MAX) { showToast(`Maksimal ${SI_MAX} ta qo'shimcha ma'lumot`, 'warning'); return; }
+  const idx = _siUidCounter++;
+  const def = STICKER_FIELD_TYPES[0];
+  const optsHtml = STICKER_FIELD_TYPES.map(f => `<option value="${f.type}">${f.icon} ${f.type}</option>`).join('');
+  const div = document.createElement('div');
+  div.id = `si-field-${idx}`;
+  div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 0.9rem;margin-bottom:0.55rem;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+      <select id="si-select-${idx}" onchange="onSiTypeChange(${idx})"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.38rem 0.6rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;">
+        ${optsHtml}
+      </select>
+      <button onclick="removeSiField(${idx})" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:8px;padding:0.28rem 0.6rem;cursor:pointer;font-size:0.8rem;">✕</button>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <input id="si-input-${idx}" type="text" placeholder="${def.placeholder}" oninput="updateSiPreview()"
+        style="flex:1;box-sizing:border-box;padding:0.5rem 0.7rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;" />
+      <button id="si-mapbtn-${idx}" onclick="openMapPicker('si-input-${idx}')" title="Xaritadan tanlash"
+        style="display:block;padding:0.42rem 0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.9rem;flex-shrink:0;line-height:1;">🗺</button>
+    </div>`;
+  document.getElementById('siFieldsList').appendChild(div);
+  updateSiCount();
+}
+
+function onSiTypeChange(idx) {
+  const sel = document.getElementById(`si-select-${idx}`);
+  const ft = STICKER_FIELD_TYPES.find(f => f.type === sel.value) || STICKER_FIELD_TYPES[0];
+  const input = document.getElementById(`si-input-${idx}`);
+  const mapBtn = document.getElementById(`si-mapbtn-${idx}`);
+  if (input) input.placeholder = ft.placeholder;
+  if (mapBtn) mapBtn.style.display = ft.type === 'Manzil' ? 'block' : 'none';
+  updateSiPreview();
+}
+
+function removeSiField(idx) {
+  document.getElementById(`si-field-${idx}`)?.remove();
+  updateSiCount();
+  updateSiPreview();
+}
+
+function updateSiCount() {
+  const count = document.getElementById('siFieldsList')?.children.length || 0;
+  const el = document.getElementById('siFieldCount');
+  if (el) el.textContent = `${count} / ${SI_MAX}`;
+  const btn = document.getElementById('siAddBtn');
+  if (btn) btn.style.opacity = count >= SI_MAX ? '0.4' : '1';
+}
+
+function updateSiPreview() {
+  const bizName = document.getElementById('siBizName')?.value?.trim() || '';
+  const phone   = document.getElementById('siPhone')?.value?.trim() || '';
+  const rows = [];
+  if (phone) rows.push({ icon: '📱', label: 'Telefon', val: phone });
+
+  for (const el of (document.getElementById('siFieldsList')?.children || [])) {
+    const idx = el.id.replace('si-field-', '');
+    const sel = document.getElementById(`si-select-${idx}`);
+    const inp = document.getElementById(`si-input-${idx}`);
+    const ft  = STICKER_FIELD_TYPES.find(f => f.type === sel?.value) || STICKER_FIELD_TYPES[0];
+    const val = inp?.value?.trim() || '';
+    if (val) rows.push({ icon: ft.icon, label: ft.type, val });
+  }
+
+  const wrap = document.getElementById('siPreviewWrap');
+  const card = document.getElementById('siPreviewCard');
+  if (!wrap || !card) return;
+
+  const hasContent = bizName || rows.length > 0;
+  wrap.style.display = hasContent ? '' : 'none';
+  if (!hasContent) return;
+
+  const nameHtml = bizName
+    ? `<div style="font-weight:700;font-size:1rem;margin-bottom:0.6rem;font-family:'Syne',sans-serif;">${bizName}</div>`
+    : `<div style="color:var(--muted);font-size:0.8rem;font-style:italic;margin-bottom:0.6rem;">Biznes nomi...</div>`;
+
+  const rowsHtml = rows.map(r => `
+    <div style="display:flex;align-items:flex-start;gap:0.65rem;padding:0.32rem 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:1rem;flex-shrink:0;line-height:1.4;">${r.icon}</span>
+      <div>
+        <div style="font-size:0.67rem;color:var(--muted);line-height:1;margin-bottom:1px;">${r.label}</div>
+        <div style="font-size:0.85rem;line-height:1.45;word-break:break-all;">${r.val}</div>
+      </div>
+    </div>`).join('');
+
+  card.innerHTML = nameHtml + (rowsHtml || `<div style="color:var(--muted);font-size:0.78rem;font-style:italic;">Qo'shimcha ma'lumot qo'shing...</div>`);
+}
 
 function openStickerInfoForm() {
   closeOverlay('successOverlay');
+  // Reset dynamic fields
+  const list = document.getElementById('siFieldsList');
+  if (list) list.innerHTML = '';
+  updateSiCount();
+  // Pre-fill required fields from order data
   const bizNameEl = document.getElementById('siBizName');
   const phoneEl   = document.getElementById('siPhone');
   if (bizNameEl && _lastStickerOrderData?.businessName) bizNameEl.value = _lastStickerOrderData.businessName;
   if (phoneEl   && _lastStickerOrderData?.phone)        phoneEl.value   = _lastStickerOrderData.phone;
+  updateSiPreview();
   const overlay = document.getElementById('stickerInfoOverlay');
   if (overlay) overlay.classList.add('active');
 }
@@ -3126,14 +3239,28 @@ async function submitStickerInfo() {
   const bizName  = (document.getElementById('siBizName')?.value||'').trim();
   const phone    = (document.getElementById('siPhone')?.value||'').trim();
   const category = document.getElementById('siCategory')?.value||'';
-  const address  = (document.getElementById('siAddress')?.value||'').trim();
-  const hours    = (document.getElementById('siHours')?.value||'').trim();
-  const desc     = (document.getElementById('siDesc')?.value||'').trim();
 
   if (!bizName || !phone) {
     showToast('Biznes nomi va telefon kiritilishi shart.', 'warning');
     return;
   }
+
+  // Collect dynamic fields
+  let address = '', hours = '', desc = '';
+  const extras = [];
+  for (const el of (document.getElementById('siFieldsList')?.children || [])) {
+    const idx = el.id.replace('si-field-', '');
+    const sel = document.getElementById(`si-select-${idx}`);
+    const inp = document.getElementById(`si-input-${idx}`);
+    const type = sel?.value || '';
+    const val  = inp?.value?.trim() || '';
+    if (!val) continue;
+    if (type === 'Manzil')    address = val;
+    else if (type === 'Ish vaqti') hours = val;
+    else if (type === 'Tavsif')    desc  = val;
+    else extras.push(`${type}: ${val}`);
+  }
+  if (extras.length) desc = [desc, ...extras].filter(Boolean).join('\n');
 
   const btn = document.getElementById('siSubmitBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Yuklanmoqda...'; }
@@ -3160,12 +3287,13 @@ async function submitStickerInfo() {
     if (!data.success) throw new Error(data.message || 'Xato');
 
     // Reset form
-    ['siBizName','siPhone','siAddress','siHours','siDesc'].forEach(id => {
-      const el = document.getElementById(id); if(el) el.value='';
-    });
-    const catEl = document.getElementById('siCategory'); if(catEl) catEl.value='';
-    const imgEl = document.getElementById('siLogoImg'); if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
+    ['siBizName','siPhone'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    const catEl  = document.getElementById('siCategory'); if(catEl)  catEl.value='';
+    const list   = document.getElementById('siFieldsList'); if(list)  list.innerHTML='';
+    const imgEl  = document.getElementById('siLogoImg');  if(imgEl)  { imgEl.src=''; imgEl.style.display='none'; }
     const plusEl = document.getElementById('siLogoPlus'); if(plusEl) plusEl.style.display='';
+    const prevW  = document.getElementById('siPreviewWrap'); if(prevW) prevW.style.display='none';
+    updateSiCount();
     _siLogoBase64 = null;
     _lastStickerOrderData = null;
     closeOverlay('stickerInfoOverlay');
@@ -3308,6 +3436,7 @@ async function handleGoogleCredential(response) {
     };
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     isSuperAdmin = _isSuperAdmin;
+    isAdmin      = _isAdmin;
 
     closeOverlay('authOverlay');
     _afterAuth();
