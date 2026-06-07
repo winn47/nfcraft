@@ -2866,12 +2866,12 @@ function showPaymentModal(orderData) {
     </div>
 
     <div style="font-size:0.76rem;color:var(--muted2);text-align:center;line-height:1.65;background:rgba(255,255,255,0.03);border-radius:10px;padding:0.75rem;">
-      ⚠️ To'lov o'tkazilgandan so'ng quyidagi tugmani bosing —<br>
-      Admin <b>1-2 soat ichida</b> buyurtmangizni tasdiqlaydi.
+      To'lovni amalga oshirgach quyidagi tugmani bosing.<br>
+      Admin to'lovni tekshirib, <b>1-2 soat ichida</b> tasdiqlaydi.
     </div>
 
     <button onclick="closePaymentModal()" style="width:100%;margin-top:0.9rem;padding:0.85rem;background:var(--accent);border:none;border-radius:12px;color:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;">
-      ✅ To'ladim — Davom etish
+      ✅ To'lovni amalga oshirdim
     </button>`;
 
   let modal = document.getElementById('paymentModal');
