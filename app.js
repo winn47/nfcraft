@@ -2442,26 +2442,33 @@ async function loadStickerOrders() {
     if (!res.ok) throw new Error();
     const orders = await res.json();
     if (!Array.isArray(orders) || !orders.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="padding:1rem;text-align:center;color:var(--muted2)">Stiker buyurtma yo\'q</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:1rem;text-align:center;color:var(--muted2)">Stiker buyurtma yo\'q</td></tr>';
       return;
     }
     tbody.innerHTML = orders.map(o => {
-      const sc = o.status === 'delivered' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : '#facc15';
+      const sc = o.status === 'delivered' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : o.status === 'paid' ? '#34d399' : '#facc15';
       const nextMap = {
-        'pending':    { label: '✅ To\'landi',   next: 'paid' },
+        'pending':    { label: '✅ To\'landi',      next: 'paid' },
         'paid':       { label: '🔧 Tayyorlanmoqda', next: 'processing' },
-        'processing': { label: '📦 Jo\'natildi', next: 'shipped' },
-        'shipped':    { label: '✓ Yetkazildi',   next: 'delivered' },
+        'processing': { label: '📦 Jo\'natildi',    next: 'shipped' },
+        'shipped':    { label: '✓ Yetkazildi',      next: 'delivered' },
       };
       const nextBtn = nextMap[o.status]
         ? `<button onclick="updateStickerStatus(${o.id},'${nextMap[o.status].next}',this)"
              style="padding:0.2rem 0.55rem;border-radius:7px;border:1px solid rgba(232,255,71,0.3);background:rgba(232,255,71,0.07);color:var(--accent);font-size:0.7rem;cursor:pointer;white-space:nowrap;">
              ${nextMap[o.status].label}
            </button>` : '';
+      const designCell = o.hasDesign
+        ? `<button onclick="viewStickerDesign(${o.id})"
+             style="padding:0.15rem 0.45rem;border-radius:6px;border:1px solid rgba(100,200,255,0.3);background:rgba(100,200,255,0.07);color:#60c8ff;font-size:0.7rem;cursor:pointer;">
+             🖼 Canvas
+           </button>`
+        : (o.templateName ? `<span style="font-size:0.72rem;color:var(--muted2)">📋 ${o.templateName}</span>` : '<span style="color:var(--muted2);font-size:0.72rem">—</span>');
       return `<tr style="border-bottom:1px solid var(--border)">
         <td style="padding:0.5rem 0.7rem;font-weight:700;color:var(--accent);font-size:0.82rem">${o.orderId||'—'}</td>
         <td style="padding:0.5rem 0.7rem">${o.businessName||'—'}</td>
         <td style="padding:0.5rem 0.7rem;color:var(--muted2)">${o.category||'—'}</td>
+        <td style="padding:0.5rem 0.7rem">${designCell}</td>
         <td style="padding:0.5rem 0.7rem">${o.quantity||0}</td>
         <td style="padding:0.5rem 0.7rem">$${parseFloat(o.total||0).toFixed(2)}</td>
         <td style="padding:0.5rem 0.7rem">
@@ -2471,7 +2478,7 @@ async function loadStickerOrders() {
       </tr>`;
     }).join('');
   } catch {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:1rem;text-align:center;color:#ff6b6b">Xato yuz berdi</td></tr>';
   }
 }
 
@@ -2489,6 +2496,37 @@ async function updateStickerStatus(id, newStatus, btn) {
   } catch(e) {
     showToast('Xato: ' + e.message, 'error');
     if (btn) { btn.disabled = false; }
+  }
+}
+
+async function viewStickerDesign(id) {
+  try {
+    const res = await fetch(`${API_BASE}/sticker/orders/${id}/design`, {
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    });
+    const data = await res.json();
+    const preview = data.designPreview;
+    if (!preview) { showToast('Dizayn topilmadi', 'error'); return; }
+
+    // Show in a full-screen overlay modal
+    let modal = document.getElementById('stickerDesignModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'stickerDesignModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;';
+      modal.innerHTML = `
+        <img id="stickerDesignImg" style="max-width:90vw;max-height:80vh;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,0.6);" />
+        <button onclick="document.getElementById('stickerDesignModal').style.display='none'"
+          style="padding:0.5rem 1.5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:#fff;font-size:0.9rem;cursor:pointer;">
+          ✕ Yopish
+        </button>`;
+      document.body.appendChild(modal);
+    }
+    document.getElementById('stickerDesignImg').src = preview;
+    modal.style.display = 'flex';
+    modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+  } catch(e) {
+    showToast('Dizaynni yuklashda xato', 'error');
   }
 }
 
