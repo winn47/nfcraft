@@ -319,6 +319,67 @@
     animation: orbit-spin 3s linear infinite;
   }
   @keyframes orbit-spin { to { transform: rotate(360deg); } }
+
+  /* ── New animated backgrounds ── */
+  .bg-cyber-punk { background:linear-gradient(-45deg,#0d0221,#4a0080,#ff00ff,#7b00ff) !important; background-size:400% 400% !important; animation:gradient-shift 3s ease infinite; }
+  .bg-solar-flare { background:linear-gradient(-45deg,#ff4500,#ff8c00,#ffd700,#ff4500) !important; background-size:300% 300% !important; animation:gradient-shift 2.5s ease infinite; }
+  .bg-neon-sunrise { background:linear-gradient(-45deg,#1a0533,#ff006e,#ff8c00,#fff200) !important; background-size:400% 400% !important; animation:gradient-shift 4s ease infinite; }
+
+  /* ── New frame CSS ── */
+  .frame-rainbow-ring {
+    border: 3px solid transparent !important;
+    background-clip: padding-box, border-box !important;
+    background-origin: padding-box, border-box !important;
+    background-image: linear-gradient(#0a0a0a,#0a0a0a), conic-gradient(#ff0000,#ff7700,#ffff00,#00ff00,#0000ff,#8b00ff,#ff0000) !important;
+    animation: rainbow-spin 3s linear infinite;
+  }
+  @keyframes rainbow-spin { to { filter: hue-rotate(360deg); } }
+  .frame-gold-luxury {
+    border: 4px solid transparent !important;
+    background-clip: padding-box, border-box !important;
+    background-origin: padding-box, border-box !important;
+    background-image: linear-gradient(#0a0a0a,#0a0a0a), linear-gradient(135deg,#b8860b,#ffd700 30%,#daa520 50%,#ffd700 70%,#b8860b) !important;
+    box-shadow: 0 0 18px rgba(218,165,32,0.5) !important;
+  }
+  .frame-ice-ring {
+    border: 3px solid rgba(147,210,255,0.8) !important;
+    box-shadow: 0 0 12px rgba(147,210,255,0.6), 0 0 24px rgba(100,180,255,0.3) !important;
+  }
+  .frame-fire-ring {
+    border: 3px solid #ff4500 !important;
+    box-shadow: 0 0 8px #ff4500, 0 0 20px rgba(255,69,0,0.6) !important;
+    animation: fire-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes fire-pulse {
+    0%,100% { box-shadow: 0 0 8px #ff4500, 0 0 20px rgba(255,69,0,0.6); }
+    50%      { box-shadow: 0 0 4px #ff6600, 0 0 12px rgba(255,100,0,0.8); }
+  }
+  .frame-vortex-wrap::before {
+    content:''; position:absolute; inset:-8px; border-radius:50%;
+    background:conic-gradient(#e8ff47,#00ffff,#ff00ff,#ff4500,#e8ff47);
+    animation:vortex-spin 2s linear infinite; z-index:-1;
+  }
+  @keyframes vortex-spin { to { transform:rotate(360deg); } }
+  .frame-neon-pink {
+    border: 3px solid #ff1493 !important;
+    box-shadow: 0 0 10px #ff1493, 0 0 24px rgba(255,20,147,0.5) !important;
+    animation: pink-pulse 2s ease-in-out infinite;
+  }
+  @keyframes pink-pulse {
+    0%,100% { box-shadow:0 0 10px #ff1493,0 0 24px rgba(255,20,147,0.5); }
+    50%      { box-shadow:0 0 5px #ff1493,0 0 12px rgba(255,20,147,0.3); }
+  }
+  .frame-diamond {
+    border: 3px solid transparent !important;
+    background-clip: padding-box, border-box !important;
+    background-origin: padding-box, border-box !important;
+    background-image: linear-gradient(#0a0a0a,#0a0a0a), linear-gradient(135deg,#a8d8ea,#fff 30%,#b8d4e8 50%,#fff 70%,#a8d8ea) !important;
+    box-shadow: 0 0 20px rgba(168,216,234,0.4) !important;
+  }
+  .frame-double-ring {
+    border: 2px solid rgba(232,255,71,0.7) !important;
+    box-shadow: 0 0 0 4px rgba(232,255,71,0.15), 0 0 0 6px rgba(232,255,71,0.5), 0 0 0 9px rgba(232,255,71,0.1) !important;
+  }
 </style>
 </head>
 <body>
@@ -339,7 +400,7 @@
   </div>
 
   <!-- Edit profile button (only visible to owner) -->
-  <a class="edit-btn" id="editBtn" href="#">
+  <a class="edit-btn" id="editBtn" href="#" style="display:none;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     Profilni sozlash
   </a>
@@ -551,7 +612,10 @@ async function loadCard() {
 }
 
 function applyCardVisuals(data, uuid) {
-  const ANIMATED_CLASSES = { 'graffiti-neon': 'bg-graffiti-neon', 'pixel-glow': 'bg-pixel-glow', 'orbit-dots': 'bg-orbit-dots' };
+  const ANIMATED_CLASSES = {
+    'graffiti-neon':'bg-graffiti-neon','pixel-glow':'bg-pixel-glow','orbit-dots':'bg-orbit-dots',
+    'cyber-punk':'bg-cyber-punk','solar-flare':'bg-solar-flare','neon-sunrise':'bg-neon-sunrise'
+  };
   const GRADIENT_MAP = {
     'glacier-platinum':  { bg:'linear-gradient(135deg,#c9d6df 0%,#e2ebf0 50%,#bdc8cf 100%)', text:'#1a1a2e' },
     'carrara-prestige':  { bg:'linear-gradient(135deg,#2c3e50 0%,#4a6073 50%,#2c3e50 100%)', text:'#f0f0f0' },
@@ -562,6 +626,15 @@ function applyCardVisuals(data, uuid) {
     'midnight-obsidian': { bg:'linear-gradient(135deg,#0a0f1e 0%,#0f172a 50%,#1e293b 100%)', text:'#e2e8f0' },
     'aurora-scriptum':   { bg:'linear-gradient(135deg,#1e1b4b 0%,#312e81 30%,#4338ca 60%,#6d28d9 100%)', text:'#e9d5ff' },
     'liquid-glass':      { bg:'#1a2a4a', text:'#f0f0f0' },
+    'crimson-empire':    { bg:'linear-gradient(135deg,#2d0505 0%,#4a0a0a 30%,#8b1a1a 60%,#4a0a0a 100%)', text:'#fca5a5' },
+    'ocean-depths':      { bg:'linear-gradient(135deg,#060f1e 0%,#0c2340 30%,#1a4a7a 60%,#0c2340 100%)', text:'#bae6fd' },
+    'rose-gold':         { bg:'linear-gradient(135deg,#5c1f1f 0%,#c96a6a 40%,#e8b4b8 70%,#c96a6a 100%)', text:'#fff' },
+    'nordic-frost':      { bg:'linear-gradient(135deg,#6ba3be 0%,#a8d8ea 50%,#e8f4f8 100%)', text:'#1a2a4a' },
+    'volcanic-ash':      { bg:'linear-gradient(135deg,#0a0804 0%,#1a1208 30%,#3d2b1f 60%,#6b3a2a 100%)', text:'#f59e0b' },
+    'jade-temple':       { bg:'linear-gradient(135deg,#001a12 0%,#003d2b 40%,#006b4a 70%,#003d2b 100%)', text:'#6ee7b7' },
+    'arctic-aurora':     { bg:'linear-gradient(135deg,#03071e 0%,#0a2640 25%,#023e58 50%,#00b4d8 75%,#90e0ef 100%)', text:'#caf0f8' },
+    'mahogany-dark':     { bg:'linear-gradient(135deg,#1a0a03 0%,#2d1206 35%,#5c2a14 65%,#8b3a1e 100%)', text:'#f5cba7' },
+    'neon-sunset':       { bg:'linear-gradient(135deg,#6f2232 0%,#c06c84 30%,#f7c59f 60%,#ff6b35 100%)', text:'#fff' },
   };
 
   if (data.bgType && data.bgValue) {
@@ -604,12 +677,11 @@ function applyCardVisuals(data, uuid) {
     const avatar = document.getElementById('profileAvatar');
     const avatarWrap = avatar?.parentElement;
     const frameId = data.borderStyle;
-    if (frameId === 'starburst' && avatarWrap) {
+    // Wrap-based frames (use ::before/::after on parent)
+    const WRAP_FRAMES = { starburst:'frame-starburst-wrap', 'orbit-dots':'frame-orbit-dots-wrap', vortex:'frame-vortex-wrap' };
+    if (WRAP_FRAMES[frameId] && avatarWrap) {
       avatarWrap.style.position = 'relative';
-      avatarWrap.classList.add('frame-starburst-wrap');
-    } else if (frameId === 'orbit-dots' && avatarWrap) {
-      avatarWrap.style.position = 'relative';
-      avatarWrap.classList.add('frame-orbit-dots-wrap');
+      avatarWrap.classList.add(WRAP_FRAMES[frameId]);
     } else {
       avatar?.classList.add('frame-' + frameId);
     }

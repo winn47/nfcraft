@@ -2496,25 +2496,47 @@ async function loadUserProfile() {
 
 async function loadUserOrders() {
   try {
-    const res = await fetch(`${API_BASE}/orders/user/${currentUser.id}`, {
-      headers: { 'Authorization': `Bearer ${currentUser.token}` }
-    });
+    const headers = { 'Authorization': `Bearer ${currentUser.token}` };
+    const [ordersRes, cardsRes] = await Promise.all([
+      fetch(`${API_BASE}/orders/user/${currentUser.id}`, { headers }),
+      fetch(`${API_BASE}/card-info/my`, { headers })
+    ]);
 
-    if (!res.ok) throw new Error('Failed to load orders');
-
-    const data = await res.json();
+    const data   = ordersRes.ok ? await ordersRes.json() : [];
+    const cards  = cardsRes.ok  ? await cardsRes.json()  : [];
     const orders = Array.isArray(data) ? data : (data.orders || []);
 
     const tbody = document.getElementById('userOrdersBody');
     if (!tbody) return;
 
+    // Show user's active cards at the top if any exist
+    const cardsBanner = document.getElementById('userCardsBanner');
+    if (cardsBanner) {
+      if (cards.length) {
+        cardsBanner.style.display = '';
+        cardsBanner.innerHTML = cards.map(c => `
+          <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(232,255,71,0.06);border:1px solid rgba(232,255,71,0.18);border-radius:12px;padding:0.75rem 1rem;margin-bottom:0.5rem;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.15rem;">${c.ownerName || 'NFCraft Card'}</div>
+              <div style="font-size:0.7rem;color:var(--muted2);text-transform:uppercase;">${c.plan || 'starter'}</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+              <a href="card.html?uuid=${c.uuid}" target="_blank" style="padding:0.3rem 0.7rem;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text);font-size:0.75rem;text-decoration:none;">👁 Ko'rish</a>
+              <a href="profile-settings.html?uuid=${c.uuid}" style="padding:0.3rem 0.7rem;border-radius:8px;background:rgba(232,255,71,0.12);border:1px solid rgba(232,255,71,0.3);color:var(--accent);font-size:0.75rem;font-weight:600;text-decoration:none;">🎨 Sozlash</a>
+            </div>
+          </div>`).join('');
+      } else {
+        cardsBanner.style.display = 'none';
+      }
+    }
+
     if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">No orders yet</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">Buyurtma yo\'q</td></tr>';
       return;
     }
 
     tbody.innerHTML = orders.map(o => {
-      const statusColor = o.status === 'completed' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : '#facc15';
+      const sc = o.status === 'delivered' || o.status === 'completed' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : o.status === 'paid' ? '#34d399' : '#facc15';
       const planLabel = o.plan ? o.plan.charAt(0).toUpperCase() + o.plan.slice(1) : '—';
       return `
         <tr style="border-bottom:1px solid var(--border)">
@@ -2522,7 +2544,7 @@ async function loadUserOrders() {
           <td style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--muted2)">${o.quantity || 1}</td>
           <td style="padding:0.75rem 1rem;font-size:0.88rem;font-weight:500">$${parseFloat(o.total || 0).toFixed(2)}</td>
           <td style="padding:0.75rem 1rem">
-            <span style="padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;background:${statusColor}22;color:${statusColor}">${o.status || 'pending'}</span>
+            <span style="padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;background:${sc}22;color:${sc}">${o.status || 'pending'}</span>
           </td>
         </tr>`;
     }).join('');
