@@ -276,6 +276,12 @@ const translations = {
     b2bMoreBiz: '+ any other business',
     b2bDesigns: 'DESIGN TEMPLATES',
     b2bFilterAll: 'All',
+    scTitle: '🎨 Sticker Design', scOrder: 'Order →',
+    scImgLabel: '📷 Images', scImgHint: 'Click to add image\n.png · .jpg · max 5MB',
+    scTextLabel: '✏️ Text', scTextPh: 'Business name...',
+    scTextColorLabel: '🔤 Text color', scBgColorLabel: '🖌 Background',
+    scPreviewLabel: 'LIVE PREVIEW', scAddImg: '+ Add Image', scAddText: '+ Add Text',
+    scFontSize: 'Font size', scDelete: 'Delete', scHint: 'Click to select · Drag to move · Corner to resize',
   },
   uz: {
     navWhy: 'Nima uchun NFC', navPricing: 'Narxlar', navTeam: 'Jamoa', navLocation: 'Manzil', navUsers: 'Foydalanuvchilar',
@@ -367,6 +373,12 @@ const translations = {
     b2bMoreBiz: '+ boshqa har qanday biznes',
     b2bDesigns: 'DIZAYN NAMUNALARI',
     b2bFilterAll: 'Hammasi',
+    scTitle: '🎨 Stiker Dizayn', scOrder: 'Buyurtma →',
+    scImgLabel: '📷 Rasmlar', scImgHint: 'Bosib rasm qo\'shing\n.png · .jpg · max 5MB',
+    scTextLabel: '✏️ Matn', scTextPh: 'Biznes nomi...',
+    scTextColorLabel: '🔤 Matn rangi', scBgColorLabel: '🖌 Fon rangi',
+    scPreviewLabel: 'JONLI KO\'RINISH', scAddImg: '+ Rasm qo\'shish', scAddText: '+ Matn qo\'shish',
+    scFontSize: 'Shrift o\'lchami', scDelete: 'O\'chirish', scHint: 'Tanlang · Suring · Burchakdan kattalashtiring',
   },
   ru: {
     navWhy: 'Почему NFC', navPricing: 'Цены', navTeam: 'Команда', navLocation: 'Адрес', navUsers: 'Пользователи',
@@ -458,6 +470,12 @@ const translations = {
     b2bMoreBiz: '+ любой другой бизнес',
     b2bDesigns: 'ШАБЛОНЫ ДИЗАЙНА',
     b2bFilterAll: 'Все',
+    scTitle: '🎨 Дизайн стикера', scOrder: 'Заказать →',
+    scImgLabel: '📷 Изображения', scImgHint: 'Нажмите для добавления\n.png · .jpg · max 5MB',
+    scTextLabel: '✏️ Текст', scTextPh: 'Название бизнеса...',
+    scTextColorLabel: '🔤 Цвет текста', scBgColorLabel: '🖌 Фон',
+    scPreviewLabel: 'ПРЕДПРОСМОТР', scAddImg: '+ Добавить фото', scAddText: '+ Добавить текст',
+    scFontSize: 'Размер шрифта', scDelete: 'Удалить', scHint: 'Выберите · Перетащите · Угол для масштаба',
   },
 };
 
@@ -1096,154 +1114,320 @@ function skipDesignAndOrder() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  STIKER CUSTOMIZER  (Simple · Bug-Free · Real-Time Preview)
+//  STIKER CUSTOMIZER  (Interactive · Multi-Image · Drag & Resize)
 // ─────────────────────────────────────────────────────────────
 
-let _scImg        = null;   // loaded Image object
-let _dsDesignData = null;   // shared with placeStickerOrder
-const SC_SIZE     = 400;    // canvas width & height
+let _scElements  = [];   // { id, type:'img'|'text', x, y, w, h, img?, text?, fontSize?, textColor? }
+let _scSelected  = null; // selected element id
+let _scDragging  = false;
+let _scResizing  = false;
+let _scResizeHnd = '';   // 'tl','tr','bl','br'
+let _scResizeSt  = {};   // snapshot when resize started
+let _scDragOff   = { x:0, y:0 };
+let _scNextId    = 1;
+let _dsDesignData= null;
+const SC_W = 560, SC_H = 320;
+const SC_HANDLE  = 9;    // handle square half-size
 
+// ── Open / bind ───────────────────────────────────────────────
 function openStickerDesigner() {
-  const overlay = document.getElementById('stickerDesignerOverlay');
-  if (overlay) overlay.classList.add('active');
-  requestAnimationFrame(scDraw);
+  const ov = document.getElementById('stickerDesignerOverlay');
+  if (ov) ov.classList.add('active');
+  requestAnimationFrame(() => { scDraw(); scBindEvents(); });
 }
 
-// ── Image loading ─────────────────────────────────────────────
-function scLoadImage(input) {
+// ── Add elements ──────────────────────────────────────────────
+function scAddImage(input) {
   const file = input.files && input.files[0];
   if (!file) return;
-
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('Rasm hajmi 5MB dan oshmasligi kerak', 'warning');
-    input.value = '';
-    return;
-  }
-
+  if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB', 'warning'); return; }
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
-      _scImg = img;
-      // Show thumbnail
-      const thumb = document.getElementById('scImgThumb');
-      const hint  = document.getElementById('scImgHint');
-      if (thumb) { thumb.src = e.target.result; thumb.style.display = 'block'; }
-      if (hint)  hint.style.display = 'none';
-      scDraw();
+      const maxW = SC_W * 0.55, maxH = SC_H * 0.55;
+      const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      const el = { id: _scNextId++, type: 'img', img,
+                   x: (SC_W - w) / 2, y: (SC_H - h) / 2, w, h };
+      _scElements.push(el);
+      _scSelected = el.id;
+      input.value = '';
+      scDraw(); scUpdateSelectedUI();
     };
-    img.onerror = function() { showToast('Rasm yuklab bo\'lmadi', 'error'); };
+    img.onerror = function() { showToast("Rasm yuklanmadi", 'error'); };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// ── Color hex display sync ────────────────────────────────────
-function scUpdateColorHex(inputId, spanId) {
-  const val = document.getElementById(inputId)?.value || '';
-  const span = document.getElementById(spanId);
-  if (span) span.textContent = val;
+function scAddTextEl() {
+  const el = { id: _scNextId++, type: 'text',
+               x: 20, y: SC_H / 2 - 22, w: SC_W - 40, h: 44,
+               text: 'Matn', fontSize: 28, textColor: '#ffffff' };
+  _scElements.push(el);
+  _scSelected = el.id;
+  scDraw(); scUpdateSelectedUI();
+  const inp = document.getElementById('scTextEdit');
+  if (inp) { inp.value = el.text; inp.focus(); inp.select(); }
 }
 
-function scSetBg(color) {
-  const el = document.getElementById('scBgColor');
-  if (el) { el.value = color; scUpdateColorHex('scBgColor', 'scBgHex'); scDraw(); }
+// ── Selected element controls ─────────────────────────────────
+function scGetSel() { return _scElements.find(e => e.id === _scSelected) || null; }
+
+function scDeleteSelected() {
+  if (!_scSelected) return;
+  _scElements = _scElements.filter(e => e.id !== _scSelected);
+  _scSelected = null;
+  scDraw(); scUpdateSelectedUI();
 }
 
-// ── Canvas draw (real-time) ───────────────────────────────────
+function scUpdateSelectedText() {
+  const el = scGetSel();
+  if (el && el.type === 'text') {
+    el.text = (document.getElementById('scTextEdit')?.value || '').slice(0, 30);
+    scDraw();
+  }
+}
+
+function scUpdateFontSize(v) {
+  const el = scGetSel();
+  if (el && el.type === 'text') {
+    el.fontSize = parseInt(v) || 28;
+    el.h = el.fontSize + 16;
+    const lbl = document.getElementById('scFontSizeLabel');
+    if (lbl) lbl.textContent = v;
+    scDraw();
+  }
+}
+
+function scUpdateTextColor(v) {
+  const el = scGetSel();
+  if (el && el.type === 'text') { el.textColor = v; scDraw(); }
+}
+
+function scUpdateSelectedUI() {
+  const el = scGetSel();
+  const ctrl = document.getElementById('scSelCtrl');
+  const textPanel = document.getElementById('scTextEditPanel');
+  if (!ctrl) return;
+  if (!el) { ctrl.style.display = 'none'; return; }
+  ctrl.style.display = 'flex';
+  if (el.type === 'text') {
+    textPanel.style.display = 'flex';
+    const inp = document.getElementById('scTextEdit');
+    const slider = document.getElementById('scFontSlider');
+    const lbl = document.getElementById('scFontSizeLabel');
+    const col = document.getElementById('scElemColor');
+    if (inp) inp.value = el.text;
+    if (slider) slider.value = el.fontSize;
+    if (lbl) lbl.textContent = el.fontSize;
+    if (col) col.value = el.textColor;
+  } else {
+    textPanel.style.display = 'none';
+  }
+}
+
+// ── Canvas drawing ────────────────────────────────────────────
 function scDraw() {
   const canvas = document.getElementById('scCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const S   = SC_SIZE;
+  const W = SC_W, H = SC_H;
 
-  // 1. Background fill
-  const bgColor = document.getElementById('scBgColor')?.value || '#1a1a2e';
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, S, S);
+  // 1. Background
+  ctx.fillStyle = document.getElementById('scBgColor')?.value || '#1a1a2e';
+  ctx.fillRect(0, 0, W, H);
 
-  // 2. Uploaded image — centered, aspect-ratio preserved
-  const text = _scGetText();
-  if (_scImg) {
-    const pad         = 24;
-    const textReserve = text ? 60 : 0;
-    const maxW        = S - pad * 2;
-    const maxH        = S - pad * 2 - textReserve;
-    const scale       = Math.min(maxW / _scImg.naturalWidth, maxH / _scImg.naturalHeight);
-    const w           = _scImg.naturalWidth  * scale;
-    const h           = _scImg.naturalHeight * scale;
-    const x           = (S - w) / 2;
-    const y           = pad + (maxH - h) / 2;
-
-    // Draw with rounded corners via clip
+  // 2. Elements
+  for (const el of _scElements) {
     ctx.save();
-    _scRoundRect(ctx, x, y, w, h, 10);
-    ctx.clip();
-    ctx.drawImage(_scImg, x, y, w, h);
+    if (el.type === 'img' && el.img) {
+      ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
+    } else if (el.type === 'text' && el.text) {
+      ctx.font = `bold ${el.fontSize}px 'DM Sans', Arial, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const metrics = ctx.measureText(el.text);
+      const tw = metrics.width + 16;
+      const th = el.fontSize + 14;
+      // Update actual bounding box
+      el.w = tw; el.h = th;
+      // Pill bg
+      ctx.fillStyle = 'rgba(0,0,0,0.48)';
+      _scRoundRect(ctx, el.x, el.y, tw, th, th / 2); ctx.fill();
+      // Text
+      ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;
+      ctx.fillStyle = el.textColor || '#ffffff';
+      ctx.fillText(el.text, el.x + 8, el.y + th / 2);
+      ctx.shadowBlur = 0;
+    }
+    // Selection border + corner handles
+    if (el.id === _scSelected) {
+      ctx.strokeStyle = '#e8ff47'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 3]);
+      ctx.strokeRect(el.x - 1, el.y - 1, el.w + 2, el.h + 2);
+      ctx.setLineDash([]);
+      const hs = SC_HANDLE;
+      [[el.x, el.y],[el.x+el.w, el.y],[el.x, el.y+el.h],[el.x+el.w, el.y+el.h]]
+        .forEach(([hx,hy]) => { ctx.fillStyle='#e8ff47'; ctx.fillRect(hx-hs,hy-hs,hs*2,hs*2); });
+    }
     ctx.restore();
   }
 
-  // 3. Text — centered at bottom with semi-transparent pill background
-  if (text) {
-    const textColor = document.getElementById('scTextColor')?.value || '#ffffff';
-    const fontSize  = Math.max(18, Math.min(34, Math.floor(S * 0.082)));
-    ctx.font = `bold ${fontSize}px 'DM Sans', Arial, sans-serif`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-
-    const tx      = S / 2;
-    const ty      = S - 36;
-    const metrics = ctx.measureText(text);
-    const pillW   = metrics.width + 28;
-    const pillH   = fontSize + 18;
-
-    // Pill background
-    ctx.fillStyle = 'rgba(0,0,0,0.50)';
-    _scRoundRect(ctx, tx - pillW / 2, ty - pillH / 2, pillW, pillH, pillH / 2);
-    ctx.fill();
-
-    // Text with shadow
-    ctx.shadowColor  = 'rgba(0,0,0,0.75)';
-    ctx.shadowBlur   = 6;
-    ctx.fillStyle    = textColor;
-    ctx.fillText(text, tx, ty);
-    ctx.shadowBlur   = 0;
+  // 3. Empty state hint
+  if (_scElements.length === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.font = '14px DM Sans, Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Rasm yoki matn qo\'shing', W/2, H/2);
   }
-
-  // Update char counter
-  const counter = document.getElementById('scCharCount');
-  if (counter) counter.textContent = text.length + '/30';
 }
 
-function _scGetText() {
-  return (document.getElementById('scText')?.value || '').slice(0, 30);
+// ── Utilities ─────────────────────────────────────────────────
+function scUpdateColorHex(inputId, spanId) {
+  const v = document.getElementById(inputId)?.value || '';
+  const s = document.getElementById(spanId);
+  if (s) s.textContent = v;
+}
+
+function scSetBg(color) {
+  const el = document.getElementById('scBgColor');
+  if (el) { el.value = color; scUpdateColorHex('scBgColor','scBgHex'); scDraw(); }
 }
 
 function _scRoundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+// ── Canvas coordinate conversion ─────────────────────────────
+function scXY(e) {
+  const canvas = document.getElementById('scCanvas');
+  if (!canvas) return { x:0, y:0 };
+  const rect = canvas.getBoundingClientRect();
+  const src  = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left)  * (SC_W / rect.width),
+    y: (src.clientY - rect.top)   * (SC_H / rect.height)
+  };
+}
+
+// ── Hit testing ───────────────────────────────────────────────
+function scHit(mx, my) {
+  for (let i = _scElements.length - 1; i >= 0; i--) {
+    const el = _scElements[i];
+    if (mx >= el.x && mx <= el.x+el.w && my >= el.y && my <= el.y+el.h) return el;
+  }
+  return null;
+}
+
+function scResizeHndAt(mx, my) {
+  const el = scGetSel(); if (!el) return null;
+  const hs = SC_HANDLE;
+  const corners = { tl:[el.x,el.y], tr:[el.x+el.w,el.y], bl:[el.x,el.y+el.h], br:[el.x+el.w,el.y+el.h] };
+  for (const [k,[hx,hy]] of Object.entries(corners))
+    if (Math.abs(mx-hx)<=hs && Math.abs(my-hy)<=hs) return k;
+  return null;
+}
+
+// ── Mouse / Touch events ──────────────────────────────────────
+function scMouseDown(e) {
+  const { x, y } = scXY(e);
+  const hnd = scResizeHndAt(x, y);
+  if (hnd) {
+    const el = scGetSel();
+    _scResizing = true; _scResizeHnd = hnd;
+    _scResizeSt = { x, y, ex:el.x, ey:el.y, ew:el.w, eh:el.h };
+    return;
+  }
+  const hit = scHit(x, y);
+  if (hit) {
+    _scSelected = hit.id; _scDragging = true;
+    _scDragOff = { x: x - hit.x, y: y - hit.y };
+    _scElements = _scElements.filter(e=>e.id!==hit.id).concat(hit); // bring to top
+  } else {
+    _scSelected = null;
+  }
+  scDraw(); scUpdateSelectedUI();
+}
+
+function scMouseMove(e) {
+  const { x, y } = scXY(e);
+  const canvas = document.getElementById('scCanvas');
+  if (_scResizing) {
+    const el = scGetSel(); if (!el) return;
+    const { x:sx,y:sy,ex,ey,ew,eh } = _scResizeSt;
+    const dx = x-sx, dy = y-sy;
+    if (_scResizeHnd==='br') { el.w=Math.max(20,ew+dx); el.h=Math.max(20,eh+dy); }
+    else if (_scResizeHnd==='tr') { el.w=Math.max(20,ew+dx); el.y=ey+dy; el.h=Math.max(20,eh-dy); }
+    else if (_scResizeHnd==='bl') { el.x=ex+dx; el.w=Math.max(20,ew-dx); el.h=Math.max(20,eh+dy); }
+    else if (_scResizeHnd==='tl') { el.x=ex+dx; el.y=ey+dy; el.w=Math.max(20,ew-dx); el.h=Math.max(20,eh-dy); }
+    scDraw(); return;
+  }
+  if (_scDragging) {
+    const el = scGetSel(); if (!el) return;
+    el.x = Math.max(0, Math.min(SC_W-el.w, x-_scDragOff.x));
+    el.y = Math.max(0, Math.min(SC_H-el.h, y-_scDragOff.y));
+    scDraw(); return;
+  }
+  if (canvas) {
+    const hnd = scResizeHndAt(x,y);
+    canvas.style.cursor = hnd ? (hnd==='br'||hnd==='tl'?'nwse-resize':'nesw-resize')
+                               : (scHit(x,y)?'grab':'default');
+  }
+}
+
+function scMouseUp() {
+  _scDragging = false; _scResizing = false;
+  const canvas = document.getElementById('scCanvas');
+  if (canvas) canvas.style.cursor = 'default';
+}
+
+function scBindEvents() {
+  const canvas = document.getElementById('scCanvas');
+  if (!canvas || canvas._scBound) return;
+  canvas._scBound = true;
+  canvas.addEventListener('mousedown',  scMouseDown);
+  canvas.addEventListener('mousemove',  scMouseMove);
+  canvas.addEventListener('mouseup',    scMouseUp);
+  canvas.addEventListener('touchstart', e=>{ e.preventDefault(); scMouseDown(e); }, { passive:false });
+  canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); scMouseMove(e); }, { passive:false });
+  canvas.addEventListener('touchend',   e=>{ e.preventDefault(); scMouseUp(e);   }, { passive:false });
+  document.addEventListener('keydown', e=>{
+    if ((e.key==='Delete'||e.key==='Backspace') && _scSelected) {
+      const active = document.activeElement;
+      if (active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA')) return;
+      scDeleteSelected();
+    }
+  });
 }
 
 // ── Save & go to order ────────────────────────────────────────
-
 function dsSaveAndOrder() {
+  // Temporarily deselect so handles don't appear in export
+  const prevSel = _scSelected;
+  _scSelected = null;
+  scDraw();
+
   const canvas  = document.getElementById('scCanvas');
   const dataUrl = canvas ? canvas.toDataURL('image/jpeg', 0.85) : null;
+
+  _scSelected = prevSel; scDraw();
+
+  const allText = _scElements.filter(e=>e.type==='text').map(e=>e.text).join(', ');
+  const firstTextEl = _scElements.find(e=>e.type==='text');
   _dsDesignData = {
     preview:   dataUrl,
     bgColor:   document.getElementById('scBgColor')?.value  || '#1a1a2e',
-    textColor: document.getElementById('scTextColor')?.value || '#ffffff',
-    userText:  _scGetText()
+    textColor: firstTextEl?.textColor || '#ffffff',
+    userText:  allText
   };
+
   closeOverlay('stickerDesignerOverlay');
 
   _selectedCatalogDesign = null;
@@ -1252,7 +1436,7 @@ function dsSaveAndOrder() {
   const info   = document.getElementById('stDesignInfo');
   const picker = document.getElementById('stDesignPicker');
   const chosen = document.getElementById('stDesignChosen');
-  if (badge)  { badge.textContent = '🎨'; badge.style.background='var(--surface)'; badge.style.color='var(--accent)'; }
+  if (badge)  { badge.textContent='🎨'; badge.style.background='var(--surface)'; badge.style.color='var(--accent)'; }
   if (label)  label.textContent = 'Canvas dizayn';
   if (info)   info.textContent  = "O'z dizayningiz";
   if (picker) picker.style.display = 'none';
@@ -1305,6 +1489,7 @@ async function placeStickerOrder() {
     if (!data.success) throw new Error(data.message||'Xato');
 
     _lastStickerOrderData = { ...data, businessName: bizName, phone };
+    sessionStorage.setItem('_lastStickerOrderData', JSON.stringify(_lastStickerOrderData));
 
     closeOverlay('stickerOverlay');
     _dsDesignData = null;
@@ -2955,6 +3140,7 @@ async function submitStickerInfo() {
     updateSiCount();
     _siLogoBase64 = null;
     closeOverlay('stickerInfoOverlay');
+    sessionStorage.removeItem('_lastStickerOrderData');
     const payData = _lastStickerOrderData;
     _lastStickerOrderData = null;
     showPaymentModal(payData);
@@ -3026,6 +3212,17 @@ window.addEventListener('DOMContentLoaded', () => {
   stRenderCatalogGrid();
   const revealElements = document.querySelectorAll('.reveal');
   revealElements.forEach(el => el.classList.add('visible'));
+
+  // Restore sticker NFC info step if user refreshed mid-flow
+  const savedOrder = sessionStorage.getItem('_lastStickerOrderData');
+  if (savedOrder) {
+    try {
+      _lastStickerOrderData = JSON.parse(savedOrder);
+      openStickerInfoForm();
+    } catch (_) {
+      sessionStorage.removeItem('_lastStickerOrderData');
+    }
+  }
 });
 
 /* ══════════════════════════════════════════
