@@ -1,4 +1,4 @@
-let currentUser = null;
+﻿let currentUser = null;
 let isAdmin = false;
 let isSuperAdmin = false;
 
@@ -1096,631 +1096,165 @@ function skipDesignAndOrder() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  CANVAS STIKER DIZAYNER
+//  STIKER CUSTOMIZER  (Simple · Bug-Free · Real-Time Preview)
 // ─────────────────────────────────────────────────────────────
 
-let _dsCanvas, _dsCtx;
-let _dsElements   = [];
-let _dsSelected   = null;
-let _dsDragging   = false;
-let _dsDragOff    = {x:0, y:0};
-let _dsHistory    = [];
-let _dsRedoStack  = [];
-let _dsDesignData = null;
-let _dsBg         = '#ffffff';
-let _dsEditingId  = null;
-const DS_W = 580, DS_H = 326;
+let _scImg        = null;   // loaded Image object
+let _dsDesignData = null;   // shared with placeStickerOrder
+const SC_SIZE     = 400;    // canvas width & height
 
 function openStickerDesigner() {
   const overlay = document.getElementById('stickerDesignerOverlay');
   if (overlay) overlay.classList.add('active');
-  requestAnimationFrame(() => initDesignerCanvas());
+  requestAnimationFrame(scDraw);
 }
 
-function initDesignerCanvas() {
-  _dsCanvas = document.getElementById('dsCanvas');
-  if (!_dsCanvas) return;
-  const maxW  = Math.min(window.innerWidth - 56, 840);
-  const scale = Math.min(1, maxW / DS_W);
-  _dsCanvas.width  = DS_W;
-  _dsCanvas.height = DS_H;
-  _dsCanvas.style.width  = Math.round(DS_W * scale) + 'px';
-  _dsCanvas.style.height = Math.round(DS_H * scale) + 'px';
-  _dsCtx = _dsCanvas.getContext('2d');
-  _dsBg  = '#ffffff';
-  const bgPick = document.getElementById('dsBgColorPicker');
-  if (bgPick) bgPick.value = '#ffffff';
-  _dsHistory   = [];
-  _dsRedoStack = [];
-  _dsSelected  = null;
-  _dsElements  = [
-    { id:'nfclogo', type:'text', x:16, y:20,       text:'NFCraft', font:'bold 11px Syne,sans-serif', color:'rgba(0,0,0,0.6)', locked:true },
-    { id:'footer',  type:'text', x:16, y:DS_H-11,  text:'nfcraft.uz · NFC Stiker', font:'9px DM Sans,sans-serif', color:'rgba(0,0,0,0.35)', locked:true },
-    { id:'brand',   type:'text', x:DS_W/2, y:DS_H/2, text:'BIZNESINGIZ', font:'bold 38px Syne,sans-serif', color:'#111111', align:'center' },
-  ];
-  dsBindEvents();
-  dsDraw();
+// ── Image loading ─────────────────────────────────────────────
+function scLoadImage(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Rasm hajmi 5MB dan oshmasligi kerak', 'warning');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      _scImg = img;
+      // Show thumbnail
+      const thumb = document.getElementById('scImgThumb');
+      const hint  = document.getElementById('scImgHint');
+      if (thumb) { thumb.src = e.target.result; thumb.style.display = 'block'; }
+      if (hint)  hint.style.display = 'none';
+      scDraw();
+    };
+    img.onerror = function() { showToast('Rasm yuklab bo\'lmadi', 'error'); };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
-function dsDraw() {
-  if (!_dsCtx) return;
-  const ctx = _dsCtx;
-  ctx.clearRect(0, 0, DS_W, DS_H);
-  // Background
-  ctx.save();
-  ctx.fillStyle = _dsBg;
-  ctx.fillRect(0, 0, DS_W, DS_H);
-  ctx.restore();
+// ── Color hex display sync ────────────────────────────────────
+function scUpdateColorHex(inputId, spanId) {
+  const val = document.getElementById(inputId)?.value || '';
+  const span = document.getElementById(spanId);
+  if (span) span.textContent = val;
+}
 
-  for (const el of _dsElements) {
+function scSetBg(color) {
+  const el = document.getElementById('scBgColor');
+  if (el) { el.value = color; scUpdateColorHex('scBgColor', 'scBgHex'); scDraw(); }
+}
+
+// ── Canvas draw (real-time) ───────────────────────────────────
+function scDraw() {
+  const canvas = document.getElementById('scCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const S   = SC_SIZE;
+
+  // 1. Background fill
+  const bgColor = document.getElementById('scBgColor')?.value || '#1a1a2e';
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, S, S);
+
+  // 2. Uploaded image — centered, aspect-ratio preserved
+  const text = _scGetText();
+  if (_scImg) {
+    const pad         = 24;
+    const textReserve = text ? 60 : 0;
+    const maxW        = S - pad * 2;
+    const maxH        = S - pad * 2 - textReserve;
+    const scale       = Math.min(maxW / _scImg.naturalWidth, maxH / _scImg.naturalHeight);
+    const w           = _scImg.naturalWidth  * scale;
+    const h           = _scImg.naturalHeight * scale;
+    const x           = (S - w) / 2;
+    const y           = pad + (maxH - h) / 2;
+
+    // Draw with rounded corners via clip
     ctx.save();
-    ctx.globalAlpha = el.opacity ?? 1;
-    // Rotation around element center
-    if (el.rotation) {
-      const bb0 = dsGetBBoxRaw(el);
-      const cx0 = bb0.x + bb0.w / 2;
-      const cy0 = bb0.y + bb0.h / 2;
-      ctx.translate(cx0, cy0);
-      ctx.rotate(el.rotation * Math.PI / 180);
-      ctx.translate(-cx0, -cy0);
-    }
-    if (el.type === 'text') {
-      ctx.textAlign    = el.align || 'left';
-      ctx.textBaseline = 'middle';
-      if (el.id === 'nfclogo') {
-        ctx.font = 'bold 11px Syne,sans-serif';
-        const baseColor = el.color || 'rgba(0,0,0,0.6)';
-        // Yellow dot brand mark
-        ctx.fillStyle = '#e8ff47';
-        ctx.beginPath(); ctx.arc(el.x + 3.5, el.y, 3.5, 0, Math.PI * 2); ctx.fill();
-        // "NF" in base color
-        ctx.fillStyle = baseColor;
-        ctx.fillText('NF', el.x + 11, el.y);
-        const nfW = ctx.measureText('NF').width;
-        // "Craft" — accent on dark bg, dark on light bg
-        const bright = parseInt(_dsBg.replace('#','').slice(0,2),16);
-        ctx.fillStyle = bright < 128 ? '#e8ff47' : baseColor;
-        ctx.fillText('Craft', el.x + 11 + nfW, el.y);
-      } else {
-        ctx.font      = el.font || 'bold 36px Syne,sans-serif';
-        ctx.fillStyle = el.color || '#111';
-        ctx.fillText(el.text, el.x, el.y);
-      }
-    } else if (el.type === 'image' && el.img) {
-      ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
-    } else if (el.type === 'nfc') {
-      dsDrawNfc(ctx, el.x, el.y, el.r, _dsTextColor());
-    } else if (el.type === 'rect') {
-      dsRoundRect(ctx, el.x, el.y, el.w, el.h, el.rx || 0);
-      ctx.fillStyle = el.fillColor || '#e8ff47';
-      ctx.fill();
-      if ((el.borderWidth || 0) > 0) {
-        ctx.strokeStyle = el.borderColor || '#111';
-        ctx.lineWidth   = el.borderWidth;
-        ctx.stroke();
-      }
-    } else if (el.type === 'circle') {
-      ctx.beginPath();
-      ctx.ellipse(el.x + el.w / 2, el.y + el.h / 2, el.w / 2, el.h / 2, 0, 0, Math.PI * 2);
-      ctx.fillStyle = el.fillColor || '#e8ff47';
-      ctx.fill();
-      if ((el.borderWidth || 0) > 0) {
-        ctx.strokeStyle = el.borderColor || '#111';
-        ctx.lineWidth   = el.borderWidth;
-        ctx.stroke();
-      }
-    }
-    // Selection handles
-    if (_dsSelected === el.id && !el.locked) {
-      const bb = dsGetBBoxRaw(el);
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#e8ff47';
-      ctx.lineWidth   = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.strokeRect(bb.x - 7, bb.y - 7, bb.w + 14, bb.h + 14);
-      ctx.setLineDash([]);
-      [[bb.x-7,bb.y-7],[bb.x+bb.w+7,bb.y-7],[bb.x-7,bb.y+bb.h+7],[bb.x+bb.w+7,bb.y+bb.h+7]].forEach(([hx,hy]) => {
-        ctx.fillStyle = '#e8ff47';
-        ctx.fillRect(hx-4, hy-4, 8, 8);
-      });
-    }
+    _scRoundRect(ctx, x, y, w, h, 10);
+    ctx.clip();
+    ctx.drawImage(_scImg, x, y, w, h);
     ctx.restore();
   }
+
+  // 3. Text — centered at bottom with semi-transparent pill background
+  if (text) {
+    const textColor = document.getElementById('scTextColor')?.value || '#ffffff';
+    const fontSize  = Math.max(18, Math.min(34, Math.floor(S * 0.082)));
+    ctx.font = `bold ${fontSize}px 'DM Sans', Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+
+    const tx      = S / 2;
+    const ty      = S - 36;
+    const metrics = ctx.measureText(text);
+    const pillW   = metrics.width + 28;
+    const pillH   = fontSize + 18;
+
+    // Pill background
+    ctx.fillStyle = 'rgba(0,0,0,0.50)';
+    _scRoundRect(ctx, tx - pillW / 2, ty - pillH / 2, pillW, pillH, pillH / 2);
+    ctx.fill();
+
+    // Text with shadow
+    ctx.shadowColor  = 'rgba(0,0,0,0.75)';
+    ctx.shadowBlur   = 6;
+    ctx.fillStyle    = textColor;
+    ctx.fillText(text, tx, ty);
+    ctx.shadowBlur   = 0;
+  }
+
+  // Update char counter
+  const counter = document.getElementById('scCharCount');
+  if (counter) counter.textContent = text.length + '/30';
 }
 
-function dsDrawNfc(ctx, cx, cy, r, color) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.8;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, r*0.6, Math.PI*0.3, Math.PI*1.7); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2); ctx.stroke();
+function _scGetText() {
+  return (document.getElementById('scText')?.value || '').slice(0, 30);
 }
 
-function dsRoundRect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w/2, h/2);
+function _scRoundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
 
-function _dsTextColor() {
-  const hex = _dsBg.replace('#','');
-  if (hex.length < 6) return '#111';
-  const r = parseInt(hex.slice(0,2),16);
-  const g = parseInt(hex.slice(2,4),16);
-  const b = parseInt(hex.slice(4,6),16);
-  return (r*0.299+g*0.587+b*0.114) > 140 ? '#111111' : '#ffffff';
-}
-
-// Unrotated bounding box (used for resize handles and drag)
-function dsGetBBoxRaw(el) {
-  if (el.type === 'text' && _dsCtx) {
-    _dsCtx.font = el.font || 'bold 36px Syne,sans-serif';
-    _dsCtx.textAlign = el.align || 'left';
-    const m = _dsCtx.measureText(el.text);
-    const w = m.width;
-    const h = parseInt(el.font) || 20;
-    const ax = el.align === 'center' ? el.x - w/2 : el.x;
-    return { x:ax, y:el.y-h/2, w, h };
-  }
-  if (el.type === 'nfc')    return { x:el.x-el.r, y:el.y-el.r, w:el.r*2, h:el.r*2 };
-  if (el.type === 'image')  return { x:el.x, y:el.y, w:el.w||80, h:el.h||80 };
-  if (el.type === 'rect' || el.type === 'circle') return { x:el.x, y:el.y, w:el.w||80, h:el.h||80 };
-  return { x:el.x, y:el.y, w:60, h:20 };
-}
-const dsGetBBox = dsGetBBoxRaw;
-
-function dsHitTest(mx, my) {
-  for (let i = _dsElements.length-1; i >= 0; i--) {
-    const el = _dsElements[i];
-    if (el.locked) continue;
-    const bb = dsGetBBoxRaw(el);
-    if (mx >= bb.x-9 && mx <= bb.x+bb.w+9 && my >= bb.y-9 && my <= bb.y+bb.h+9) return el;
-  }
-  return null;
-}
-
-function dsCanvasXY(e) {
-  const rect = _dsCanvas.getBoundingClientRect();
-  const scaleX = DS_W / rect.width;
-  const scaleY = DS_H / rect.height;
-  const src = e.touches ? e.touches[0] : e;
-  return { x:(src.clientX - rect.left)*scaleX, y:(src.clientY - rect.top)*scaleY };
-}
-
-const HANDLE = 9;
-
-function dsBindEvents() {
-  const c = _dsCanvas;
-  // Remove old listeners by cloning and replacing in DOM
-  const nc = c.cloneNode(true);
-  c.parentNode.replaceChild(nc, c);
-  _dsCanvas = document.getElementById('dsCanvas');
-  const cv = _dsCanvas;
-
-  function hitHandle(x, y) {
-    if (!_dsSelected) return null;
-    const el = _dsElements.find(e => e.id === _dsSelected);
-    if (!el || el.locked) return null;
-    const bb = dsGetBBoxRaw(el);
-    const corners = [
-      { cx:bb.x-7,       cy:bb.y-7,       dx:-1, dy:-1 },
-      { cx:bb.x+bb.w+7,  cy:bb.y-7,       dx: 1, dy:-1 },
-      { cx:bb.x-7,       cy:bb.y+bb.h+7,  dx:-1, dy: 1 },
-      { cx:bb.x+bb.w+7,  cy:bb.y+bb.h+7,  dx: 1, dy: 1 },
-    ];
-    for (const cr of corners) {
-      if (Math.abs(x-cr.cx) <= HANDLE+2 && Math.abs(y-cr.cy) <= HANDLE+2) return cr;
-    }
-    return null;
-  }
-
-  let _rc = null, _rs = null, _ro = null;
-
-  const down = (e) => {
-    e.preventDefault();
-    // Commit any active text edit before handling new click
-    if (_dsEditingId) { dsCommitInlineText(); return; }
-    const {x, y} = dsCanvasXY(e);
-    const handle = hitHandle(x, y);
-    if (handle) {
-      _rc = handle;
-      const el = _dsElements.find(el => el.id === _dsSelected);
-      _rs = { x, y };
-      _ro = { x:el.x, y:el.y, w:el.w, h:el.h, r:el.r, font:el.font };
-      return;
-    }
-    const hit = dsHitTest(x, y);
-    _dsDragging = !!hit;
-    _dsSelected = hit ? hit.id : null;
-    if (hit) _dsDragOff = { x: x-hit.x, y: y-hit.y };
-    _dsShowElementControls(hit && !hit.locked ? hit : null);
-    const delBtn = document.getElementById('dsBtnDelete');
-    if (delBtn) delBtn.style.display = (_dsSelected && !_dsElements.find(e=>e.id===_dsSelected)?.locked) ? '' : 'none';
-    dsDraw();
-  };
-
-  const move = (e) => {
-    e.preventDefault();
-    const {x, y} = dsCanvasXY(e);
-    if (_rc && _dsSelected) {
-      const el = _dsElements.find(e => e.id === _dsSelected);
-      if (!el) return;
-      const dx = x - _rs.x, dy = y - _rs.y;
-      if (el.type === 'text') {
-        const orig = parseInt(_ro.font) || 36;
-        const delta = _rc.dx*dx + _rc.dy*dy;
-        const ns = Math.max(10, Math.min(120, orig + delta*0.5));
-        el.font = el.font.replace(/\d+px/, Math.round(ns)+'px');
-        const sl = document.getElementById('dsFontSize');
-        const lb = document.getElementById('dsFontSizeLabel');
-        if (sl) sl.value = Math.round(ns);
-        if (lb) lb.textContent = Math.round(ns)+'px';
-      } else if (el.type === 'image' || el.type === 'rect' || el.type === 'circle') {
-        const ratio = (_ro.w||80) / Math.max(1, _ro.h||80);
-        const delta = Math.max(_rc.dx*dx, _rc.dy*dy);
-        el.w = Math.max(20, (_ro.w||80) + delta);
-        el.h = Math.max(20, el.w / ratio);
-      } else if (el.type === 'nfc') {
-        const delta = (_rc.dx*dx + _rc.dy*dy)*0.5;
-        el.r = Math.max(15, Math.min(120, (_ro.r||36) + delta));
-      }
-      dsDraw(); return;
-    }
-    if (!_dsDragging || !_dsSelected) return;
-    const el = _dsElements.find(e => e.id === _dsSelected);
-    if (!el || el.locked) return;
-    el.x = Math.max(0, Math.min(DS_W, x - _dsDragOff.x));
-    el.y = Math.max(0, Math.min(DS_H, y - _dsDragOff.y));
-    dsDraw();
-  };
-
-  const up = () => {
-    if (_dsDragging || _rc) dsSnapshot();
-    _dsDragging = false; _rc = null; _rs = null; _ro = null;
-  };
-
-  // Inline text edit on double-click
-  cv.addEventListener('dblclick', (e) => {
-    const {x, y} = dsCanvasXY(e);
-    const hit = dsHitTest(x, y);
-    if (hit && hit.type === 'text' && !hit.locked) {
-      dsShowInlineText(hit);
-    }
-  });
-
-  cv.addEventListener('mousemove', (e) => {
-    const {x, y} = dsCanvasXY(e);
-    if (hitHandle(x, y)) cv.style.cursor = 'nwse-resize';
-    else if (dsHitTest(x, y)) cv.style.cursor = 'move';
-    else cv.style.cursor = 'default';
-  });
-
-  cv.addEventListener('mousedown',  down);
-  cv.addEventListener('mousemove',  move);
-  cv.addEventListener('mouseup',    up);
-  cv.addEventListener('touchstart', down, { passive:false });
-  cv.addEventListener('touchmove',  move, { passive:false });
-  cv.addEventListener('touchend',   up);
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    const overlay = document.getElementById('stickerDesignerOverlay');
-    if (!overlay?.classList.contains('active')) return;
-    if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); dsUndo(); }
-    if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.shiftKey&&e.key==='Z'))) { e.preventDefault(); dsRedo(); }
-    if (e.key === 'Delete' && _dsSelected) dsDeleteSelected();
-  });
-}
-
-function _dsShowElementControls(el) {
-  const props = document.getElementById('dsPropsPanel');
-  const tc    = document.getElementById('dsTextControls');
-  const sc    = document.getElementById('dsShapeControls');
-  const up    = document.getElementById('dsBtnUp');
-  const down  = document.getElementById('dsBtnDown');
-  if (!el) {
-    if (props) props.style.display = 'none';
-    if (tc) tc.style.display = 'none';
-    if (sc) sc.style.display = 'none';
-    if (up)   up.style.display   = 'none';
-    if (down) down.style.display = 'none';
-    return;
-  }
-  if (props) props.style.display = 'flex';
-  if (up)   up.style.display   = '';
-  if (down) down.style.display = '';
-  // Opacity
-  const op = Math.round((el.opacity ?? 1)*100);
-  const opEl = document.getElementById('dsOpacity');
-  const opLb = document.getElementById('dsOpacityLabel');
-  if (opEl) opEl.value = op;
-  if (opLb) opLb.textContent = op+'%';
-  // Rotation
-  const rot = el.rotation || 0;
-  const rotEl = document.getElementById('dsRotation');
-  const rotLb = document.getElementById('dsRotationLabel');
-  if (rotEl) rotEl.value = rot;
-  if (rotLb) rotLb.textContent = rot+'°';
-  // Type-specific
-  if (el.type === 'text') {
-    if (tc) tc.style.display = 'flex';
-    if (sc) sc.style.display = 'none';
-    const cp = document.getElementById('dsTextColorPicker');
-    if (cp) cp.value = (el.color||'#111111').startsWith('#') ? el.color : '#111111';
-    const sz = parseInt(el.font)||36;
-    const sl = document.getElementById('dsFontSize');
-    const lb = document.getElementById('dsFontSizeLabel');
-    if (sl) sl.value = sz;
-    if (lb) lb.textContent = sz+'px';
-  } else if (el.type==='rect'||el.type==='circle') {
-    if (tc) tc.style.display = 'none';
-    if (sc) sc.style.display = 'flex';
-    const fp = document.getElementById('dsShapeFill');
-    const bp = document.getElementById('dsShapeBorder');
-    const bw = document.getElementById('dsBorderW');
-    const bl = document.getElementById('dsBorderWLabel');
-    if (fp) fp.value = el.fillColor||'#e8ff47';
-    if (bp) bp.value = el.borderColor||'#111111';
-    if (bw) bw.value = el.borderWidth||0;
-    if (bl) bl.textContent = (el.borderWidth||0)+'px';
-  } else {
-    if (tc) tc.style.display = 'none';
-    if (sc) sc.style.display = 'none';
-  }
-}
-const _dsShowTextControls = _dsShowElementControls;
-
-// ── Canvas actions ──
-function dsAddText() {
-  dsSnapshot();
-  const id = 'txt_' + Date.now();
-  _dsElements.push({ id, type:'text', x:DS_W/2, y:DS_H/2, text:'Matn', font:'bold 32px Syne,sans-serif', color:_dsTextColor(), align:'center' });
-  _dsSelected = id;
-  _dsShowElementControls(_dsElements.at(-1));
-  const del = document.getElementById('dsBtnDelete');
-  if (del) del.style.display = '';
-  dsDraw();
-  // Open inline editor immediately
-  requestAnimationFrame(() => dsShowInlineText(_dsElements.at(-1)));
-}
-
-function dsShowInlineText(el) {
-  const input = document.getElementById('dsInlineText');
-  if (!input || !_dsCanvas) return;
-  const canvasRect = _dsCanvas.getBoundingClientRect();
-  const wrap = _dsCanvas.parentElement;
-  const wrapRect = wrap.getBoundingClientRect();
-  const scaleX = canvasRect.width / DS_W;
-  const scaleY = canvasRect.height / DS_H;
-  const bb = dsGetBBoxRaw(el);
-  const dispFontSize = Math.max(12, (parseInt(el.font) || 32) * scaleX);
-  const fontFamily = (el.font || '').replace(/bold\s*|\d+px\s*/g, '').trim() || 'Syne,sans-serif';
-  const isBold = (el.font || '').includes('bold');
-  input.value = el.text || '';
-  input.dataset.elId = el.id;
-  input.style.left   = (canvasRect.left - wrapRect.left + bb.x * scaleX - 4) + 'px';
-  input.style.top    = (canvasRect.top  - wrapRect.top  + (el.y - bb.h * 0.5) * scaleY - 2) + 'px';
-  input.style.width  = Math.max(80, bb.w * scaleX + 20) + 'px';
-  input.style.height = (dispFontSize * 1.4) + 'px';
-  input.style.fontSize   = dispFontSize + 'px';
-  input.style.fontFamily = fontFamily;
-  input.style.fontWeight = isBold ? 'bold' : 'normal';
-  input.style.color      = el.color || '#111';
-  input.style.display    = 'block';
-  _dsEditingId = el.id;
-  setTimeout(() => { input.focus(); input.select(); }, 20);
-}
-
-function dsCommitInlineText() {
-  const input = document.getElementById('dsInlineText');
-  if (!input) return;
-  const el = _dsElements.find(e => e.id === _dsEditingId);
-  if (el) {
-    const newText = input.value.trim();
-    if (newText && newText !== el.text) {
-      dsSnapshot();
-      el.text = newText;
-    }
-  }
-  input.style.display = 'none';
-  input.dataset.elId = '';
-  _dsEditingId = null;
-  dsDraw();
-}
-
-function dsAddRect() {
-  dsSnapshot();
-  const id = 'rect_' + Date.now();
-  _dsElements.push({ id, type:'rect', x:DS_W/2-60, y:DS_H/2-30, w:120, h:60, fillColor:'#e8ff47', borderColor:'#111', borderWidth:0, rx:8, opacity:1, rotation:0 });
-  _dsSelected = id;
-  _dsShowElementControls(_dsElements.at(-1));
-  const del = document.getElementById('dsBtnDelete');
-  if (del) del.style.display = '';
-  dsDraw();
-}
-
-function dsAddCircle() {
-  dsSnapshot();
-  const id = 'circle_' + Date.now();
-  _dsElements.push({ id, type:'circle', x:DS_W/2-50, y:DS_H/2-50, w:100, h:100, fillColor:'#e8ff47', borderColor:'#111', borderWidth:0, opacity:1, rotation:0 });
-  _dsSelected = id;
-  _dsShowElementControls(_dsElements.at(-1));
-  const del = document.getElementById('dsBtnDelete');
-  if (del) del.style.display = '';
-  dsDraw();
-}
-
-// Multiple images support
-function dsLoadImages(input) {
-  const files = Array.from(input.files);
-  if (!files.length) return;
-  dsSnapshot();
-  let offsetX = 30;
-  const promises = files.map(file => new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const maxS = 100;
-        const ratio = Math.min(maxS/img.width, maxS/img.height);
-        const w = Math.round(img.width * ratio);
-        const h = Math.round(img.height * ratio);
-        const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-        _dsElements.push({ id, type:'image', x:offsetX, y:DS_H/2-h/2, w, h, img, imgSrc:e.target.result, opacity:1, rotation:0 });
-        offsetX += w + 12;
-        resolve();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }));
-  Promise.all(promises).then(() => { dsDraw(); });
-  input.value = '';
-}
-
-function dsBgColor(color) {
-  dsSnapshot();
-  _dsBg = color;
-  const tc = _dsTextColor();
-  _dsElements.forEach(el => { if (el.locked) el.color = tc; });
-  dsDraw();
-}
-
-function dsSetTextColor(color) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (el && el.type==='text' && !el.locked) { el.color = color; dsDraw(); }
-}
-
-function dsSetFont(val) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.type!=='text') return;
-  const size = parseInt(el.font)||36;
-  el.font = `bold ${size}px ${val}`;
-  dsDraw();
-}
-
-function dsSetFontSize(size) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.type!=='text') return;
-  el.font = el.font.replace(/\d+px/, size+'px');
-  const lb = document.getElementById('dsFontSizeLabel');
-  if (lb) lb.textContent = size+'px';
-  dsDraw();
-}
-
-function dsSetOpacity(val) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.locked) return;
-  el.opacity = val / 100;
-  const lb = document.getElementById('dsOpacityLabel');
-  if (lb) lb.textContent = val+'%';
-  dsDraw();
-}
-
-function dsSetRotation(val) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (!el || el.locked) return;
-  el.rotation = val;
-  const lb = document.getElementById('dsRotationLabel');
-  if (lb) lb.textContent = val+'°';
-  dsDraw();
-}
-
-function dsSetShapeFill(color) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (el && (el.type==='rect'||el.type==='circle')) { el.fillColor = color; dsDraw(); }
-}
-
-function dsSetShapeBorder(color) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (el && (el.type==='rect'||el.type==='circle')) { el.borderColor = color; dsDraw(); }
-}
-
-function dsSetBorderW(val) {
-  const el = _dsElements.find(e=>e.id===_dsSelected);
-  if (el && (el.type==='rect'||el.type==='circle')) {
-    el.borderWidth = val;
-    const lb = document.getElementById('dsBorderWLabel');
-    if (lb) lb.textContent = val+'px';
-    dsDraw();
-  }
-}
-
-function dsMoveLayer(dir) {
-  if (!_dsSelected) return;
-  const i = _dsElements.findIndex(e=>e.id===_dsSelected);
-  if (i < 0) return;
-  const j = i + dir;
-  if (j < 0 || j >= _dsElements.length) return;
-  dsSnapshot();
-  [_dsElements[i], _dsElements[j]] = [_dsElements[j], _dsElements[i]];
-  dsDraw();
-}
-
-function dsDeleteSelected() {
-  if (!_dsSelected) return;
-  dsSnapshot();
-  _dsElements = _dsElements.filter(e=>e.id!==_dsSelected);
-  _dsSelected = null;
-  const del = document.getElementById('dsBtnDelete');
-  if (del) del.style.display = 'none';
-  _dsShowElementControls(null);
-  dsDraw();
-}
-
-function dsUndo() {
-  if (!_dsHistory.length) return;
-  const cur = _dsElements.map(el=>({...el,img:undefined}));
-  _dsRedoStack.push({ els:JSON.stringify(cur), bg:_dsBg });
-  if (_dsRedoStack.length > 30) _dsRedoStack.shift();
-  const state = _dsHistory.pop();
-  _dsElements = JSON.parse(state.els);
-  _dsElements.forEach(el => { if (el.type==='image'&&el.imgSrc) { const img=new Image(); img.src=el.imgSrc; el.img=img; } });
-  _dsBg = state.bg;
-  const bgPick = document.getElementById('dsBgColorPicker');
-  if (bgPick) bgPick.value = _dsBg;
-  dsDraw();
-}
-
-function dsRedo() {
-  if (!_dsRedoStack.length) return;
-  const cur = _dsElements.map(el=>({...el,img:undefined}));
-  _dsHistory.push({ els:JSON.stringify(cur), bg:_dsBg });
-  const state = _dsRedoStack.pop();
-  _dsElements = JSON.parse(state.els);
-  _dsElements.forEach(el => { if (el.type==='image'&&el.imgSrc) { const img=new Image(); img.src=el.imgSrc; el.img=img; } });
-  _dsBg = state.bg;
-  const bgPick = document.getElementById('dsBgColorPicker');
-  if (bgPick) bgPick.value = _dsBg;
-  dsDraw();
-}
-
-function dsSnapshot() {
-  const els = _dsElements.map(el=>({...el, img:undefined}));
-  _dsHistory.push({ els:JSON.stringify(els), bg:_dsBg });
-  if (_dsHistory.length > 40) _dsHistory.shift();
-  _dsRedoStack = [];
-}
+// ── Save & go to order ────────────────────────────────────────
 
 function dsSaveAndOrder() {
-  const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/jpeg', 0.85) : null;
-  const elSummary = _dsElements.filter(e=>!e.locked&&e.type==='text').map(e=>e.text).join(', ');
-  _dsDesignData = { preview:dataUrl, bgColor:_dsBg, elements:elSummary };
+  const canvas  = document.getElementById('scCanvas');
+  const dataUrl = canvas ? canvas.toDataURL('image/jpeg', 0.85) : null;
+  _dsDesignData = {
+    preview:   dataUrl,
+    bgColor:   document.getElementById('scBgColor')?.value  || '#1a1a2e',
+    textColor: document.getElementById('scTextColor')?.value || '#ffffff',
+    userText:  _scGetText()
+  };
   closeOverlay('stickerDesignerOverlay');
-  // Show canvas design as selected
+
   _selectedCatalogDesign = null;
-  const badge = document.getElementById('stDesignBadge');
-  const label = document.getElementById('stDesignLabel');
-  const info  = document.getElementById('stDesignInfo');
+  const badge  = document.getElementById('stDesignBadge');
+  const label  = document.getElementById('stDesignLabel');
+  const info   = document.getElementById('stDesignInfo');
   const picker = document.getElementById('stDesignPicker');
   const chosen = document.getElementById('stDesignChosen');
-  if (badge) { badge.textContent = '🎨'; badge.style.background='var(--surface)'; badge.style.color='var(--accent)'; }
-  if (label) label.textContent = 'Canvas dizayn';
-  if (info)  info.textContent  = 'O\'z dizayningiz';
+  if (badge)  { badge.textContent = '🎨'; badge.style.background='var(--surface)'; badge.style.color='var(--accent)'; }
+  if (label)  label.textContent = 'Canvas dizayn';
+  if (info)   info.textContent  = "O'z dizayningiz";
   if (picker) picker.style.display = 'none';
   if (chosen) chosen.style.display = 'flex';
   _openStickerOrderOverlay();
@@ -1761,7 +1295,11 @@ async function placeStickerOrder() {
       method: 'POST',
       headers: { 'Content-Type':'application/json', ...(currentUser?.token?{'Authorization':`Bearer ${currentUser.token}`}:{}) },
       body: JSON.stringify({ businessName:bizName, phone, contactPhone:phone, quantity:qty,
-                             templateName, designPreview:_dsDesignData?.preview||null })
+                             templateName,
+                             designPreview: _dsDesignData?.preview   || null,
+                             userText:      _dsDesignData?.userText  || null,
+                             textColor:     _dsDesignData?.textColor || null,
+                             bgColor:       _dsDesignData?.bgColor   || null })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message||'Xato');

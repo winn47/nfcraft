@@ -747,87 +747,86 @@
   </div>
 </div>
 
-<!-- ══ STIKER DESIGNER MODAL ══ -->
+<!-- ══ STIKER CUSTOMIZER MODAL ══ -->
 <div class="overlay" id="stickerDesignerOverlay">
-  <div class="modal" style="max-width:920px;max-height:96vh;overflow-y:auto;margin:1rem;">
+  <div class="modal" style="max-width:860px;max-height:96vh;overflow-y:auto;margin:1rem;padding:0;">
 
     <!-- Header -->
-    <div class="modal-header">
-      <div class="modal-title">🎨 Stiker Dizaynlash</div>
+    <div class="modal-header" style="padding:1rem 1.2rem;">
+      <div class="modal-title">🎨 Stiker Dizayn</div>
       <div style="display:flex;gap:0.5rem;align-items:center;">
-        <button onclick="skipDesignAndOrder()" style="padding:0.38rem 0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted2);font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Katalog</button>
-        <button onclick="dsSaveAndOrder()" style="padding:0.38rem 1rem;background:var(--accent);border:none;border-radius:8px;color:#0a0a0a;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;">Buyurtma →</button>
+        <button onclick="dsSaveAndOrder()" style="padding:0.38rem 1.1rem;background:var(--accent);border:none;border-radius:8px;color:#0a0a0a;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;">Buyurtma →</button>
         <button class="modal-close" onclick="closeOverlay('stickerDesignerOverlay')">✕</button>
       </div>
     </div>
 
-    <!-- Toolbar -->
-    <div style="display:flex;gap:0.3rem;padding:0.45rem 0.8rem;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center;flex-wrap:wrap;">
-      <label class="ds-tool-btn" title="Rasm qo'shish" style="cursor:pointer;">
-        🖼 Rasm
-        <input type="file" accept="image/*" multiple onchange="dsLoadImages(this)" style="display:none;"/>
-      </label>
-      <button class="ds-tool-btn" onclick="dsAddText()" title="Matn qo'shish · 2x bosib tahrirlang">T Matn</button>
-      <button class="ds-tool-btn" onclick="dsAddRect()" title="To'rtburchak">▭</button>
-      <button class="ds-tool-btn" onclick="dsAddCircle()" title="Doira">⬤</button>
-      <div style="width:1px;height:20px;background:var(--border);margin:0 0.2rem;flex-shrink:0;"></div>
-      <button class="ds-tool-btn" onclick="dsUndo()" title="Orqaga · Ctrl+Z">↩</button>
-      <button class="ds-tool-btn" onclick="dsRedo()" title="Oldinga · Ctrl+Y">↪</button>
-      <div style="width:1px;height:20px;background:var(--border);margin:0 0.2rem;flex-shrink:0;"></div>
-      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--muted);cursor:pointer;" title="Fon rangi">
-        Fon <input type="color" id="dsBgColorPicker" value="#ffffff" oninput="dsBgColor(this.value)" style="width:26px;height:24px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px;background:var(--surface);"/>
-      </label>
-      <div style="margin-left:auto;display:flex;gap:0.3rem;align-items:center;">
-        <button class="ds-tool-btn" onclick="dsMoveLayer(1)"  id="dsBtnUp"   style="display:none;" title="Ust qatlam">↑</button>
-        <button class="ds-tool-btn" onclick="dsMoveLayer(-1)" id="dsBtnDown" style="display:none;" title="Quyi qatlam">↓</button>
-        <button class="ds-tool-btn" onclick="dsDeleteSelected()" id="dsBtnDelete" style="display:none;color:#ff7070;" title="O'chirish · Del">🗑 O'chir</button>
-      </div>
-    </div>
+    <!-- 2-panel body -->
+    <div style="display:flex;min-height:480px;flex-wrap:wrap;">
 
-    <!-- Properties Panel (shows when element selected) -->
-    <div id="dsPropsPanel" style="display:none;padding:0.4rem 0.8rem;border-bottom:1px solid var(--border);background:rgba(232,255,71,0.03);align-items:center;flex-wrap:wrap;gap:0.5rem;">
-      <div id="dsTextControls" style="display:none;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:0.7rem;color:var(--muted);">Rang:</span>
-        <input type="color" id="dsTextColorPicker" value="#111111" oninput="dsSetTextColor(this.value)" style="width:26px;height:24px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px;background:var(--surface);"/>
-        <select id="dsFontPicker" onchange="dsSetFont(this.value)" style="padding:0.22rem 0.4rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.77rem;cursor:pointer;">
-          <option value="Syne,sans-serif">Syne</option>
-          <option value="DM Sans,sans-serif">DM Sans</option>
-          <option value="Georgia,serif">Serif</option>
-          <option value="monospace">Mono</option>
-        </select>
-        <input type="range" id="dsFontSize" min="10" max="120" value="36" oninput="dsSetFontSize(+this.value)" style="width:90px;accent-color:var(--accent);"/>
-        <span id="dsFontSizeLabel" style="font-size:0.71rem;color:var(--muted);min-width:30px;">36px</span>
-      </div>
-      <div id="dsShapeControls" style="display:none;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:0.7rem;color:var(--muted);">To'ldirish:</span>
-        <input type="color" id="dsShapeFill" value="#e8ff47" oninput="dsSetShapeFill(this.value)" style="width:26px;height:24px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px;background:var(--surface);"/>
-        <span style="font-size:0.7rem;color:var(--muted);">Chegara:</span>
-        <input type="color" id="dsShapeBorder" value="#111111" oninput="dsSetShapeBorder(this.value)" style="width:26px;height:24px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px;background:var(--surface);"/>
-        <input type="range" id="dsBorderW" min="0" max="12" value="0" oninput="dsSetBorderW(+this.value)" style="width:70px;accent-color:var(--accent);" title="Qalinlik"/>
-        <span id="dsBorderWLabel" style="font-size:0.71rem;color:var(--muted);">0px</span>
-      </div>
-      <div style="display:flex;gap:0.5rem;align-items:center;margin-left:auto;flex-wrap:wrap;">
-        <span style="font-size:0.7rem;color:var(--muted);">Shaffof:</span>
-        <input type="range" id="dsOpacity" min="10" max="100" value="100" oninput="dsSetOpacity(+this.value)" style="width:72px;accent-color:var(--accent);"/>
-        <span id="dsOpacityLabel" style="font-size:0.71rem;color:var(--muted);min-width:28px;">100%</span>
-        <span style="font-size:0.7rem;color:var(--muted);">Burish:</span>
-        <input type="range" id="dsRotation" min="-180" max="180" value="0" oninput="dsSetRotation(+this.value)" style="width:80px;accent-color:var(--accent);"/>
-        <span id="dsRotationLabel" style="font-size:0.71rem;color:var(--muted);min-width:28px;">0°</span>
-      </div>
-    </div>
+      <!-- LEFT: Controls -->
+      <div style="width:260px;flex-shrink:0;padding:1.4rem 1.2rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem;background:var(--surface);">
 
-    <!-- Canvas area -->
-    <div style="padding:1rem;background:#111;display:flex;justify-content:center;overflow-x:auto;">
-      <div style="position:relative;display:inline-block;">
-        <canvas id="dsCanvas" style="border-radius:12px;display:block;touch-action:none;box-shadow:0 6px 30px rgba(0,0,0,0.65);cursor:default;max-width:100%;"></canvas>
-        <!-- Inline text editor overlay -->
-        <input id="dsInlineText"
-          style="display:none;position:absolute;border:1.5px dashed #e8ff47;background:rgba(232,255,71,0.07);outline:none;border-radius:3px;padding:0 3px;z-index:10;box-sizing:border-box;"
-          onblur="dsCommitInlineText()"
-          onkeydown="if(event.key==='Enter'||event.key==='Escape'){event.preventDefault();this.blur();}"
-        />
-        <div style="position:absolute;bottom:0.4rem;right:0.6rem;font-size:0.55rem;color:rgba(255,255,255,0.18);pointer-events:none;font-family:'DM Sans',sans-serif;">Bosib tanlang · Torting · 2× tahrirlang</div>
+        <!-- Image Upload -->
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:0.55rem;text-transform:uppercase;letter-spacing:0.06em;">📷 Rasm</div>
+          <label style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;padding:0.9rem;border:1.5px dashed var(--border);border-radius:10px;cursor:pointer;background:var(--surface2);transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <img id="scImgThumb" style="display:none;max-width:100%;max-height:90px;border-radius:6px;object-fit:contain;" />
+            <span id="scImgHint" style="font-size:0.73rem;color:var(--muted2);text-align:center;line-height:1.5;">Bosib rasm tanlang<br><span style="color:var(--muted);font-size:0.68rem;">.png · .jpg · max 5MB</span></span>
+            <input type="file" id="scImageInput" accept="image/png,image/jpeg,image/webp" onchange="scLoadImage(this)" style="display:none;" />
+          </label>
+        </div>
+
+        <!-- Text -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.55rem;">
+            <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">✏️ Matn</div>
+            <span id="scCharCount" style="font-size:0.7rem;color:var(--muted2);">0/30</span>
+          </div>
+          <input type="text" id="scText" maxlength="30" placeholder="Biznes nomi..."
+            oninput="scDraw()"
+            style="width:100%;padding:0.55rem 0.7rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;box-sizing:border-box;font-family:'DM Sans',sans-serif;outline:none;" />
+        </div>
+
+        <!-- Text Color -->
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:0.55rem;text-transform:uppercase;letter-spacing:0.06em;">🔤 Matn rangi</div>
+          <div style="display:flex;align-items:center;gap:0.8rem;">
+            <input type="color" id="scTextColor" value="#ffffff" oninput="scUpdateColorHex('scTextColor','scTextHex');scDraw()"
+              style="width:42px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:var(--surface2);border:1px solid var(--border);" />
+            <span id="scTextHex" style="font-size:0.8rem;color:var(--muted);font-family:monospace;">#ffffff</span>
+          </div>
+        </div>
+
+        <!-- Background Color -->
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:0.55rem;text-transform:uppercase;letter-spacing:0.06em;">🖌 Fon rangi</div>
+          <div style="display:flex;align-items:center;gap:0.8rem;">
+            <input type="color" id="scBgColor" value="#1a1a2e" oninput="scUpdateColorHex('scBgColor','scBgHex');scDraw()"
+              style="width:42px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:var(--surface2);border:1px solid var(--border);" />
+            <span id="scBgHex" style="font-size:0.8rem;color:var(--muted);font-family:monospace;">#1a1a2e</span>
+          </div>
+          <!-- Quick presets -->
+          <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.7rem;">
+            <button onclick="scSetBg('#1a1a2e')" title="#1a1a2e" style="width:22px;height:22px;border-radius:5px;background:#1a1a2e;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#0d1117')" title="#0d1117" style="width:22px;height:22px;border-radius:5px;background:#0d1117;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#ffffff')" title="#ffffff" style="width:22px;height:22px;border-radius:5px;background:#ffffff;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#e8ff47')" title="#e8ff47" style="width:22px;height:22px;border-radius:5px;background:#e8ff47;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#ff6b6b')" title="#ff6b6b" style="width:22px;height:22px;border-radius:5px;background:#ff6b6b;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#4ecdc4')" title="#4ecdc4" style="width:22px;height:22px;border-radius:5px;background:#4ecdc4;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#a78bfa')" title="#a78bfa" style="width:22px;height:22px;border-radius:5px;background:#a78bfa;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+            <button onclick="scSetBg('#fbbf24')" title="#fbbf24" style="width:22px;height:22px;border-radius:5px;background:#fbbf24;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;"></button>
+          </div>
+        </div>
+
       </div>
+
+      <!-- RIGHT: Canvas Preview -->
+      <div style="flex:1;min-width:280px;display:flex;align-items:center;justify-content:center;background:#0d0d0d;padding:2rem;flex-direction:column;gap:0.8rem;">
+        <canvas id="scCanvas" width="400" height="400"
+          style="border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.75);max-width:min(400px,100%);display:block;"></canvas>
+        <span style="font-size:0.68rem;color:rgba(255,255,255,0.22);letter-spacing:0.05em;">JONLI KO'RINISH</span>
+      </div>
+
     </div>
 
   </div>
