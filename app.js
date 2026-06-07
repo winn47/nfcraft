@@ -268,6 +268,9 @@ const translations = {
     b2bStep3Title: 'Stick on your products',
     b2bStep3Desc: 'Customer taps — connected to you instantly ✓',
     b2bPriceLabel: 'PRICES (per sticker)',
+    b2bQty1: '1–50 pcs',
+    b2bQty2: '51–200 pcs',
+    b2bQty3: '201+ pcs',
     b2bOrderBtn: '📦 Order Stickers →',
     b2bForWho: 'WHO IS IT FOR',
     b2bMoreBiz: '+ any other business',
@@ -356,6 +359,9 @@ const translations = {
     b2bStep3Title: 'Mahsulotlarga yopishtirasiz',
     b2bStep3Desc: 'Mijoz tegintirganda — darhol siz bilan bog\'lanadi ✓',
     b2bPriceLabel: 'NARXLAR (1 dona)',
+    b2bQty1: '1–50 dona',
+    b2bQty2: '51–200 dona',
+    b2bQty3: '201+ dona',
     b2bOrderBtn: '📦 Stiker Buyurtma →',
     b2bForWho: 'KIMLAR UCHUN MO\'LJALLANGAN',
     b2bMoreBiz: '+ boshqa har qanday biznes',
@@ -444,6 +450,9 @@ const translations = {
     b2bStep3Title: 'Наклейте на товары',
     b2bStep3Desc: 'Клиент касается — мгновенно связывается с вами ✓',
     b2bPriceLabel: 'ЦЕНЫ (за штуку)',
+    b2bQty1: '1–50 шт',
+    b2bQty2: '51–200 шт',
+    b2bQty3: '201+ шт',
     b2bOrderBtn: '📦 Заказать стикеры →',
     b2bForWho: 'ДЛЯ КОГО ЭТО',
     b2bMoreBiz: '+ любой другой бизнес',
@@ -1698,7 +1707,7 @@ function dsSnapshot() {
 }
 
 function dsSaveAndOrder() {
-  const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/png') : null;
+  const dataUrl = _dsCanvas ? _dsCanvas.toDataURL('image/jpeg', 0.85) : null;
   const elSummary = _dsElements.filter(e=>!e.locked&&e.type==='text').map(e=>e.text).join(', ');
   _dsDesignData = { preview:dataUrl, bgColor:_dsBg, elements:elSummary };
   closeOverlay('stickerDesignerOverlay');
@@ -3132,8 +3141,16 @@ async function _doSubmitCardInfo() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Xato yuz berdi');
     _generatedCardLink = data.cardUrl || '';
+    // Save UUID for profile-settings page
+    if (data.uuid) localStorage.setItem('myCardUuid', data.uuid);
     const nfcBtn = document.getElementById('successNfcBtn');
     if (nfcBtn) nfcBtn.style.display = 'none';
+    // Show profile settings shortcut
+    const psLink = document.getElementById('successProfileSettingsLink');
+    if (psLink && data.uuid) {
+      psLink.href = `profile-settings.html?uuid=${data.uuid}`;
+      psLink.style.display = 'flex';
+    }
     document.getElementById('successOverlay')?.classList.add('active');
   } catch (err) {
     showToast('Karta ma\'lumotlari yuborishda xato: ' + err.message, 'error');
@@ -3154,15 +3171,15 @@ let _siUidCounter = 0;
 const SI_MAX = 12;
 
 const STICKER_FIELD_TYPES = [
-  { type: 'Biznes nomi', icon: '🏪', placeholder: 'Do\'kon / Kompaniya nomi' },
-  { type: 'Telefon',     icon: '📞', placeholder: '+998 90 123 45 67' },
-  { type: 'Manzil',      icon: '📍', placeholder: "Shahar, Ko'cha, ..." },
-  { type: 'Ish vaqti',   icon: '🕐', placeholder: 'Dush–Shan: 09:00–21:00' },
-  { type: 'WhatsApp',    icon: '💬', placeholder: '+998 90 123 45 67' },
-  { type: 'Telegram',    icon: '✈️', placeholder: '@username' },
-  { type: 'Instagram',   icon: '📸', placeholder: '@username' },
-  { type: 'Website',     icon: '🌐', placeholder: 'https://yoursite.uz' },
-  { type: 'Tavsif',      icon: '📋', placeholder: 'Biznes haqida qisqacha...' },
+  { type: 'Biznes nomi', icon: '🏪', placeholder: "Do'kon / Kompaniya nomi",    example: 'NFCraft Electronics' },
+  { type: 'Telefon',     icon: '📞', placeholder: '+998 90 123 45 67',           example: '+998 90 123 45 67' },
+  { type: 'Manzil',      icon: '📍', placeholder: "Shahar, Ko'cha, ...",          example: 'Toshkent, Navoiy 12' },
+  { type: 'Ish vaqti',   icon: '🕐', placeholder: 'Dush–Shan: 09:00–21:00',      example: 'Du–Sha: 09:00–20:00' },
+  { type: 'WhatsApp',    icon: '💬', placeholder: '+998 90 123 45 67',           example: '+998 90 123 45 67' },
+  { type: 'Telegram',    icon: '✈️', placeholder: '@username',                    example: '@biznes_nomi' },
+  { type: 'Instagram',   icon: '📸', placeholder: '@username',                    example: '@biznes_nomi' },
+  { type: 'Website',     icon: '🌐', placeholder: 'https://yoursite.uz',         example: 'https://nfcraft.uz' },
+  { type: 'Tavsif',      icon: '📋', placeholder: 'Biznes haqida qisqacha...',   example: 'NFC stiker va kartalar' },
 ];
 
 function addSiField(preType, preValue) {
@@ -3177,21 +3194,23 @@ function addSiField(preType, preValue) {
   const isMap = initType === 'Manzil';
   const div = document.createElement('div');
   div.id = `si-field-${idx}`;
-  div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 0.9rem;margin-bottom:0.55rem;';
+  div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;margin-bottom:0.7rem;';
   div.innerHTML = `
-    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
       <select id="si-select-${idx}" onchange="onSiTypeChange(${idx})"
-        style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.38rem 0.6rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;">
+        style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.4rem 0.6rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;">
         ${optsHtml}
       </select>
-      <button onclick="removeSiField(${idx})" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:8px;padding:0.28rem 0.6rem;cursor:pointer;font-size:0.8rem;">✕</button>
+      <button onclick="removeSiField(${idx})" style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;border-radius:8px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;">✕</button>
     </div>
     <div style="display:flex;gap:0.5rem;align-items:center;">
       <input id="si-input-${idx}" type="text" value="${preValue || ''}" placeholder="${initFt.placeholder}" oninput="updateSiPreview()"
-        style="flex:1;box-sizing:border-box;padding:0.5rem 0.7rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;" />
+        style="flex:1;box-sizing:border-box;padding:0.55rem 0.7rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;" />
       <button id="si-mapbtn-${idx}" onclick="openMapPicker('si-input-${idx}')" title="Xaritadan tanlash"
         style="display:${isMap ? 'block' : 'none'};padding:0.42rem 0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.9rem;flex-shrink:0;line-height:1;">🗺</button>
-    </div>`;
+    </div>
+    <div id="si-label-${idx}" style="font-size:0.88rem;font-weight:600;margin-top:0.45rem;color:var(--text);">${initFt.icon} ${initFt.type}</div>
+    <div id="si-example-${idx}" style="font-size:0.72rem;color:var(--muted2);margin-top:0.12rem;">Misol: ${initFt.example}</div>`;
   document.getElementById('siFieldsList').appendChild(div);
   updateSiCount();
 }
@@ -3199,10 +3218,14 @@ function addSiField(preType, preValue) {
 function onSiTypeChange(idx) {
   const sel = document.getElementById(`si-select-${idx}`);
   const ft = STICKER_FIELD_TYPES.find(f => f.type === sel.value) || STICKER_FIELD_TYPES[0];
-  const input = document.getElementById(`si-input-${idx}`);
-  const mapBtn = document.getElementById(`si-mapbtn-${idx}`);
-  if (input) input.placeholder = ft.placeholder;
-  if (mapBtn) mapBtn.style.display = ft.type === 'Manzil' ? 'block' : 'none';
+  const input   = document.getElementById(`si-input-${idx}`);
+  const mapBtn  = document.getElementById(`si-mapbtn-${idx}`);
+  const label   = document.getElementById(`si-label-${idx}`);
+  const example = document.getElementById(`si-example-${idx}`);
+  if (input)   input.placeholder = ft.placeholder;
+  if (mapBtn)  mapBtn.style.display = ft.type === 'Manzil' ? 'block' : 'none';
+  if (label)   label.textContent = `${ft.icon} ${ft.type}`;
+  if (example) example.textContent = `Misol: ${ft.example}`;
   updateSiPreview();
 }
 
@@ -3218,6 +3241,7 @@ function updateSiCount() {
   if (el) el.textContent = `${count} / ${SI_MAX}`;
   const btn = document.getElementById('siAddBtn');
   if (btn) btn.style.opacity = count >= SI_MAX ? '0.4' : '1';
+  if (btn) btn.style.display = count >= SI_MAX ? 'none' : '';
 }
 
 function updateSiPreview() {
@@ -3319,13 +3343,8 @@ async function submitStickerInfo() {
     else extras.push(`${type}: ${val}`);
   }
   if (extras.length) desc = [desc, ...extras].filter(Boolean).join('\n');
-  // Fallback: use order phone if no phone field added
   if (!phone) phone = _lastStickerOrderData?.phone || '';
-  // Require at least business name
-  if (!bizName) {
-    showToast('Biznes nomini kiriting (Biznes nomi maydonini qo\'shing)', 'warning');
-    return;
-  }
+  if (!bizName) bizName = '—';
   const category = '';
 
   const btn = document.getElementById('siSubmitBtn');
