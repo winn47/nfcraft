@@ -125,34 +125,6 @@
   .info-value { font-size: 0.92rem; color: var(--text); line-height: 1.4; }
 
   /* CTA buttons */
-  .cta-group {
-    display: flex; flex-direction: column; gap: 0.75rem;
-    margin-top: 1.4rem;
-  }
-
-  .btn-call {
-    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-    padding: 0.9rem 1.4rem;
-    background: var(--accent); color: #0a0a0a;
-    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
-    border: none; border-radius: 12px;
-    text-decoration: none; cursor: pointer;
-    transition: transform 0.15s, opacity 0.15s;
-  }
-  .btn-call:hover { transform: translateY(-1px); opacity: 0.92; }
-
-  .btn-map {
-    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-    padding: 0.85rem 1.4rem;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.14);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 500;
-    border-radius: 12px;
-    text-decoration: none; cursor: pointer;
-    transition: background 0.18s, border-color 0.18s;
-  }
-  .btn-map:hover { background: var(--surface2); border-color: rgba(255,255,255,0.25); }
 
   /* Complaint section */
   .complaint-box {
@@ -324,13 +296,13 @@
           </div>
         </a>
 
-        <div class="info-row">
+        <a class="info-row" id="addressRow" href="#" target="_blank" rel="noopener" style="text-decoration:none;">
           <div class="info-icon">📍</div>
           <div class="info-text-wrap">
             <span class="info-label" id="addressLabel">Manzil</span>
             <span class="info-value" id="bizAddress">—</span>
           </div>
-        </div>
+        </a>
 
         <div class="info-row" id="hoursRow" style="display:none;">
           <div class="info-icon">🕐</div>
@@ -342,10 +314,6 @@
 
       </div>
 
-      <div class="cta-group">
-        <a class="btn-call" id="callBtn" href="#">📞 Qo'ng'iroq qilish</a>
-        <a class="btn-map" id="mapBtn" href="#" target="_blank" rel="noopener">🗺 Xaritada ko'rish</a>
-      </div>
 
     </div>
   </div>
@@ -400,7 +368,6 @@ const API = 'https://nfcraftbackend1-production.up.railway.app/api';
 const LANG_T = {
   uz: {
     phone: 'Telefon', address: 'Manzil', hours: 'Ish vaqti',
-    call: '📞 Qo\'ng\'iroq qilish', map: '🗺 Xaritada ko\'rish',
     complaint: '⚠️ Muammo yoki shikoyat bormi?',
     complaintFn: (name, addr) => `"${name}" do'konida mahsulotingiz bilan muammo yuzaga kelsa, yuqoridagi telefonga qo'ng'iroq qiling.\nManzil: ${addr}`,
     loading: 'Yuklanmoqda...', errorMain: 'Stiker ma\'lumotlari topilmadi.',
@@ -408,7 +375,6 @@ const LANG_T = {
   },
   en: {
     phone: 'Phone', address: 'Address', hours: 'Working hours',
-    call: '📞 Call Now', map: '🗺 View on Map',
     complaint: '⚠️ Problem or complaint?',
     complaintFn: (name, addr) => `If you have an issue with a product from "${name}", call the number above.\nAddress: ${addr}`,
     loading: 'Loading...', errorMain: 'Sticker info not found.',
@@ -416,7 +382,6 @@ const LANG_T = {
   },
   ru: {
     phone: 'Телефон', address: 'Адрес', hours: 'Режим работы',
-    call: '📞 Позвонить', map: '🗺 На карте',
     complaint: '⚠️ Проблема или жалоба?',
     complaintFn: (name, addr) => `Если у вас проблема с товаром из "${name}", позвоните по номеру выше.\nАдрес: ${addr}`,
     loading: 'Загрузка...', errorMain: 'Данные стикера не найдены.',
@@ -441,8 +406,6 @@ function applyLang() {
   setText('phoneLabel',    t.phone);
   setText('addressLabel',  t.address);
   setText('hoursLabel',    t.hours);
-  document.getElementById('callBtn').textContent = t.call;
-  document.getElementById('mapBtn').textContent  = t.map;
   setText('complaintTitle', t.complaint);
   setText('loadingMsg',     t.loading);
   // Error message
@@ -491,11 +454,10 @@ async function loadSticker() {
     const phone = data.phone || '';
     setText('bizPhone', phone);
     document.getElementById('phoneRow').href = 'tel:' + phone.replace(/\s/g, '');
-    document.getElementById('callBtn').href  = 'tel:' + phone.replace(/\s/g, '');
 
     setText('bizAddress', data.address);
     if (data.address) {
-      document.getElementById('mapBtn').href = 'https://www.google.com/maps/search/' + encodeURIComponent(data.address);
+      document.getElementById('addressRow').href = 'https://www.google.com/maps/search/' + encodeURIComponent(data.address);
     }
 
     if (data.workingHours) { setText('bizHours', data.workingHours); show('hoursRow'); }
