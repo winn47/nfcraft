@@ -1213,6 +1213,14 @@ function scUpdateTextBg(v) {
   if (el && el.type === 'text') { el.bgColor = v; scDraw(); }
 }
 
+function scToggleTextBg(show) {
+  const el = scGetSel();
+  if (el && el.type === 'text') {
+    el.bgAlpha = show ? (parseInt(document.getElementById('scTextBgAlpha')?.value) || 50) : 0;
+    scDraw();
+  }
+}
+
 function scUpdateTextBgAlpha(v) {
   const el = scGetSel();
   if (el && el.type === 'text') {
@@ -1234,7 +1242,11 @@ function scAddShapeEl() {
 
 function scSetShape(shape) {
   const el = scGetSel();
-  if (el && el.type === 'shape') { el.shape = shape; scDraw(); scUpdateShapeButtonUI(shape); }
+  if (el && el.type === 'shape') {
+    el.shape = shape; scDraw(); scUpdateShapeButtonUI(shape);
+    const radiusRow = document.getElementById('scShapeRadiusRow');
+    if (radiusRow) radiusRow.style.display = (shape === 'circle' || shape === 'pill') ? 'none' : 'flex';
+  }
 }
 
 function scUpdateShapeBg(v) {
@@ -1262,6 +1274,16 @@ function scUpdateShapeBorderW(v) {
   if (el && el.type === 'shape') {
     el.borderWidth = parseInt(v);
     const lbl = document.getElementById('scShapeBorderWLbl');
+    if (lbl) lbl.textContent = v;
+    scDraw();
+  }
+}
+
+function scUpdateShapeRadius(v) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') {
+    el.radius = parseInt(v);
+    const lbl = document.getElementById('scShapeRadiusLbl');
     if (lbl) lbl.textContent = v;
     scDraw();
   }
@@ -1297,8 +1319,11 @@ function scUpdateSelectedUI() {
     if (lbl) lbl.textContent = el.fontSize;
     if (col) col.value = el.textColor || '#ffffff';
     if (bgCol) bgCol.value = el.bgColor || '#000000';
-    if (bgAlpha) bgAlpha.value = el.bgAlpha ?? 50;
-    if (bgAlphaLbl) bgAlphaLbl.textContent = (el.bgAlpha ?? 50) + '%';
+    const alpha = el.bgAlpha ?? 50;
+    if (bgAlpha) bgAlpha.value = alpha;
+    if (bgAlphaLbl) bgAlphaLbl.textContent = alpha + '%';
+    const chk = document.getElementById('scTextBgShow');
+    if (chk) chk.checked = alpha > 0;
   } else if (el.type === 'shape') {
     textPanel.style.display = 'none';
     if (shapePanel) shapePanel.style.display = 'flex';
@@ -1314,6 +1339,13 @@ function scUpdateSelectedUI() {
     if (borderCol) borderCol.value = el.borderColor || '#ffffff';
     if (borderW) borderW.value = el.borderWidth || 0;
     if (borderWLbl) borderWLbl.textContent = el.borderWidth || 0;
+    const radiusSlider = document.getElementById('scShapeRadius');
+    const radiusLbl = document.getElementById('scShapeRadiusLbl');
+    const radiusRow = document.getElementById('scShapeRadiusRow');
+    if (radiusSlider) radiusSlider.value = el.radius ?? 8;
+    if (radiusLbl) radiusLbl.textContent = el.radius ?? 8;
+    // hide radius slider for circle/pill (they auto-calculate)
+    if (radiusRow) radiusRow.style.display = (el.shape === 'circle' || el.shape === 'pill') ? 'none' : 'flex';
     scUpdateShapeButtonUI(el.shape || 'rect');
   } else {
     textPanel.style.display = 'none';

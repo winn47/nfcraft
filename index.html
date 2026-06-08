@@ -768,8 +768,8 @@
 
         <!-- Add buttons -->
         <div style="display:flex;gap:0.5rem;">
-          <label data-i18n="scAddImg" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.3rem;padding:0.5rem 0.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--text);font-weight:600;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
-            + Rasm
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.3rem;padding:0.5rem 0.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--text);font-weight:600;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <span data-i18n="scAddImg">+ Rasm</span>
             <input type="file" accept="image/png,image/jpeg,image/webp" onchange="scAddImage(this)" style="display:none;" />
           </label>
           <button data-i18n="scAddText" onclick="scAddTextEl()" style="flex:1;padding:0.5rem 0.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--text);font-weight:600;">+ Matn</button>
@@ -794,8 +794,11 @@
               <input type="color" id="scElemColor" value="#ffffff" oninput="scUpdateTextColor(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
             </div>
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <span style="font-size:0.72rem;color:var(--muted);">Fon</span>
-              <input type="color" id="scTextBgColor" value="#000000" oninput="scUpdateTextBg(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+              <label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.72rem;color:var(--muted);user-select:none;">
+                <input type="checkbox" id="scTextBgShow" checked onchange="scToggleTextBg(this.checked)" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;" />
+                Fon
+              </label>
+              <input type="color" id="scTextBgColor" value="#000000" oninput="scUpdateTextBg(this.value)" style="width:32px;height:26px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
               <input type="range" id="scTextBgAlpha" min="0" max="100" value="50" oninput="scUpdateTextBgAlpha(this.value)" style="flex:1;accent-color:var(--accent);" title="Shaffoflik"/>
               <span id="scTextBgAlphaLbl" style="font-size:0.68rem;color:var(--muted);min-width:28px;">50%</span>
             </div>
@@ -817,9 +820,14 @@
             </div>
             <div style="display:flex;align-items:center;gap:0.6rem;">
               <span style="font-size:0.72rem;color:var(--muted);">Chegara</span>
-              <input type="color" id="scShapeBorderColor" value="#ffffff" oninput="scUpdateShapeBorder(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+              <input type="color" id="scShapeBorderColor" value="#ffffff" oninput="scUpdateShapeBorder(this.value)" style="width:32px;height:26px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
               <input type="range" id="scShapeBorderW" min="0" max="10" value="0" oninput="scUpdateShapeBorderW(this.value)" style="flex:1;accent-color:var(--accent);"/>
               <span id="scShapeBorderWLbl" style="font-size:0.68rem;color:var(--muted);min-width:18px;">0</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;" id="scShapeRadiusRow">
+              <span style="font-size:0.72rem;color:var(--muted);white-space:nowrap;">Burchak</span>
+              <input type="range" id="scShapeRadius" min="0" max="80" value="8" oninput="scUpdateShapeRadius(this.value)" style="flex:1;accent-color:var(--accent);"/>
+              <span id="scShapeRadiusLbl" style="font-size:0.68rem;color:var(--muted);min-width:18px;">8</span>
             </div>
           </div>
           <button data-i18n="scDelete" onclick="scDeleteSelected()" style="padding:0.38rem;background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.3);border-radius:7px;color:#ff7070;font-size:0.78rem;cursor:pointer;width:100%;">🗑 O'chirish</button>
