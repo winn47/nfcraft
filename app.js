@@ -1127,7 +1127,7 @@ let _scDragOff   = { x:0, y:0 };
 let _scNextId    = 1;
 let _dsDesignData= null;
 const SC_W = 560, SC_H = 320;
-const SC_HANDLE  = 9;    // handle square half-size
+const SC_HANDLE  = 14;   // handle square half-size
 
 // ── Open / bind ───────────────────────────────────────────────
 function openStickerDesigner() {
@@ -1165,7 +1165,8 @@ function scAddImage(input) {
 function scAddTextEl() {
   const el = { id: _scNextId++, type: 'text',
                x: 20, y: SC_H / 2 - 22, w: SC_W - 40, h: 44,
-               text: 'Matn', fontSize: 28, textColor: '#ffffff' };
+               text: 'Matn', fontSize: 28, textColor: '#ffffff',
+               bgColor: '#000000', bgAlpha: 50 };
   _scElements.push(el);
   _scSelected = el.id;
   scDraw(); scUpdateSelectedUI();
@@ -1207,6 +1208,72 @@ function scUpdateTextColor(v) {
   if (el && el.type === 'text') { el.textColor = v; scDraw(); }
 }
 
+function scUpdateTextBg(v) {
+  const el = scGetSel();
+  if (el && el.type === 'text') { el.bgColor = v; scDraw(); }
+}
+
+function scUpdateTextBgAlpha(v) {
+  const el = scGetSel();
+  if (el && el.type === 'text') {
+    el.bgAlpha = parseInt(v);
+    const lbl = document.getElementById('scTextBgAlphaLbl');
+    if (lbl) lbl.textContent = v + '%';
+    scDraw();
+  }
+}
+
+function scAddShapeEl() {
+  const el = { id: _scNextId++, type: 'shape', shape: 'rect',
+               x: SC_W/2 - 60, y: SC_H/2 - 40, w: 120, h: 80,
+               bgColor: '#e8ff47', bgAlpha: 100, borderColor: '#ffffff', borderWidth: 0, radius: 8 };
+  _scElements.push(el);
+  _scSelected = el.id;
+  scDraw(); scUpdateSelectedUI();
+}
+
+function scSetShape(shape) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') { el.shape = shape; scDraw(); scUpdateShapeButtonUI(shape); }
+}
+
+function scUpdateShapeBg(v) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') { el.bgColor = v; scDraw(); }
+}
+
+function scUpdateShapeBgAlpha(v) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') {
+    el.bgAlpha = parseInt(v);
+    const lbl = document.getElementById('scShapeBgAlphaLbl');
+    if (lbl) lbl.textContent = v + '%';
+    scDraw();
+  }
+}
+
+function scUpdateShapeBorder(v) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') { el.borderColor = v; scDraw(); }
+}
+
+function scUpdateShapeBorderW(v) {
+  const el = scGetSel();
+  if (el && el.type === 'shape') {
+    el.borderWidth = parseInt(v);
+    const lbl = document.getElementById('scShapeBorderWLbl');
+    if (lbl) lbl.textContent = v;
+    scDraw();
+  }
+}
+
+function scUpdateShapeButtonUI(shape) {
+  ['rect','pill','circle'].forEach(s => {
+    const btn = document.getElementById('scShape' + s.charAt(0).toUpperCase() + s.slice(1));
+    if (btn) btn.style.borderColor = s === shape ? 'var(--accent)' : 'var(--border)';
+  });
+}
+
 function scUpdateSelectedUI() {
   const el = scGetSel();
   const ctrl = document.getElementById('scSelCtrl');
@@ -1214,18 +1281,43 @@ function scUpdateSelectedUI() {
   if (!ctrl) return;
   if (!el) { ctrl.style.display = 'none'; return; }
   ctrl.style.display = 'flex';
+  const shapePanel = document.getElementById('scShapeEditPanel');
   if (el.type === 'text') {
     textPanel.style.display = 'flex';
+    if (shapePanel) shapePanel.style.display = 'none';
     const inp = document.getElementById('scTextEdit');
     const slider = document.getElementById('scFontSlider');
     const lbl = document.getElementById('scFontSizeLabel');
     const col = document.getElementById('scElemColor');
+    const bgCol = document.getElementById('scTextBgColor');
+    const bgAlpha = document.getElementById('scTextBgAlpha');
+    const bgAlphaLbl = document.getElementById('scTextBgAlphaLbl');
     if (inp) inp.value = el.text;
     if (slider) slider.value = el.fontSize;
     if (lbl) lbl.textContent = el.fontSize;
-    if (col) col.value = el.textColor;
+    if (col) col.value = el.textColor || '#ffffff';
+    if (bgCol) bgCol.value = el.bgColor || '#000000';
+    if (bgAlpha) bgAlpha.value = el.bgAlpha ?? 50;
+    if (bgAlphaLbl) bgAlphaLbl.textContent = (el.bgAlpha ?? 50) + '%';
+  } else if (el.type === 'shape') {
+    textPanel.style.display = 'none';
+    if (shapePanel) shapePanel.style.display = 'flex';
+    const bgCol = document.getElementById('scShapeBgColor');
+    const bgAlpha = document.getElementById('scShapeBgAlpha');
+    const bgAlphaLbl = document.getElementById('scShapeBgAlphaLbl');
+    const borderCol = document.getElementById('scShapeBorderColor');
+    const borderW = document.getElementById('scShapeBorderW');
+    const borderWLbl = document.getElementById('scShapeBorderWLbl');
+    if (bgCol) bgCol.value = el.bgColor || '#e8ff47';
+    if (bgAlpha) bgAlpha.value = el.bgAlpha ?? 100;
+    if (bgAlphaLbl) bgAlphaLbl.textContent = (el.bgAlpha ?? 100) + '%';
+    if (borderCol) borderCol.value = el.borderColor || '#ffffff';
+    if (borderW) borderW.value = el.borderWidth || 0;
+    if (borderWLbl) borderWLbl.textContent = el.borderWidth || 0;
+    scUpdateShapeButtonUI(el.shape || 'rect');
   } else {
     textPanel.style.display = 'none';
+    if (shapePanel) shapePanel.style.display = 'none';
   }
 }
 
@@ -1247,21 +1339,51 @@ function scDraw() {
       ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
     } else if (el.type === 'text' && el.text) {
       ctx.font = `bold ${el.fontSize}px 'DM Sans', Arial, sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       const metrics = ctx.measureText(el.text);
-      const tw = metrics.width + 16;
-      const th = el.fontSize + 14;
-      // Update actual bounding box
+      const tw = metrics.width + 16, th = el.fontSize + 14;
       el.w = tw; el.h = th;
-      // Pill bg
-      ctx.fillStyle = 'rgba(0,0,0,0.48)';
+      // Pill bg with user-defined color + alpha
+      const alpha = (el.bgAlpha ?? 50) / 100;
+      const bgHex = el.bgColor || '#000000';
+      const br = parseInt(bgHex.slice(1,3),16), bg2 = parseInt(bgHex.slice(3,5),16), bb = parseInt(bgHex.slice(5,7),16);
+      ctx.fillStyle = `rgba(${br},${bg2},${bb},${alpha})`;
       _scRoundRect(ctx, el.x, el.y, tw, th, th / 2); ctx.fill();
       // Text
       ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;
       ctx.fillStyle = el.textColor || '#ffffff';
       ctx.fillText(el.text, el.x + 8, el.y + th / 2);
       ctx.shadowBlur = 0;
+    } else if (el.type === 'shape') {
+      const alpha = (el.bgAlpha ?? 100) / 100;
+      const bgHex = el.bgColor || '#e8ff47';
+      const sr = parseInt(bgHex.slice(1,3),16), sg = parseInt(bgHex.slice(3,5),16), sb = parseInt(bgHex.slice(5,7),16);
+      ctx.fillStyle = `rgba(${sr},${sg},${sb},${alpha})`;
+      const shape = el.shape || 'rect';
+      if (shape === 'circle') {
+        const cx = el.x + el.w/2, cy = el.y + el.h/2, r = Math.min(el.w,el.h)/2;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+        if (el.borderWidth > 0) {
+          ctx.strokeStyle = el.borderColor || '#ffffff';
+          ctx.lineWidth = el.borderWidth;
+          ctx.stroke();
+        }
+      } else if (shape === 'pill') {
+        _scRoundRect(ctx, el.x, el.y, el.w, el.h, Math.min(el.w,el.h)/2); ctx.fill();
+        if (el.borderWidth > 0) {
+          ctx.strokeStyle = el.borderColor || '#ffffff';
+          ctx.lineWidth = el.borderWidth;
+          _scRoundRect(ctx, el.x, el.y, el.w, el.h, Math.min(el.w,el.h)/2); ctx.stroke();
+        }
+      } else {
+        const r = el.radius || 0;
+        _scRoundRect(ctx, el.x, el.y, el.w, el.h, r); ctx.fill();
+        if (el.borderWidth > 0) {
+          ctx.strokeStyle = el.borderColor || '#ffffff';
+          ctx.lineWidth = el.borderWidth;
+          _scRoundRect(ctx, el.x, el.y, el.w, el.h, r); ctx.stroke();
+        }
+      }
     }
     // Selection border + corner handles
     if (el.id === _scSelected) {
@@ -1363,10 +1485,18 @@ function scMouseMove(e) {
     const el = scGetSel(); if (!el) return;
     const { x:sx,y:sy,ex,ey,ew,eh } = _scResizeSt;
     const dx = x-sx, dy = y-sy;
-    if (_scResizeHnd==='br') { el.w=Math.max(20,ew+dx); el.h=Math.max(20,eh+dy); }
-    else if (_scResizeHnd==='tr') { el.w=Math.max(20,ew+dx); el.y=ey+dy; el.h=Math.max(20,eh-dy); }
-    else if (_scResizeHnd==='bl') { el.x=ex+dx; el.w=Math.max(20,ew-dx); el.h=Math.max(20,eh+dy); }
-    else if (_scResizeHnd==='tl') { el.x=ex+dx; el.y=ey+dy; el.w=Math.max(20,ew-dx); el.h=Math.max(20,eh-dy); }
+    if (_scResizeHnd==='br') {
+      el.w=Math.max(20,ew+dx); el.h=Math.max(20,eh+dy);
+    } else if (_scResizeHnd==='tr') {
+      const nw=Math.max(20,ew+dx), nh=Math.max(20,eh-dy);
+      el.y=ey+(eh-nh); el.w=nw; el.h=nh;
+    } else if (_scResizeHnd==='bl') {
+      const nw=Math.max(20,ew-dx), nh=Math.max(20,eh+dy);
+      el.x=ex+(ew-nw); el.w=nw; el.h=nh;
+    } else if (_scResizeHnd==='tl') {
+      const nw=Math.max(20,ew-dx), nh=Math.max(20,eh-dy);
+      el.x=ex+(ew-nw); el.y=ey+(eh-nh); el.w=nw; el.h=nh;
+    }
     scDraw(); return;
   }
   if (_scDragging) {

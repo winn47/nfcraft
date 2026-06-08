@@ -773,6 +773,7 @@
             <input type="file" accept="image/png,image/jpeg,image/webp" onchange="scAddImage(this)" style="display:none;" />
           </label>
           <button data-i18n="scAddText" onclick="scAddTextEl()" style="flex:1;padding:0.5rem 0.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--text);font-weight:600;">+ Matn</button>
+          <button onclick="scAddShapeEl()" style="flex:1;padding:0.5rem 0.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--text);font-weight:600;">+ Shakl</button>
         </div>
 
         <!-- Selected element controls -->
@@ -791,6 +792,34 @@
             <div style="display:flex;align-items:center;gap:0.6rem;">
               <span data-i18n="scTextColorLabel" style="font-size:0.72rem;color:var(--muted);">Rang</span>
               <input type="color" id="scElemColor" value="#ffffff" oninput="scUpdateTextColor(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <span style="font-size:0.72rem;color:var(--muted);">Fon</span>
+              <input type="color" id="scTextBgColor" value="#000000" oninput="scUpdateTextBg(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+              <input type="range" id="scTextBgAlpha" min="0" max="100" value="50" oninput="scUpdateTextBgAlpha(this.value)" style="flex:1;accent-color:var(--accent);" title="Shaffoflik"/>
+              <span id="scTextBgAlphaLbl" style="font-size:0.68rem;color:var(--muted);min-width:28px;">50%</span>
+            </div>
+          </div>
+
+          <!-- Shape editing (only for shape elements) -->
+          <div id="scShapeEditPanel" style="display:none;flex-direction:column;gap:0.5rem;">
+            <div style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">⬛ Shakl</div>
+            <div style="display:flex;gap:0.4rem;">
+              <button onclick="scSetShape('rect')"   id="scShapeRect"   style="flex:1;padding:0.35rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.78rem;cursor:pointer;">▬ To'rtburchak</button>
+              <button onclick="scSetShape('pill')"   id="scShapePill"   style="flex:1;padding:0.35rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.78rem;cursor:pointer;">⬭ Oval</button>
+              <button onclick="scSetShape('circle')" id="scShapeCircle" style="flex:1;padding:0.35rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.78rem;cursor:pointer;">⬤ Doira</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <span style="font-size:0.72rem;color:var(--muted);">Rang</span>
+              <input type="color" id="scShapeBgColor" value="#e8ff47" oninput="scUpdateShapeBg(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+              <input type="range" id="scShapeBgAlpha" min="0" max="100" value="100" oninput="scUpdateShapeBgAlpha(this.value)" style="flex:1;accent-color:var(--accent);" title="Shaffoflik"/>
+              <span id="scShapeBgAlphaLbl" style="font-size:0.68rem;color:var(--muted);min-width:28px;">100%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <span style="font-size:0.72rem;color:var(--muted);">Chegara</span>
+              <input type="color" id="scShapeBorderColor" value="#ffffff" oninput="scUpdateShapeBorder(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px;" />
+              <input type="range" id="scShapeBorderW" min="0" max="10" value="0" oninput="scUpdateShapeBorderW(this.value)" style="flex:1;accent-color:var(--accent);"/>
+              <span id="scShapeBorderWLbl" style="font-size:0.68rem;color:var(--muted);min-width:18px;">0</span>
             </div>
           </div>
           <button data-i18n="scDelete" onclick="scDeleteSelected()" style="padding:0.38rem;background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.3);border-radius:7px;color:#ff7070;font-size:0.78rem;cursor:pointer;width:100%;">🗑 O'chirish</button>
@@ -824,7 +853,7 @@
       <!-- RIGHT: Canvas Preview -->
       <div style="flex:1;min-width:280px;display:flex;align-items:center;justify-content:center;background:#0d0d0d;padding:2rem;flex-direction:column;gap:0.8rem;">
         <canvas id="scCanvas" width="560" height="320"
-          style="border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,0.75);max-width:min(560px,100%);display:block;"></canvas>
+          style="border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,0.75);max-width:min(560px,100%);display:block;touch-action:none;"></canvas>
         <span data-i18n="scPreviewLabel" style="font-size:0.68rem;color:rgba(255,255,255,0.22);letter-spacing:0.05em;">JONLI KO'RINISH</span>
       </div>
 
