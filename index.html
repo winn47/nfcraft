@@ -582,11 +582,11 @@
         <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.04em;" data-i18n="b2bDesigns">DIZAYN NAMUNALARI</div>
         <div style="display:flex;gap:0.5rem;">
           <button class="cat-pill active" onclick="filterCatalog('all',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="b2bFilterAll">Hammasi</button>
-          <button class="cat-pill" onclick="filterCatalog('supermarket',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;">Supermarket</button>
-          <button class="cat-pill" onclick="filterCatalog('elektronika',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;">Elektronika</button>
-          <button class="cat-pill" onclick="filterCatalog('dorixona',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;">Dorixona</button>
-          <button class="cat-pill" onclick="filterCatalog('restoran',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;">Restoran</button>
-          <button class="cat-pill" onclick="filterCatalog('salon',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;">Salon</button>
+          <button class="cat-pill" onclick="filterCatalog('supermarket',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catSupermarket">Supermarket</button>
+          <button class="cat-pill" onclick="filterCatalog('elektronika',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catElektronika">Elektronika</button>
+          <button class="cat-pill" onclick="filterCatalog('dorixona',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catDorixona">Dorixona</button>
+          <button class="cat-pill" onclick="filterCatalog('restoran',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catRestoran">Restoran</button>
+          <button class="cat-pill" onclick="filterCatalog('salon',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catSalon">Salon</button>
         </div>
       </div>
       <div class="sticker-catalog-grid" id="stickerCatalogGrid">
@@ -887,7 +887,7 @@
           <div id="stCatalogGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.3rem;padding:0.6rem;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;padding:0 0.6rem 0.6rem;">
             <button onclick="stSelectNoDesign()" style="padding:0.42rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted2);font-size:0.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">📄 Dizaynsiz</button>
-            <button onclick="closeOverlay('stickerOverlay');openStickerDesigner()" style="padding:0.42rem;background:rgba(232,255,71,0.07);border:1px solid rgba(232,255,71,0.2);border-radius:8px;color:var(--accent);font-size:0.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">🎨 Canvas dizayn</button>
+            <button onclick="closeOverlay('stickerOverlay');openStickerDesigner()" style="padding:0.42rem;background:rgba(232,255,71,0.07);border:1px solid rgba(232,255,71,0.2);border-radius:8px;color:var(--accent);font-size:0.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;" data-i18n="scCanvasBtn">🎨 Canvas dizayn</button>
           </div>
         </div>
         <!-- Selected state -->
@@ -942,12 +942,12 @@
 
     <!-- Filter pills -->
     <div style="display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;margin-bottom:2rem;">
-      <button class="cat-pill active" onclick="filterCatalog('all',this)">Hammasi</button>
-      <button class="cat-pill" onclick="filterCatalog('supermarket',this)">🛒 Supermarket</button>
-      <button class="cat-pill" onclick="filterCatalog('elektronika',this)">📱 Elektronika</button>
-      <button class="cat-pill" onclick="filterCatalog('dorixona',this)">💊 Dorixona</button>
-      <button class="cat-pill" onclick="filterCatalog('restoran',this)">🍽 Restoran</button>
-      <button class="cat-pill" onclick="filterCatalog('salon',this)">✂️ Salon</button>
+      <button class="cat-pill active" onclick="filterCatalog('all',this)" data-i18n="b2bFilterAll">Hammasi</button>
+      <button class="cat-pill" onclick="filterCatalog('supermarket',this)" data-i18n="catSupermarket">Supermarket</button>
+      <button class="cat-pill" onclick="filterCatalog('elektronika',this)" data-i18n="catElektronika">Elektronika</button>
+      <button class="cat-pill" onclick="filterCatalog('dorixona',this)" data-i18n="catDorixona">Dorixona</button>
+      <button class="cat-pill" onclick="filterCatalog('restoran',this)" data-i18n="catRestoran">Restoran</button>
+      <button class="cat-pill" onclick="filterCatalog('salon',this)" data-i18n="catSalon">Salon</button>
     </div>
 
     <!-- Catalog grid -->
@@ -965,7 +965,7 @@
           </div>
           <div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Supermarket · Oq</div>
+        <div class="sticker-card-label" data-i18n="slAnora">Supermarket · Oq</div>
       </div>
 
       <div class="sticker-card-item" data-cat="supermarket">
@@ -978,7 +978,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.5);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Supermarket · Qora</div>
+        <div class="sticker-card-label" data-i18n="slNexmart">Supermarket · Qora</div>
       </div>
 
       <!-- ELEKTRONIKA -->
@@ -992,7 +992,7 @@
           </div>
           <div class="sm-footer" style="color:#555;">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Elektronika · Neon</div>
+        <div class="sticker-card-label" data-i18n="slTechno">Elektronika · Neon</div>
       </div>
 
       <div class="sticker-card-item" data-cat="elektronika">
@@ -1005,7 +1005,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Elektronika · Premium qora</div>
+        <div class="sticker-card-label" data-i18n="slSmart">Elektronika · Premium qora</div>
       </div>
 
       <!-- DORIXONA -->
@@ -1019,7 +1019,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.6);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Dorixona · Yashil</div>
+        <div class="sticker-card-label" data-i18n="slHealth">Dorixona · Yashil</div>
       </div>
 
       <div class="sticker-card-item" data-cat="dorixona">
@@ -1032,7 +1032,7 @@
           </div>
           <div class="sm-footer" style="color:#888;">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Dorixona · Oq/Yashil</div>
+        <div class="sticker-card-label" data-i18n="slMedplus">Dorixona · Oq/Yashil</div>
       </div>
 
       <!-- RESTORAN -->
@@ -1046,7 +1046,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.5);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Restoran · Bordo</div>
+        <div class="sticker-card-label" data-i18n="slLazzat">Restoran · Bordo</div>
       </div>
 
       <div class="sticker-card-item" data-cat="restoran">
@@ -1059,7 +1059,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Restoran · Oltin</div>
+        <div class="sticker-card-label" data-i18n="slGolden">Restoran · Oltin</div>
       </div>
 
       <!-- SALON -->
@@ -1073,7 +1073,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.6);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Go'zallik saloni · Gradient</div>
+        <div class="sticker-card-label" data-i18n="slGlam">Go'zallik saloni · Gradient</div>
       </div>
 
       <div class="sticker-card-item" data-cat="salon">
@@ -1086,7 +1086,7 @@
           </div>
           <div class="sm-footer" style="color:rgba(255,255,255,0.4);">nfcraft.uz · NFC Stiker biznesingiz uchun</div>
         </div>
-        <div class="sticker-card-label">Go'zallik saloni · Qora/Pink</div>
+        <div class="sticker-card-label" data-i18n="slBeauty">Go'zallik saloni · Qora/Pink</div>
       </div>
 
     </div>
