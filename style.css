@@ -1335,40 +1335,6 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
   pointer-events: none;
 }
 
-/* ── Custom cursor (desktop only) ── */
-@media (hover: hover) and (pointer: fine) {
-  * { cursor: none !important; }
-}
-#customCursor {
-  position: fixed;
-  width: 8px; height: 8px;
-  background: var(--accent);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99999;
-  left: -100px; top: -100px;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 12px var(--accent), 0 0 28px rgba(232,255,71,0.4);
-  will-change: left, top;
-  transition: transform 0.15s, opacity 0.2s;
-}
-#customCursorRing {
-  position: fixed;
-  width: 36px; height: 36px;
-  border: 1.5px solid rgba(232,255,71,0.45);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99998;
-  left: -100px; top: -100px;
-  transform: translate(-50%, -50%);
-  will-change: left, top;
-  transition: width 0.3s cubic-bezier(.4,0,.2,1), height 0.3s cubic-bezier(.4,0,.2,1), border-color 0.3s, opacity 0.2s;
-}
-#customCursorRing.hovered {
-  width: 54px; height: 54px;
-  border-color: var(--accent);
-  border-width: 2px;
-}
 
 /* ── Hero canvas particles ── */
 #heroCanvas {

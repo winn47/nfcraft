@@ -3668,7 +3668,6 @@ window.addEventListener('DOMContentLoaded', () => {
   _initOtpBoxes();
   setLanguage('en');
   stRenderCatalogGrid();
-  initCustomCursor();
   initHeroParticles();
   initMagneticButtons();
   initCatalogTilt();
