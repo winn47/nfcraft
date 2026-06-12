@@ -283,6 +283,7 @@ const translations = {
     slLazzat:'Restaurant · Bordeaux', slGolden:'Restaurant · Gold',
     slGlam:'Salon · Gradient', slBeauty:'Salon · Black/Pink',
     scCanvasBtn: '🎨 Create Design',
+    stReadyDesign: 'Ready design', stNoDesign: 'No design', stSelectedDesign: 'Selected design',
     scTitle: '🎨 Sticker Design', scOrder: 'Order →',
     scImgLabel: '📷 Images', scImgHint: 'Click to add image\n.png · .jpg · max 5MB',
     scTextLabel: '✏️ Text', scTextPh: 'Business name...',
@@ -387,6 +388,7 @@ const translations = {
     slLazzat:'Restoran · Bordo', slGolden:'Restoran · Oltin',
     slGlam:'Salon · Gradient', slBeauty:'Salon · Qora/Pink',
     scCanvasBtn: '🎨 Dizayn yaratish',
+    stReadyDesign: 'Tayyor dizayn', stNoDesign: 'Dizaynsiz', stSelectedDesign: 'Tanlangan dizayn',
     scTitle: '🎨 Stiker Dizayn', scOrder: 'Buyurtma →',
     scImgLabel: '📷 Rasmlar', scImgHint: 'Bosib rasm qo\'shing\n.png · .jpg · max 5MB',
     scTextLabel: '✏️ Matn', scTextPh: 'Biznes nomi...',
@@ -491,6 +493,7 @@ const translations = {
     slLazzat:'Ресторан · Бордо', slGolden:'Ресторан · Золотой',
     slGlam:'Салон · Градиент', slBeauty:'Салон · Чёрный/Розовый',
     scCanvasBtn: '🎨 Создать дизайн',
+    stReadyDesign: 'Готовый дизайн', stNoDesign: 'Без дизайна', stSelectedDesign: 'Выбранный дизайн',
     scTitle: '🎨 Дизайн стикера', scOrder: 'Заказать →',
     scImgLabel: '📷 Изображения', scImgHint: 'Нажмите для добавления\n.png · .jpg · max 5MB',
     scTextLabel: '✏️ Текст', scTextPh: 'Название бизнеса...',
@@ -1048,9 +1051,11 @@ function stSelectCatalog(idx) {
   const info   = document.getElementById('stDesignInfo');
   const picker = document.getElementById('stDesignPicker');
   const chosen = document.getElementById('stDesignChosen');
+  const t = translations[currentLang] || {};
   if (badge)  { badge.textContent = d.name; badge.style.background = d.bg; badge.style.color = d.color; }
-  if (label)  label.textContent = d.name + ' – Tayyor dizayn';
-  if (info)   info.textContent  = d.cat;
+  if (label)  label.textContent = d.name + ' – ' + (t.stReadyDesign || 'Tayyor dizayn');
+  const catTKey = 'cat' + d.catKey.charAt(0).toUpperCase() + d.catKey.slice(1);
+  if (info)   info.textContent = t[catTKey] || d.cat;
   if (picker) picker.style.display = 'none';
   if (chosen) { chosen.style.display = 'flex'; }
   const colorRow = document.getElementById('stDzColorRow');
@@ -1068,8 +1073,9 @@ function stSelectNoDesign() {
   const colorRow = document.getElementById('stDzColorRow');
   const bg  = document.getElementById('stDzBg')?.value  || '#ffffff';
   const tx  = document.getElementById('stDzColor')?.value || '#111111';
+  const t = translations[currentLang] || {};
   if (badge)    { badge.textContent = 'Dz'; badge.style.background = bg; badge.style.color = tx; }
-  if (label)    label.textContent = 'Dizaynsiz';
+  if (label)    label.textContent = t.stNoDesign || 'Dizaynsiz';
   if (info)     info.textContent  = 'Rang tanlang';
   if (picker)   picker.style.display = 'none';
   if (chosen)   chosen.style.display = 'flex';

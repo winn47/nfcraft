@@ -578,15 +578,15 @@
 
     <!-- Catalog strip -->
     <div class="reveal">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding:0 0.2rem;">
-        <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.04em;" data-i18n="b2bDesigns">DIZAYN NAMUNALARI</div>
-        <div style="display:flex;gap:0.5rem;">
-          <button class="cat-pill active" onclick="filterCatalog('all',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="b2bFilterAll">Hammasi</button>
-          <button class="cat-pill" onclick="filterCatalog('supermarket',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catSupermarket">Supermarket</button>
-          <button class="cat-pill" onclick="filterCatalog('elektronika',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catElektronika">Elektronika</button>
-          <button class="cat-pill" onclick="filterCatalog('dorixona',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catDorixona">Dorixona</button>
-          <button class="cat-pill" onclick="filterCatalog('restoran',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catRestoran">Restoran</button>
-          <button class="cat-pill" onclick="filterCatalog('salon',this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;" data-i18n="catSalon">Salon</button>
+      <div class="catalog-header-row">
+        <div class="catalog-section-label" data-i18n="b2bDesigns">DIZAYN NAMUNALARI</div>
+        <div class="cat-filter-pills">
+          <button class="cat-pill active" onclick="filterCatalog('all',this)" data-i18n="b2bFilterAll">Hammasi</button>
+          <button class="cat-pill" onclick="filterCatalog('supermarket',this)" data-i18n="catSupermarket">Supermarket</button>
+          <button class="cat-pill" onclick="filterCatalog('elektronika',this)" data-i18n="catElektronika">Elektronika</button>
+          <button class="cat-pill" onclick="filterCatalog('dorixona',this)" data-i18n="catDorixona">Dorixona</button>
+          <button class="cat-pill" onclick="filterCatalog('restoran',this)" data-i18n="catRestoran">Restoran</button>
+          <button class="cat-pill" onclick="filterCatalog('salon',this)" data-i18n="catSalon">Salon</button>
         </div>
       </div>
       <div class="sticker-catalog-grid" id="stickerCatalogGrid">
@@ -895,7 +895,7 @@
           <div style="display:flex;align-items:center;gap:0.75rem;">
             <div id="stDesignBadge" style="padding:0.3rem 0.85rem;border-radius:8px;font-weight:700;font-size:0.82rem;font-family:'Syne',sans-serif;flex-shrink:0;border:1px solid rgba(128,128,128,0.2);">—</div>
             <div style="flex:1;">
-              <div style="font-size:0.8rem;font-weight:600;color:var(--text);" id="stDesignLabel">Tanlangan dizayn</div>
+              <div style="font-size:0.8rem;font-weight:600;color:var(--text);" id="stDesignLabel" data-i18n="stSelectedDesign">Tanlangan dizayn</div>
               <div style="font-size:0.7rem;color:var(--muted2);margin-top:0.15rem;" id="stDesignInfo"></div>
             </div>
             <button onclick="stResetDesign()" style="padding:0.28rem 0.55rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:0.7rem;color:var(--muted2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">↺ O'zgartir</button>
@@ -951,7 +951,7 @@
     </div>
 
     <!-- Catalog grid -->
-    <div class="sticker-catalog-grid" id="stickerCatalogGrid">
+    <div class="sticker-catalog-grid">
 
       <!-- SUPERMARKET -->
       <div class="sticker-card-item" data-cat="supermarket">
