@@ -253,9 +253,19 @@ h1 em {
 }
 .btn-secondary:hover { border-color: rgba(255,255,255,0.25); background: var(--surface); }
 
+.hero-stats {
+  margin-top: 1.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  text-align: center;
+  position: relative; z-index: 1;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+
 .hero-visual {
-  position: relative; z-index: 1; margin-top: 5rem;
-  animation: fadeUp 0.9s 0.4s ease both; perspective: 800px;
+  position: relative; z-index: 1; margin-top: 4rem;
+  animation: fadeUp 0.9s 0.5s ease both; perspective: 800px;
 }
 
 .nfc-card {
@@ -653,6 +663,14 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
 .pricing-btn-outline:hover { border-color: rgba(255,255,255,0.25); background: var(--surface2); }
 .pricing-btn-solid { background: var(--accent); border: none; color: #000; }
 .pricing-btn-solid:hover { box-shadow: 0 4px 24px rgba(232,255,71,0.3); transform: translateY(-1px); }
+
+.pricing-trust {
+  text-align: center;
+  margin-top: 2.2rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
 
 #owners { background: var(--bg2); padding: 120px 6vw; text-align: center; }
 .owners-grid {

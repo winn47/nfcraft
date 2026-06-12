@@ -257,7 +257,7 @@
 <nav id="siteNav">
   <a class="logo" href="#">NF<span>Craft</span></a>
   <ul>
-    <li><a href="#why"      data-i18n="navWhy">Why NFC</a></li>
+    <li><a href="#how"      data-i18n="howLabel">How It Works</a></li>
     <li><a href="#pricing"  data-i18n="navPricing">Pricing</a></li>
     <li><a href="#biznes"   data-i18n="navBiznes">Business</a></li>
     <li><a href="#owners"   data-i18n="navTeam">Team</a></li>
@@ -304,7 +304,7 @@
       <span></span><span></span><span></span>
     </button>
     <div class="mobile-dropdown" id="mobileDropdown">
-      <a href="#why"      onclick="closeMobileMenu()" data-i18n="navWhy">Why NFC</a>
+      <a href="#how"      onclick="closeMobileMenu()" data-i18n="howLabel">How It Works</a>
       <a href="#pricing"  onclick="closeMobileMenu()" data-i18n="navPricing">Pricing</a>
       <a href="#biznes"   onclick="closeMobileMenu()" data-i18n="navBiznes">Business</a>
       <a href="#owners"   onclick="closeMobileMenu()" data-i18n="navTeam">Team</a>
@@ -338,8 +338,9 @@
   <p class="hero-sub" data-i18n="heroSub">Share your contact, portfolio, or links with a single tap. No app required. Just your card — and the future in your pocket.</p>
   <div class="hero-btns">
     <button class="btn-primary" onclick="openProductChoice()" data-i18n="orderNow">⚡ Order Now</button>
-    <a class="btn-secondary" href="#pricing" data-i18n="exploreCards">Explore Plans</a>
+    <a class="btn-secondary" href="#pricing" data-i18n="exploreCards">See Pricing</a>
   </div>
+  <div class="hero-stats" id="heroStats" data-i18n="heroStats">⚡ Ships in 3 days · 📱 No app needed · ✏️ Edit anytime</div>
   <div class="hero-visual">
     <div class="nfc-card" id="heroCard">
       <div class="nfc-chip"></div>
@@ -438,7 +439,7 @@
   </div>
 </section>
 
-<section id="why">
+<section id="why" style="display:none!important;height:0;overflow:hidden;padding:0;margin:0;">
   <div class="reveal">
     <div class="section-label" data-i18n="benefits">Benefits</div>
     <h2 class="section-title" data-i18n="whyNfc">Why NFC Cards?</h2>
@@ -468,7 +469,7 @@
   </div>
 </section>
 
-<section id="card-colors">
+<section id="card-colors" style="display:none!important;height:0;overflow:hidden;padding:0;margin:0;">
   <div class="reveal">
     <div class="section-label" data-i18n="colorsLabel">Colors</div>
     <h2 class="section-title" data-i18n="colorsTitle">Pick Your Style</h2>
@@ -651,6 +652,7 @@
       <button class="pricing-btn pricing-btn-solid" data-i18n="orderPremium">Order Premium</button>
     </div>
   </div>
+  <div class="pricing-trust" data-i18n="pricingTrust">🔒 Secure payment · 🚚 Ships in 3 days · ✅ Quality guaranteed</div>
 </section>
 
 <section id="sticker-section-old" style="display:none!important;height:0;overflow:hidden;padding:0;margin:0;">
