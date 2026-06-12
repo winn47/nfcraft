@@ -14,6 +14,9 @@
 </head>
 <body>
 
+<div id="scrollProgress"></div>
+<div id="customCursor"></div>
+<div id="customCursorRing"></div>
 <div id="cursor"></div>
 
 <div id="adminDashboard" style="display:none; min-height:100vh; background:var(--bg); padding:2rem 3vw;">
@@ -331,8 +334,11 @@
 </nav>
 
 <section id="hero">
+  <canvas id="heroCanvas"></canvas>
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
   <div class="hero-badge" style="position:relative;z-index:1"><span class="dot"></span> NFC Technology, Reimagined</div>
   <h1>Modern<br/><em>NFC Cards</em></h1>
   <p class="hero-sub" data-i18n="heroSub">Share your contact, portfolio, or links with a single tap. No app required. Just your card — and the future in your pocket.</p>
@@ -361,8 +367,8 @@
   </div>
 
   <div class="how-inner">
-    <div class="how-steps reveal">
-      <div class="how-step">
+    <div class="how-steps">
+      <div class="how-step reveal-left">
         <div class="how-step-left">
           <div class="how-step-dot"><span>01</span></div>
           <div class="how-step-line"></div>
@@ -372,7 +378,7 @@
           <p class="how-step-desc" data-i18n="howStep1Desc">Pick a plan and color. Your card arrives pre-programmed and ready to use — no setup needed.</p>
         </div>
       </div>
-      <div class="how-step">
+      <div class="how-step reveal-left sd-2">
         <div class="how-step-left">
           <div class="how-step-dot"><span>02</span></div>
           <div class="how-step-line"></div>
@@ -382,7 +388,7 @@
           <p class="how-step-desc" data-i18n="howStep2Desc">Add your phone, socials, website — anything you want to share. Edit anytime from any browser.</p>
         </div>
       </div>
-      <div class="how-step">
+      <div class="how-step reveal-left sd-3">
         <div class="how-step-left">
           <div class="how-step-dot accent"><span>03</span></div>
         </div>
@@ -393,7 +399,7 @@
       </div>
     </div>
 
-    <div class="how-visual reveal">
+    <div class="how-visual reveal-right">
       <div class="demo-phone-wrap">
         <div class="demo-phone">
           <div class="demo-island"></div>
@@ -616,8 +622,8 @@
     <h2 class="section-title" data-i18n="simplePricing">Simple Pricing</h2>
     <p class="section-sub" data-i18n="pickPlan">Pick a plan that fits your needs. Every card ships ready to use.</p>
   </div>
-  <div class="pricing-grid reveal">
-    <div class="pricing-card" onclick="openOrder('starter')" style="cursor:pointer;">
+  <div class="pricing-grid">
+    <div class="pricing-card reveal-scale" onclick="openOrder('starter')" style="cursor:pointer;">
       <div class="pricing-name" data-i18n="starter">Starter</div>
       <p class="pricing-desc" data-i18n="starterDesc">Perfect for personal use or trying NFC for the first time.</p>
       <div class="pricing-price"><sup>$</sup>2.5 <span>/ card</span></div>
@@ -628,7 +634,7 @@
       </ul>
       <button class="pricing-btn pricing-btn-outline" data-i18n="orderStarter">Order Starter</button>
     </div>
-    <div class="pricing-card" onclick="openOrder('pro')" style="cursor:pointer;">
+    <div class="pricing-card reveal-scale sd-2" onclick="openOrder('pro')" style="cursor:pointer;">
       <div class="pricing-name" data-i18n="pro">Pro</div>
       <p class="pricing-desc" data-i18n="proDesc">Great for professionals who want a polished branded card.</p>
       <div class="pricing-price"><sup>$</sup>5 <span>/ card</span></div>
@@ -639,7 +645,7 @@
       </ul>
       <button class="pricing-btn pricing-btn-outline" data-i18n="orderPro">Order Pro</button>
     </div>
-    <div class="pricing-card featured" onclick="openOrder('premium')" style="cursor:pointer;">
+    <div class="pricing-card featured reveal-scale sd-3" onclick="openOrder('premium')" style="cursor:pointer;">
       <div class="pricing-badge" data-i18n="bestChoice">Best Choice</div>
       <div class="pricing-name" data-i18n="premiumTitle">Premium</div>
       <p class="pricing-desc" data-i18n="premiumDesc">For businesses that want the best.</p>

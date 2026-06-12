@@ -224,8 +224,7 @@ h1 {
 }
 h1 em {
   font-style: normal;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  /* overridden by animations block below */
 }
 .hero-sub {
   max-width: 480px; font-size: 1.05rem; color: var(--muted2);
@@ -1321,6 +1320,156 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
 .success-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.6rem; }
 .success-sub { color: var(--muted2); font-size: 0.9rem; line-height: 1.6; }
 
+/* ══════════════════════════════════════════
+   ANIMATIONS — scroll reveal, orbs, effects
+══════════════════════════════════════════ */
+
+/* Scroll progress bar */
+#scrollProgress {
+  position: fixed; top: 0; left: 0;
+  height: 2px; width: 0%;
+  background: linear-gradient(90deg, var(--accent), #a8e63d);
+  z-index: 9999;
+  box-shadow: 0 0 10px rgba(232,255,71,0.5);
+  transition: width 0.08s linear;
+  pointer-events: none;
+}
+
+/* ── Custom cursor (desktop only) ── */
+@media (hover: hover) and (pointer: fine) {
+  * { cursor: none !important; }
+}
+#customCursor {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  left: -100px; top: -100px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 12px var(--accent), 0 0 28px rgba(232,255,71,0.4);
+  will-change: left, top;
+  transition: transform 0.15s, opacity 0.2s;
+}
+#customCursorRing {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1.5px solid rgba(232,255,71,0.45);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  left: -100px; top: -100px;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: width 0.3s cubic-bezier(.4,0,.2,1), height 0.3s cubic-bezier(.4,0,.2,1), border-color 0.3s, opacity 0.2s;
+}
+#customCursorRing.hovered {
+  width: 54px; height: 54px;
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+/* ── Hero canvas particles ── */
+#heroCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Sticker card tilt (set base transition for snap-back) ── */
+.sticker-card { will-change: transform; }
+
+/* Reveal variants */
+.reveal         { opacity:0; transform: translateY(40px); transition: opacity 0.75s cubic-bezier(.4,0,.2,1), transform 0.75s cubic-bezier(.4,0,.2,1); }
+.reveal-left    { opacity:0; transform: translateX(-55px); transition: opacity 0.75s cubic-bezier(.4,0,.2,1), transform 0.75s cubic-bezier(.4,0,.2,1); }
+.reveal-right   { opacity:0; transform: translateX(55px); transition: opacity 0.75s cubic-bezier(.4,0,.2,1), transform 0.75s cubic-bezier(.4,0,.2,1); }
+.reveal-scale   { opacity:0; transform: scale(0.88); transition: opacity 0.65s cubic-bezier(.4,0,.2,1), transform 0.65s cubic-bezier(.4,0,.2,1); }
+.reveal.visible, .reveal-left.visible, .reveal-right.visible, .reveal-scale.visible {
+  opacity:1; transform: none;
+}
+
+/* Animated gradient on em (hero/section titles) */
+h1 em {
+  font-style: normal;
+  background: linear-gradient(120deg, var(--accent) 0%, #a8e63d 30%, #fff 55%, var(--accent) 80%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: shimmer 5s linear infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Hero glowing orbs */
+.hero-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); pointer-events: none; z-index: 0;
+  animation: orbDrift 12s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 400px; height: 400px;
+  background: rgba(232,255,71,0.07);
+  top: -100px; right: 10%;
+  animation-delay: 0s;
+}
+.hero-orb-2 {
+  width: 300px; height: 300px;
+  background: rgba(163,255,79,0.05);
+  bottom: 0; left: 5%;
+  animation-delay: -4s;
+}
+@keyframes orbDrift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(30px,-20px) scale(1.08); }
+  66%     { transform: translate(-20px,15px) scale(0.94); }
+}
+
+/* How-step line draw animation */
+.how-step-line {
+  transform-origin: top;
+  transition: transform 0.6s cubic-bezier(.4,0,.2,1) 0.3s;
+}
+.reveal-left.visible .how-step-line { transform: scaleY(1) !important; }
+
+/* Pricing card 3D transition reset */
+.pricing-card {
+  transition: border-color 0.3s, transform 0.3s cubic-bezier(.4,0,.2,1), box-shadow 0.3s;
+  will-change: transform;
+}
+
+/* Section entrance — label slide */
+.section-label {
+  display: inline-block;
+  overflow: hidden;
+}
+
+/* Stagger helpers */
+.sd-1  { transition-delay: 0.08s !important; }
+.sd-2  { transition-delay: 0.18s !important; }
+.sd-3  { transition-delay: 0.28s !important; }
+.sd-4  { transition-delay: 0.38s !important; }
+
+/* How step dot glow on visible */
+.how-step-dot {
+  transition: box-shadow 0.5s ease;
+}
+.reveal-left.visible .how-step-dot {
+  box-shadow: 0 0 0 6px rgba(232,255,71,0.08);
+}
+.reveal-left.visible .how-step-dot.accent {
+  box-shadow: 0 0 0 8px rgba(232,255,71,0.15), 0 0 20px rgba(232,255,71,0.2);
+}
+
+/* Nav subtle border on scroll */
+nav.scrolled {
+  background: rgba(8,8,8,0.92);
+  border-bottom-color: rgba(232,255,71,0.12);
+}
+
 footer {
   border-top: 1px solid var(--border); padding: 3rem 6vw;
   display: flex; align-items: center; justify-content: space-between;
@@ -1340,8 +1489,7 @@ footer {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: none; }
 }
-.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
-.reveal.visible { opacity: 1; transform: none; }
+/* reveal base — defined in animations block above */
 
 .mobile-menu-wrap {
   display: none;
