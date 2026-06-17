@@ -640,7 +640,7 @@ section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
   font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800;
   letter-spacing: -0.04em; margin-bottom: 1.8rem;
 }
-.pricing-price sup { font-size: 1.2rem; vertical-align: super; font-weight: 600; }
+.pricing-price sup { font-size: 0.42em; vertical-align: 0.6em; font-weight: 700; margin-right: 3px; letter-spacing: 0; }
 .pricing-price span { font-size: 1rem; font-weight: 400; color: var(--muted2); }
 .pricing-features { list-style: none; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.7rem; }
 .pricing-features li {

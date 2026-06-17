@@ -2695,14 +2695,17 @@ async function loadUserProfile() {
 async function loadUserOrders() {
   try {
     const headers = { 'Authorization': `Bearer ${currentUser.token}` };
-    const [ordersRes, cardsRes] = await Promise.all([
+    const [ordersRes, cardsRes, stickerRes] = await Promise.all([
       fetch(`${API_BASE}/orders/user/${currentUser.id}`, { headers }),
-      fetch(`${API_BASE}/card-info/my`, { headers })
+      fetch(`${API_BASE}/card-info/my`, { headers }),
+      fetch(`${API_BASE}/sticker/orders/user/${currentUser.id}`, { headers })
     ]);
 
-    const data   = ordersRes.ok ? await ordersRes.json() : [];
-    const cards  = cardsRes.ok  ? await cardsRes.json()  : [];
-    const orders = Array.isArray(data) ? data : (data.orders || []);
+    const data    = ordersRes.ok  ? await ordersRes.json()  : [];
+    const cards   = cardsRes.ok   ? await cardsRes.json()   : [];
+    const stData  = stickerRes.ok ? await stickerRes.json() : [];
+    const orders  = Array.isArray(data)   ? data   : (data.orders || []);
+    const sOrders = Array.isArray(stData) ? stData : [];
 
     const tbody = document.getElementById('userOrdersBody');
     if (!tbody) return;
@@ -2728,24 +2731,51 @@ async function loadUserOrders() {
       }
     }
 
-    if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">Buyurtma yo\'q</td></tr>';
-      return;
-    }
+    const statusLabel = s => {
+      const map = {
+        pending: { label: "To'lov tasdiqlanmadi", color: '#facc15' },
+        pending_payment: { label: "To'lov tasdiqlanmadi", color: '#facc15' },
+        paid:       { label: 'Tayyorlanmoqda',    color: '#34d399' },
+        processing: { label: 'Tayyorlanmoqda',    color: '#34d399' },
+        shipped:    { label: 'Yetkazilmoqda',     color: '#60a5fa' },
+        delivered:  { label: 'Yetkazildi',        color: '#4ade80' },
+        completed:  { label: 'Yetkazildi',        color: '#4ade80' },
+        cancelled:  { label: 'Bekor qilindi',     color: '#ff6b6b' },
+      };
+      const st = map[s] || { label: s || 'pending', color: '#facc15' };
+      return `<span style="padding:0.2rem 0.7rem;border-radius:20px;font-size:0.72rem;background:${st.color}22;color:${st.color};white-space:nowrap">${st.label}</span>`;
+    };
 
-    tbody.innerHTML = orders.map(o => {
-      const sc = o.status === 'delivered' || o.status === 'completed' ? '#4ade80' : o.status === 'cancelled' ? '#ff6b6b' : o.status === 'paid' ? '#34d399' : '#facc15';
-      const planLabel = o.plan ? o.plan.charAt(0).toUpperCase() + o.plan.slice(1) : '—';
-      return `
-        <tr style="border-bottom:1px solid var(--border)">
+    if (!orders.length && !sOrders.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--muted2)">Buyurtma yo\'q</td></tr>';
+    } else {
+      tbody.innerHTML = orders.map(o => {
+        const planLabel = o.plan ? o.plan.charAt(0).toUpperCase() + o.plan.slice(1) : '—';
+        return `<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:0.75rem 1rem;font-size:0.88rem;font-weight:500">${planLabel}</td>
           <td style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--muted2)">${o.quantity || 1}</td>
           <td style="padding:0.75rem 1rem;font-size:0.88rem;font-weight:500">$${parseFloat(o.total || 0).toFixed(2)}</td>
-          <td style="padding:0.75rem 1rem">
-            <span style="padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;background:${sc}22;color:${sc}">${o.status || 'pending'}</span>
-          </td>
+          <td style="padding:0.75rem 1rem">${statusLabel(o.status)}</td>
         </tr>`;
-    }).join('');
+      }).join('');
+    }
+
+    // Sticker orders section
+    const stickerSection = document.getElementById('userStickerOrdersSection');
+    if (stickerSection) {
+      if (sOrders.length) {
+        stickerSection.style.display = '';
+        document.getElementById('userStickerOrdersBody').innerHTML = sOrders.map(o => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:0.75rem 1rem;font-size:0.85rem;font-weight:500">${o.businessName || '—'}</td>
+            <td style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--muted2)">${o.quantity || 0}</td>
+            <td style="padding:0.75rem 1rem;font-size:0.85rem;font-weight:500">$${parseFloat(o.total || 0).toFixed(2)}</td>
+            <td style="padding:0.75rem 1rem">${statusLabel(o.status)}</td>
+          </tr>`).join('');
+      } else {
+        stickerSection.style.display = 'none';
+      }
+    }
   } catch (err) {
     // silent — user panel just stays empty on network error
   }
