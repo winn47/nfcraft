@@ -2912,6 +2912,14 @@ function closePaymentModal() {
   const modal = document.getElementById('paymentModal');
   if (modal) modal.style.display = 'none';
 
+  // Notify admin via Telegram that user confirmed payment
+  if (_lastOrderId && currentUser?.token) {
+    fetch(`${API_BASE}/orders/${_lastOrderId}/payment-confirmed`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    }).catch(() => {});
+  }
+
   if (_pendingCardInfoBody) {
     _doSubmitCardInfo();
   } else {
@@ -3758,7 +3766,50 @@ function triggerGoogleSignIn() {
     showToast('Google yuklanmadi. Sahifani yangilang.', 'warning');
     return;
   }
-  google.accounts.id.prompt();
+  // Use token client for explicit account picker popup
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'openid email profile',
+    prompt: 'select_account',
+    callback: async (tokenResponse) => {
+      if (tokenResponse.error) { showToast('Google kirish bekor qilindi', 'warning'); return; }
+      try {
+        const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { 'Authorization': `Bearer ${tokenResponse.access_token}` }
+        });
+        const info = await infoRes.json();
+        if (!info.email) throw new Error('Email topilmadi');
+        const backendRes = await fetch(`${API_BASE}/auth/google-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:   info.email,
+            name:    info.name || '',
+            picture: info.picture || '',
+            sub:     info.sub || ''
+          })
+        });
+        const data = await backendRes.json();
+        if (!data.success) throw new Error(data.message || 'Google login xatosi');
+        const _isSuperAdmin = data.isSuperAdmin === true
+          || (data.email && data.email.toLowerCase() === 'whatififlydidy@gmail.com');
+        const _isAdmin = _isSuperAdmin || data.isAdmin === true;
+        currentUser = {
+          id: data.userId, token: data.token,
+          firstName: data.firstName, lastName: data.lastName,
+          email: data.email, isAdmin: _isAdmin, isSuperAdmin: _isSuperAdmin
+        };
+        isAdmin = _isAdmin; isSuperAdmin = _isSuperAdmin;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        closeOverlay('authOverlay');
+        updateAuthUI();
+        showToast(`Xush kelibsiz, ${data.firstName}! 🎉`, 'success');
+      } catch (err) {
+        showToast('Google kirish xatosi: ' + err.message, 'error');
+      }
+    }
+  });
+  tokenClient.requestAccessToken();
 }
 
 async function handleGoogleCredential(response) {

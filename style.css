@@ -347,7 +347,87 @@ h1 em {
 }
 .hero-color-dot:hover { transform: scale(1.15); }
 
-section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; }
+section { padding: 120px 6vw; overflow-x: hidden; max-width: 100%; position: relative; }
+
+/* ══════════════════════════════════════════
+   GLOBAL SECTION COHERENCE SYSTEM
+   — single ambient light bleeds through all sections
+   — gradient glow dividers link each transition
+   — alternating tints create visual rhythm
+══════════════════════════════════════════ */
+
+/* Fixed ambient accent from top — visible through ALL sections on scroll */
+body::after {
+  content: '';
+  position: fixed;
+  top: -30vh; left: 50%;
+  transform: translateX(-50%);
+  width: 130vw; height: 90vh;
+  background: radial-gradient(ellipse 55% 45% at 50% 0%,
+    rgba(232,255,71,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Alternating section backgrounds for visual rhythm */
+#how, #owners { background: var(--bg2); }
+
+/* Glow divider line at each section boundary */
+section:not(#hero) {
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+section:not(#hero)::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgba(232,255,71,0.2), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Section-specific ambient glows — alternating left/right for flow */
+#how::after {
+  content: '';
+  position: absolute;
+  top: 5%; right: -80px;
+  width: 480px; height: 480px;
+  background: radial-gradient(circle,
+    rgba(232,255,71,0.045) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+#pricing { position: relative; overflow: hidden; }
+#pricing::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle,
+    rgba(163,255,79,0.04) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+#owners { position: relative; overflow: hidden; }
+#owners::after {
+  content: '';
+  position: absolute;
+  top: 10%; right: -80px;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle,
+    rgba(232,255,71,0.04) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+#location { position: relative; overflow: hidden; }
+#location::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle,
+    rgba(163,255,79,0.04) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+
 .section-label {
   font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
   color: var(--accent); margin-bottom: 1rem; font-weight: 500;
@@ -1468,8 +1548,8 @@ footer {
   justify-content: center;
   align-items: center;
   gap: 4px;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1526,15 +1606,6 @@ footer {
   padding: 6rem 6vw;
   position: relative;
   overflow: visible;
-}
-#how::before {
-  content: '';
-  position: absolute;
-  top: -150px; right: -80px;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(232,255,71,0.04) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
 }
 .how-inner {
   display: grid;
@@ -1695,8 +1766,8 @@ footer {
 }
 .dsl-icon { font-size: 0.8rem; flex-shrink: 0; }
 .dsl-text { flex: 1; min-width: 0; }
-.dsl-type { font-size: 0.57rem; color: rgba(255,255,255,0.28); line-height: 1; margin-bottom: 2px; }
-.dsl-val { font-size: 0.65rem; color: rgba(255,255,255,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsl-type { font-size: 0.68rem; color: rgba(255,255,255,0.28); line-height: 1; margin-bottom: 2px; }
+.dsl-val { font-size: 0.76rem; color: rgba(255,255,255,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsl-arr { font-size: 0.85rem; color: rgba(255,255,255,0.18); flex-shrink: 0; }
 
 /* Floating NFC card */
@@ -2120,4 +2191,43 @@ footer {
   .map-container { height: 200px; }
 
   footer { padding: 1.2rem 3vw; }
+}
+
+/* ══════════════════════════════════════════
+   MOBILE UX FIXES — sticker designer, B2B,
+   touch targets
+══════════════════════════════════════════ */
+
+/* Sticker designer: stack panels vertically on phone */
+@media (max-width: 640px) {
+  .sc-designer-body {
+    flex-direction: column !important;
+    min-height: auto !important;
+  }
+  .sc-designer-left {
+    width: 100% !important;
+    max-height: 240px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  #stickerDesignerOverlay .modal {
+    margin: 0 !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* B2B pricing grid: compact on small screens */
+@media (max-width: 400px) {
+  .b2b-price-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+  }
+  .b2b-price-grid > div {
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 0.5rem;
+  }
 }
