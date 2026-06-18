@@ -1200,9 +1200,9 @@ function scAddImage(input) {
 
 function scAddTextEl() {
   const el = { id: _scNextId++, type: 'text',
-               x: 20, y: SC_H / 2 - 22, w: SC_W - 40, h: 44,
-               text: 'Matn', fontSize: 28, textColor: '#ffffff',
-               bgColor: '#000000', bgAlpha: 50 };
+               x: SC_W/2 - 100, y: SC_H/2 - 26, w: 200, h: 52,
+               text: 'Matn', fontSize: 30, textColor: '#ffffff',
+               bgColor: '#000000', bgAlpha: 0 };
   _scElements.push(el);
   _scSelected = el.id;
   scDraw(); scUpdateSelectedUI();
@@ -1232,7 +1232,7 @@ function scUpdateFontSize(v) {
   const el = scGetSel();
   if (el && el.type === 'text') {
     el.fontSize = parseInt(v) || 28;
-    el.h = el.fontSize + 16;
+    el.h = el.fontSize + 22;
     const lbl = document.getElementById('scFontSizeLabel');
     if (lbl) lbl.textContent = v;
     scDraw();
@@ -1355,7 +1355,7 @@ function scUpdateSelectedUI() {
     if (lbl) lbl.textContent = el.fontSize;
     if (col) col.value = el.textColor || '#ffffff';
     if (bgCol) bgCol.value = el.bgColor || '#000000';
-    const alpha = el.bgAlpha ?? 50;
+    const alpha = el.bgAlpha ?? 0;
     if (bgAlpha) bgAlpha.value = alpha;
     if (bgAlphaLbl) bgAlphaLbl.textContent = alpha + '%';
     const chk = document.getElementById('scTextBgShow');
@@ -1406,22 +1406,26 @@ function scDraw() {
     if (el.type === 'img' && el.img) {
       ctx.drawImage(el.img, el.x, el.y, el.w, el.h);
     } else if (el.type === 'text' && el.text) {
-      ctx.font = `bold ${el.fontSize}px 'DM Sans', Arial, sans-serif`;
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      const metrics = ctx.measureText(el.text);
-      const tw = metrics.width + 16, th = el.fontSize + 14;
-      el.w = tw; el.h = th;
-      // Pill bg with user-defined color + alpha
-      const alpha = (el.bgAlpha ?? 50) / 100;
-      const bgHex = el.bgColor || '#000000';
-      const br = parseInt(bgHex.slice(1,3),16), bg2 = parseInt(bgHex.slice(3,5),16), bb = parseInt(bgHex.slice(5,7),16);
-      ctx.fillStyle = `rgba(${br},${bg2},${bb},${alpha})`;
-      _scRoundRect(ctx, el.x, el.y, tw, th, th / 2); ctx.fill();
-      // Text
-      ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;
+      const fs = Math.max(8, el.fontSize || 28);
+      ctx.save();
+      // Background (only if alpha > 0)
+      const alpha = (el.bgAlpha ?? 0) / 100;
+      if (alpha > 0) {
+        const bgHex = el.bgColor || '#000000';
+        const br = parseInt(bgHex.slice(1,3),16), bg2 = parseInt(bgHex.slice(3,5),16), bb = parseInt(bgHex.slice(5,7),16);
+        ctx.fillStyle = `rgba(${br},${bg2},${bb},${alpha})`;
+        _scRoundRect(ctx, el.x, el.y, el.w, el.h, el.h / 2); ctx.fill();
+      }
+      // Clip text to element bounds, draw centered
+      ctx.beginPath(); ctx.rect(el.x + 2, el.y, el.w - 4, el.h); ctx.clip();
+      ctx.font = `bold ${fs}px 'DM Sans', Arial, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 5;
       ctx.fillStyle = el.textColor || '#ffffff';
-      ctx.fillText(el.text, el.x + 8, el.y + th / 2);
+      ctx.fillText(el.text, el.x + el.w / 2, el.y + el.h / 2);
       ctx.shadowBlur = 0;
+      ctx.restore();
+      // el.w and el.h are NOT overwritten — user resize is preserved
     } else if (el.type === 'shape') {
       const alpha = (el.bgAlpha ?? 100) / 100;
       const bgHex = el.bgColor || '#e8ff47';
@@ -1564,6 +1568,15 @@ function scMouseMove(e) {
     } else if (_scResizeHnd==='tl') {
       const nw=Math.max(20,ew-dx), nh=Math.max(20,eh-dy);
       el.x=ex+(ew-nw); el.y=ey+(eh-nh); el.w=nw; el.h=nh;
+    }
+    // Sync font size from height for text elements
+    const rEl = scGetSel();
+    if (rEl && rEl.type === 'text') {
+      rEl.fontSize = Math.max(8, rEl.h - 22);
+      const slider = document.getElementById('scFontSlider');
+      const lbl = document.getElementById('scFontSizeLabel');
+      if (slider) slider.value = rEl.fontSize;
+      if (lbl) lbl.textContent = rEl.fontSize;
     }
     scDraw(); return;
   }
